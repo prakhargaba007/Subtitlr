@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subtitle Generator — Test</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 28px;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    select:focus { border-color: #6366f1; }
+
+    select option { background: #1a1d27; }
+
+    .file-drop {
+      border: 2px dashed #2d3148;
+      border-radius: 8px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .file-drop:hover,
+    .file-drop.dragover {
+      border-color: #6366f1;
+      background: rgba(99,102,241,0.05);
+    }
+
+    .file-drop input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .file-drop .icon { font-size: 28px; margin-bottom: 8px; }
+
+    .file-drop .hint {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .file-drop .file-name {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #6366f1;
+      font-weight: 500;
+      word-break: break-all;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    button[type="submit"]:hover { background: #4f46e5; }
+    button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .progress {
+      display: none;
+      margin-top: 18px;
+      background: #0f1117;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 6px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #6366f1;
+      transition: width 0.3s;
+      animation: indeterminate 1.4s infinite;
+    }
+
+    @keyframes indeterminate {
+      0%   { transform: translateX(-100%); width: 60%; }
+      100% { transform: translateX(200%);  width: 60%; }
+    }
+
+    .result {
+      display: none;
+      margin-top: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .result-header {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result.success .result-header { background: rgba(16,185,129,0.15); color: #10b981; }
+    .result.error   .result-header { background: rgba(239,68,68,0.15);  color: #ef4444; }
+
+    .result pre {
+      background: #0f1117;
+      border: 1px solid #2d3148;
+      border-top: none;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #94a3b8;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .downloads {
+      display: none;
+      margin-top: 16px;
+      display: none;
+      gap: 10px;
+    }
+
+    .downloads.visible { display: flex; }
+
+    .dl-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+
+    .dl-btn:hover { opacity: 0.8; }
+    .dl-btn.srt { background: #1d4ed8; color: #fff; }
+    .dl-btn.vtt { background: #0f766e; color: #fff; }
+    .dl-btn.ass { background: #7c3aed; color: #fff; }
+
+    .credits-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #818cf8;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🎙 Subtitle Generator</h1>
+    <p class="subtitle">Upload an audio or video file to generate subtitles via Whisper API</p>
+
+    <div class="credits-badge" id="creditsBadge">
+      ⚡ <span id="creditsVal">— </span> credits remaining
+    </div>
+
+    <form id="uploadForm">
+
+      <div class="field">
+        <label>JWT Token</label>
+        <input type="text" id="token" placeholder="Paste your Bearer token here" />
+      </div>
+
+      <div class="field">
+        <label>Language</label>
+        <select id="language">
+          <option value="english">English</option>
+          <option value="hindi">Hindi</option>
+          <option value="hinglish">Hinglish (auto-detect)</option>
+          <option value="german">German</option>
+          <option value="french">French</option>
+          <option value="spanish">Spanish</option>
+          <option value="arabic">Arabic</option>
+          <option value="chinese">Chinese (Mandarin)</option>
+          <option value="japanese">Japanese</option>
+          <option value="portuguese">Portuguese</option>
+          <option value="russian">Russian</option>
+          <option value="korean">Korean</option>
+          <option value="italian">Italian</option>
+          <option value="turkish">Turkish</option>
+          <option value="dutch">Dutch</option>
+          <option value="polish">Polish</option>
+          <option value="urdu">Urdu</option>
+          <option value="bengali">Bengali</option>
+          <option value="tamil">Tamil</option>
+          <option value="telugu">Telugu</option>
+          <option value="marathi">Marathi</option>
+          <option value="gujarati">Gujarati</option>
+          <option value="punjabi">Punjabi</option>
+          <option value="kannada">Kannada</option>
+          <option value="malayalam">Malayalam</option>
+          <option value="vietnamese">Vietnamese</option>
+          <option value="thai">Thai</option>
+          <option value="indonesian">Indonesian</option>
+          <option value="malay">Malay</option>
+          <option value="ukrainian">Ukrainian</option>
+          <option value="swedish">Swedish</option>
+          <option value="norwegian">Norwegian</option>
+          <option value="danish">Danish</option>
+          <option value="finnish">Finnish</option>
+          <option value="greek">Greek</option>
+          <option value="czech">Czech</option>
+          <option value="romanian">Romanian</option>
+          <option value="hungarian">Hungarian</option>
+          <option value="persian">Persian / Farsi</option>
+          <option value="hebrew">Hebrew</option>
+          <option value="swahili">Swahili</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Audio / Video File</label>
+        <div class="file-drop" id="fileDrop">
+          <input type="file" id="fileInput" accept="audio/*,video/*" />
+          <div class="icon">📁</div>
+          <div class="hint">Click or drag &amp; drop an audio / video file<br><small>MP3, WAV, OGG, MP4, MOV, MKV, WebM … up to 500 MB</small></div>
+          <div class="file-name" id="fileName"></div>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn">Generate Subtitles</button>
+    </form>
+
+    <div class="progress" id="progress"><div class="progress-bar"></div></div>
+
+    <div class="result" id="result">
+      <div class="result-header" id="resultHeader"></div>
+      <pre id="resultBody"></pre>
+    </div>
+
+    <div class="downloads" id="downloads">
+      <button class="dl-btn srt" onclick="download('srt')">⬇ Download SRT</button>
+      <button class="dl-btn vtt" onclick="download('vtt')">⬇ Download VTT</button>
+      <button class="dl-btn ass" onclick="download('ass')">⬇ Download ASS</button>
+    </div>
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:8080';
+    let currentJobId = null;
+
+    // ── File drop UI ──────────────────────────────────────────────────────────
+    const fileDrop = document.getElementById('fileDrop');
+    const fileInput = document.getElementById('fileInput');
+    const fileName  = document.getElementById('fileName');
+
+    fileInput.addEventListener('change', () => {
+      fileName.textContent = fileInput.files[0]?.name || '';
+    });
+
+    fileDrop.addEventListener('dragover', (e) => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+    fileDrop.addEventListener('dragleave', ()  => fileDrop.classList.remove('dragover'));
+    fileDrop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileDrop.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) {
+        fileInput.files = e.dataTransfer.files;
+        fileName.textContent = e.dataTransfer.files[0].name;
+      }
+    });
+
+    // ── Load credits when token is pasted ─────────────────────────────────────
+    document.getElementById('token').addEventListener('blur', fetchCredits);
+
+    async function fetchCredits() {
+      const token = document.getElementById('token').value.trim();
+      if (!token) return;
+      try {
+        const res = await fetch(`${BASE}/api/subtitles/credits`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        document.getElementById('creditsVal').textContent =
+          res.ok ? data.credits : '—';
+      } catch (_) {
+        document.getElementById('creditsVal').textContent = '—';
+      }
+    }
+
+    // ── Form submit ───────────────────────────────────────────────────────────
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token = document.getElementById('token').value.trim();
+      const lang  = document.getElementById('language').value;
+      const file  = fileInput.files[0];
+
+      if (!token) return alert('Please enter your JWT token.');
+      if (!file)  return alert('Please select an audio or video file.');
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Processing…';
+
+      document.getElementById('progress').style.display = 'block';
+      document.getElementById('result').style.display   = 'none';
+      document.getElementById('downloads').classList.remove('visible');
+      currentJobId = null;
+
+      const form = new FormData();
+      form.append('file', file);
+      form.append('language', lang);
+
+      try {
+        const res  = await fetch(`${BASE}/api/subtitles/generate`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+
+        const data = await res.json();
+        showResult(res.ok, data);
+
+        if (res.ok && data.job?._id) {
+          currentJobId = data.job._id;
+          document.getElementById('downloads').classList.add('visible');
+          document.getElementById('creditsVal').textContent = data.creditsRemaining;
+        }
+      } catch (err) {
+        showResult(false, { message: err.message });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Subtitles';
+        document.getElementById('progress').style.display = 'none';
+      }
+    });
+
+    function showResult(ok, data) {
+      const box    = document.getElementById('result');
+      const header = document.getElementById('resultHeader');
+      const body   = document.getElementById('resultBody');
+
+      box.className    = `result ${ok ? 'success' : 'error'}`;
+      header.textContent = ok ? '✅  Success' : '❌  Error';
+      body.textContent   = JSON.stringify(data, null, 2);
+      box.style.display  = 'block';
+    }
+
+    // ── Download subtitle ─────────────────────────────────────────────────────
+    async function download(format) {
+      if (!currentJobId) return;
+      const token = document.getElementById('token').value.trim();
+
+      const res = await fetch(`${BASE}/api/subtitles/${currentJobId}/export?format=${format}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return alert('Download failed: ' + (err.message || res.statusText));
+      }
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `subtitles.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

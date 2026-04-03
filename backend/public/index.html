@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Subtitlr | The Intelligent Canvas for Transcription</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "outline-variant": "#c7c4d8",
+                        "surface-variant": "#e0e3e5",
+                        "secondary-fixed": "#e1e0ff",
+                        "secondary-container": "#6063ee",
+                        "primary-container": "#534ad9",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#c3c0ff",
+                        "secondary": "#4648d4",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-surface-variant": "#464555",
+                        "on-background": "#191c1e",
+                        "on-primary-fixed-variant": "#372abf",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "surface-tint": "#5148d7",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "on-primary-container": "#dbd7ff",
+                        "surface-container-low": "#f2f4f6",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#e3dfff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#777587",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "background": "#f7f9fb",
+                        "on-tertiary-container": "#ffd2be",
+                        "tertiary": "#7e3000",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-bright": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#07006c",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "primary": "#392cc1",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary-container": "#a44100",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "on-secondary-container": "#fffbff",
+                        "on-primary-fixed": "#100069"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .editorial-glow {
+            box-shadow: 0 0 40px -10px rgba(57, 44, 193, 0.15);
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(24px);
+        }
+
+        .path-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-surface font-body text-on-surface antialiased">
+    <header class="fixed top-0 w-full z-50 glass-nav shadow-sm">
+        <nav class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+            <div class="text-2xl font-bold tracking-tighter text-indigo-700 font-headline">Subtitlr</div>
+            <div class="hidden md:flex items-center space-x-10 font-headline font-medium text-sm tracking-tight">
+                <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300" href="#">Platform</a>
+                <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300" href="#">Features</a>
+                <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300" href="#">Pricing</a>
+                <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300"
+                    href="#">Documentation</a>
+            </div>
+            <div class="flex items-center space-x-6">
+                <button class="text-slate-600 font-medium text-sm hover:text-indigo-600 transition-colors">Sign
+                    In</button>
+                <button
+                    class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-full font-headline text-sm font-semibold hover:shadow-[0_0_15px_rgba(57,44,193,0.3)] transition-all scale-100 hover:scale-[1.02] active:scale-95">
+                    Get Started
+                </button>
+            </div>
+        </nav>
+    </header>
+    <main class="relative pt-32">
+        <section class="max-w-7xl mx-auto px-8 mb-40 text-center relative z-10">
+            <div class="inline-flex items-center space-x-2 bg-primary/5 px-4 py-1.5 rounded-full mb-8">
+                <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                <span class="text-xs font-headline font-bold uppercase tracking-widest text-primary">v2.0 Now
+                    Live</span>
+            </div>
+            <h1
+                class="font-headline text-[3.5rem] md:text-[5rem] leading-[1.1] font-bold text-on-surface mb-8 tracking-tighter max-w-4xl mx-auto">
+                Turn Video &amp; Audio into <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Subtitles</span> in
+                Seconds
+            </h1>
+            <p class="text-on-surface-variant text-lg max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+                The intelligent canvas for creators. High-precision transcription meets editorial elegance. No friction,
+                just pure content flow.
+            </p>
+            <div
+                class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-16">
+                <button
+                    class="w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary px-10 py-5 rounded-2xl font-headline font-bold text-lg flex items-center justify-center space-x-3 shadow-xl hover:shadow-primary/20 transition-all">
+                    <span class="material-symbols-outlined"
+                        style="font-variation-settings: 'FILL' 1;">upload_file</span>
+                    <span>Upload File</span>
+                </button>
+                <button
+                    class="w-full md:w-auto px-10 py-5 rounded-2xl font-headline font-bold text-lg text-primary border border-primary/20 hover:bg-primary/5 transition-all">
+                    Live Demo
+                </button>
+            </div>
+            <div class="mt-8 pt-8 border-t border-slate-200/50 max-w-3xl mx-auto opacity-60">
+                <p class="text-xs font-headline font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6">
+                    Trusted by Creators &amp; Teams</p>
+                <div
+                    class="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-sm font-headline font-semibold text-slate-500">
+                    <span class="whitespace-nowrap">YouTube</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="whitespace-nowrap">Netflix</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="whitespace-nowrap">Amazon Prime Video</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="whitespace-nowrap">Meta</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="whitespace-nowrap">Google</span>
+                </div>
+            </div>
+        </section>
+        <section class="max-w-7xl mx-auto px-8 py-20 mb-40 relative">
+            <div class="text-center mb-24">
+                <h2 class="font-headline text-3xl font-bold mb-4">The Frictionless Journey</h2>
+                <div class="h-1 w-12 bg-primary mx-auto rounded-full"></div>
+            </div>
+            <div class="path-container hidden lg:block">
+                <svg fill="none" height="100%" viewBox="0 0 1200 400" width="100%" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M150 200C300 200 300 100 450 100" stroke="#c7c4d8" stroke-dasharray="6 6" stroke-width="2">
+                    </path>
+                    <path d="M450 100C600 100 600 300 750 300" stroke="#392cc1" stroke-opacity="0.3" stroke-width="2">
+                    </path>
+                    <path d="M750 300C900 300 900 200 1050 200" stroke="#c7c4d8" stroke-dasharray="6 6"
+                        stroke-width="2"></path>
+                    <circle cx="150" cy="200" fill="#392cc1" r="4"></circle>
+                    <circle cx="450" cy="100" fill="#392cc1" r="4"></circle>
+                    <circle cx="750" cy="300" fill="#392cc1" r="4"></circle>
+                    <circle cx="1050" cy="200" fill="#392cc1" r="4"></circle>
+                </svg>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative z-10">
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-20 h-20 rounded-3xl bg-surface-container-lowest editorial-glow flex items-center justify-center mb-8 border border-outline-variant/10 group hover:border-primary/30 transition-all">
+                        <span class="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
+                    </div>
+                    <h3 class="font-headline text-xl font-semibold mb-2">Upload</h3>
+                    <p class="text-on-surface-variant text-sm font-light">Drag any media format into the workspace.</p>
+                </div>
+                <div class="flex flex-col items-center text-center lg:mt-[-50px]">
+                    <div
+                        class="w-20 h-20 rounded-3xl bg-surface-container-lowest editorial-glow flex items-center justify-center mb-8 border border-outline-variant/10 group hover:border-primary/30 transition-all relative">
+                        <div class="absolute -inset-2 bg-primary/5 rounded-full blur-xl"></div>
+                        <span class="material-symbols-outlined text-primary text-3xl relative">sync_alt</span>
+                    </div>
+                    <h3 class="font-headline text-xl font-semibold mb-2">Auto-Conversion</h3>
+                    <p class="text-on-surface-variant text-sm font-light">Optimized for processing speed.</p>
+                </div>
+                <div class="flex flex-col items-center text-center lg:mt-[100px]">
+                    <div
+                        class="w-20 h-20 rounded-3xl bg-surface-container-lowest editorial-glow flex items-center justify-center mb-8 border border-outline-variant/10 group hover:border-primary/30 transition-all">
+                        <span class="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
+                    </div>
+                    <h3 class="font-headline text-xl font-semibold mb-2">AI Generation</h3>
+                    <p class="text-on-surface-variant text-sm font-light">99% accuracy in over 60 languages.</p>
+                </div>
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-20 h-20 rounded-3xl bg-surface-container-lowest editorial-glow flex items-center justify-center mb-8 border border-outline-variant/10 group hover:border-primary/30 transition-all">
+                        <span class="material-symbols-outlined text-primary text-3xl">file_download</span>
+                    </div>
+                    <h3 class="font-headline text-xl font-semibold mb-2">Download</h3>
+                    <p class="text-on-surface-variant text-sm font-light">Export to SRT, VTT, or TXT instantly.</p>
+                </div>
+            </div>
+        </section>
+        <section class="max-w-7xl mx-auto px-8 mb-40">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div
+                    class="md:col-span-2 bg-surface-container-lowest p-10 rounded-[2rem] editorial-glow border border-outline-variant/10 overflow-hidden relative group">
+                    <div class="relative z-10">
+                        <span
+                            class="bg-secondary/10 text-secondary group-hover:text-gray-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-6 inline-block">Editorial
+                            Precision</span>
+                        <h3 class="font-headline text-3xl font-bold mb-4 max-w-md">Smart Context Engine</h3>
+                        <p class="text-on-surface-variant group-hover:text-gray-300 max-w-sm mb-8">AI that understands punctuation, speaker
+                            shifts, and industry-specific jargon.</p>
+                    </div>
+                    <img class="absolute right-0 bottom-0 w-[100%] opacity-20 group-hover:opacity-90 transition-opacity pointer-events-none"
+                        data-alt="Abstract flowing wave patterns"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBszvSUoBi0dK37R6bs-LDRLCrzXZvVyHqbdUBeSBvNCSxuMllp8HsccsovK04jgyBPgHasEXLpNauIhGZUeCGveFS1I_SSGys0qKwI75Y8ptTNSaMng1ePOhyNPRFXD_G965LQ6wUnOWUqcQeRrzsuC6OnvSUUCivfSkbpyRHb-qSQnAwZRivb4lPc2LfwHNXVG8AtZheISEtmTczgbQko4EdWiWR92Mf6ApR0IWYN6mkPnR17BnFd38yIfC64WX4gxKgO_firwoU" />
+                </div>
+                <div
+                    class="bg-primary p-10 rounded-[2rem] text-on-primary flex flex-col justify-between shadow-2xl shadow-primary/20">
+                    <span class="material-symbols-outlined text-4xl"
+                        style="font-variation-settings: 'FILL' 1;">language</span>
+                    <div>
+                        <h3 class="font-headline text-2xl font-bold mb-2">Global Scale</h3>
+                        <p class="text-primary-fixed opacity-80 text-sm">Transcribe in 60+ languages with regional
+                            dialect recognition built-in.</p>
+                    </div>
+                </div>
+                <div
+                    class="bg-surface-container-low p-10 rounded-[2rem] flex flex-col justify-between border border-outline-variant/20">
+                    <div class="flex -space-x-3 mb-6">
+                        <div class="w-10 h-10 rounded-full border-2 border-surface bg-slate-200"></div>
+                        <div class="w-10 h-10 rounded-full border-2 border-surface bg-slate-300"></div>
+                        <div class="w-10 h-10 rounded-full border-2 border-surface bg-slate-400"></div>
+                    </div>
+                    <div>
+                        <h3 class="font-headline text-2xl font-bold mb-2">Team Sync</h3>
+                        <p class="text-on-surface-variant text-sm">Collaborative workspace for production teams to edit
+                            and review in real-time.</p>
+                    </div>
+                </div>
+                <div
+                    class="md:col-span-2 bg-surface-container-lowest p-10 rounded-[2rem] editorial-glow border border-outline-variant/10 flex flex-col md:flex-row items-center gap-10">
+                    <div class="flex-1">
+                        <h3 class="font-headline text-3xl font-bold mb-4">API First</h3>
+                        <p class="text-on-surface-variant mb-6">Integrate Subtitlr directly into your workflow with our
+                            developer-friendly SDK.</p>
+                        <button class="text-primary font-bold flex items-center space-x-2 group">
+                            <span>Read Documentation</span>
+                            <span
+                                class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                        </button>
+                    </div>
+                    <div
+                        class="flex-1 w-full bg-on-background/5 rounded-xl p-4 font-mono text-xs text-on-surface-variant border border-outline-variant/10">
+                        <div class="flex space-x-2 mb-3">
+                            <div class="w-2 h-2 rounded-full bg-red-400"></div>
+                            <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+                            <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                        </div>
+                        <code>curl -X POST https://api.subtitlr.ai/v1/jobs \<br/> -H "Authorization: Bearer $API_KEY"</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="max-w-7xl mx-auto px-8 mb-32" id="pricing">
+            <div class="text-center mb-16">
+                <h2 class="font-headline text-4xl font-bold mb-4">Transparent Pricing</h2>
+                <p class="text-on-surface-variant">Choose the plan that fits your production scale.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div
+                    class="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/10 hover:shadow-xl transition-all">
+                    <h3 class="font-headline text-xl font-bold mb-2">Hobby</h3>
+                    <div class="text-4xl font-bold mb-6">$0<span
+                            class="text-base font-normal text-on-surface-variant">/mo</span></div>
+                    <ul class="space-y-4 mb-10 text-on-surface-variant text-sm">
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg">check_circle</span> <span>60 mins
+                                per month</span></li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            <span>Standard speed</span>
+                        </li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg">check_circle</span> <span>SRT
+                                Export</span></li>
+                    </ul>
+                    <button
+                        class="w-full py-3 rounded-xl border border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all">Start
+                        Free</button>
+                </div>
+                <div
+                    class="bg-surface-container-lowest p-10 rounded-[2rem] border-2 border-primary relative editorial-glow transform scale-105 shadow-2xl">
+                    <div
+                        class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full">
+                        Most Popular</div>
+                    <h3 class="font-headline text-xl font-bold mb-2">Creator</h3>
+                    <div class="text-4xl font-bold mb-6">$29<span
+                            class="text-base font-normal text-on-surface-variant">/mo</span></div>
+                    <ul class="space-y-4 mb-10 text-on-surface-variant text-sm">
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg"
+                                style="font-variation-settings: 'FILL' 1;">check_circle</span> <span>600 mins per
+                                month</span></li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg"
+                                style="font-variation-settings: 'FILL' 1;">check_circle</span> <span>Turbo speed</span>
+                        </li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg"
+                                style="font-variation-settings: 'FILL' 1;">check_circle</span> <span>All export
+                                formats</span></li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg"
+                                style="font-variation-settings: 'FILL' 1;">check_circle</span> <span>AI
+                                Translation</span></li>
+                    </ul>
+                    <button
+                        class="w-full py-3 rounded-xl bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">Get
+                        Started</button>
+                </div>
+                <div
+                    class="bg-surface-container-lowest p-10 rounded-[2rem] border border-outline-variant/10 hover:shadow-xl transition-all">
+                    <h3 class="font-headline text-xl font-bold mb-2">Production</h3>
+                    <div class="text-4xl font-bold mb-6">$99<span
+                            class="text-base font-normal text-on-surface-variant">/mo</span></div>
+                    <ul class="space-y-4 mb-10 text-on-surface-variant text-sm">
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            <span>Unlimited minutes</span>
+                        </li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            <span>Priority processing</span>
+                        </li>
+                        <li class="flex items-center space-x-3"><span
+                                class="material-symbols-outlined text-primary text-lg">check_circle</span> <span>Custom
+                                dictionaries</span></li>
+                    </ul>
+                    <button
+                        class="w-full py-3 rounded-xl border border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all">Contact
+                        Sales</button>
+                </div>
+            </div>
+        </section>
+        <section class="max-w-7xl mx-auto px-8 mb-40">
+            <div class="text-center mb-16">
+                <h2 class="font-headline text-3xl font-bold mb-4">What Users Say</h2>
+                <div class="h-1 w-12 bg-primary mx-auto rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div
+                    class="p-10 rounded-[2rem] bg-surface-container-lowest border border-outline-variant/10 editorial-glow relative overflow-hidden group">
+                    <div
+                        class="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors">
+                    </div>
+                    <p
+                        class="font-headline text-xl md:text-2xl font-medium text-on-surface mb-8 leading-relaxed italic">
+                        “Saved me hours of manual work. Captions are super accurate.”
+                    </p>
+                    <div class="font-headline">
+                        <span class="block font-bold text-primary">— Aarav Mehta</span>
+                        <span class="text-sm text-on-surface-variant uppercase tracking-wider">Content Creator</span>
+                    </div>
+                </div>
+                <div
+                    class="p-10 rounded-[2rem] bg-surface-container-lowest border border-outline-variant/10 editorial-glow relative overflow-hidden group">
+                    <div
+                        class="absolute -bottom-10 -left-10 w-40 h-40 bg-secondary/5 rounded-full blur-3xl group-hover:bg-secondary/10 transition-colors">
+                    </div>
+                    <p
+                        class="font-headline text-xl md:text-2xl font-medium text-on-surface mb-8 leading-relaxed italic">
+                        “We use this for quick subtitle generation before publishing videos.”
+                    </p>
+                    <div class="font-headline">
+                        <span class="block font-bold text-primary">— Priya Sharma</span>
+                        <span class="text-sm text-on-surface-variant uppercase tracking-wider">Marketing Team</span>
+                    </div>
+                </div>
+                <div
+                    class="md:col-span-2 max-w-2xl mx-auto w-full p-10 rounded-[2rem] bg-surface-container-lowest border border-outline-variant/10 editorial-glow relative overflow-hidden group">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-secondary/5 opacity-50">
+                    </div>
+                    <p
+                        class="font-headline text-xl md:text-2xl font-medium text-on-surface mb-8 leading-relaxed text-center italic">
+                        “Simple, fast, and does exactly what it promises.”
+                    </p>
+                    <div class="font-headline text-center">
+                        <span class="block font-bold text-primary">— Rahul Verma</span>
+                        <span class="text-sm text-on-surface-variant uppercase tracking-wider">Freelancer</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="max-w-5xl mx-auto px-8 mb-40">
+            <div
+                class="bg-gradient-to-br from-primary to-primary-container rounded-[3rem] p-16 text-center text-on-primary relative overflow-hidden">
+                <div class="absolute inset-0 opacity-10"
+                    style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;">
+                </div>
+                <h2 class="font-headline text-4xl md:text-5xl font-bold mb-8 relative z-10">Ready to break the friction?
+                </h2>
+                <p class="text-primary-fixed text-lg mb-10 max-w-xl mx-auto relative z-10 opacity-90">Join 50,000+
+                    creators and studios turning audio into high-quality captions effortlessly.</p>
+                <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
+                    <button
+                        class="bg-surface-container-lowest text-primary px-10 py-4 rounded-2xl font-headline font-bold hover:bg-surface transition-all">Start
+                        Free Trial</button>
+                    <button
+                        class="text-on-primary font-headline font-bold border border-on-primary/30 px-10 py-4 rounded-2xl hover:bg-white/10 transition-all">View
+                        All Features</button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="bg-slate-50 border-t border-slate-200/50">
+        <div class="flex flex-col md:flex-row justify-between items-center px-8 py-12 max-w-7xl mx-auto">
+            <div class="mb-8 md:mb-0">
+                <div class="text-xl font-bold text-slate-900 font-headline mb-2">Subtitlr</div>
+                <p class="font-body text-sm leading-relaxed text-slate-500 max-w-xs">© 2024 Subtitlr AI. The Intelligent
+                    Canvas for Transcription.</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-4 font-body text-sm">
+                <a class="text-slate-500 hover:text-indigo-500 transition-all opacity-80 hover:opacity-100"
+                    href="#">Privacy Policy</a>
+                <a class="text-slate-500 hover:text-indigo-500 transition-all opacity-80 hover:opacity-100"
+                    href="#">Terms of Service</a>
+                <a class="text-slate-500 hover:text-indigo-500 transition-all opacity-80 hover:opacity-100"
+                    href="#">Status</a>
+                <a class="text-slate-500 hover:text-indigo-500 transition-all opacity-80 hover:opacity-100"
+                    href="#">Contact Us</a>
+                <a class="text-slate-500 hover:text-indigo-500 transition-all opacity-80 hover:opacity-100"
+                    href="#">Twitter</a>
+                <a class="text-slate-500 hover:text-indigo-500 transition-all opacity-80 hover:opacity-100"
+                    href="#">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>
