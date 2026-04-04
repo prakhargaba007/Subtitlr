@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <>
-      <Navbar />
+      
       <main className="relative pt-32">
         <HeroSection />
         <HowItWorks />
@@ -19,7 +19,6 @@ export default function Home() {
         <TestimonialsSection />
         <CTASection />
       </main>
-      <Footer />
     </>
   );
 }
