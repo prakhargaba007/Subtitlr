@@ -7,6 +7,21 @@ const instance = axios.create({
   },
 });
 
+/** Base URL for S3-hosted assets (profile pictures, uploaded files, etc.) */
+export const S3_BASE_URL = process.env.NEXT_PUBLIC_S3_BASE_URL ?? "";
+
+/**
+ * Resolve an S3 object key or relative path to a full image URL.
+ * If the value is already a full URL it is returned unchanged.
+ */
+export function s3Url(keyOrUrl: string | null | undefined): string {
+  if (!keyOrUrl) return "";
+  if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://")) {
+    return keyOrUrl;
+  }
+  return `${S3_BASE_URL}/${keyOrUrl.replace(/^\//, "")}`;
+}
+
 // Request interceptor
 instance.interceptors.request.use(
   (config) => {

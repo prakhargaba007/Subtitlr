@@ -1,69 +1,161 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AppNavbar from "@/components/AppNavbar";
 import Footer from "@/components/Footer";
+import axiosInstance from "@/utils/axios";
 
-/* ── Mock transcript data ───────────────────────────────────────────────── */
-const TRANSCRIPT = [
-  { id: 1, time: "00:01", text: "Hello bhai kya scene hai" },
-  { id: 2, time: "00:03", text: "Aaj hum ek new video banayenge" },
-  { id: 3, time: "00:07", text: "Is video mein hum subtitles generate karna seekhenge" },
-  { id: 4, time: "00:12", text: "Kaafi logon ne pucha tha ki transitions kaise apply karein" },
-  { id: 5, time: "00:15", text: "Toh aaj focus karte hain alignment aur readable text par" },
-  { id: 6, time: "00:20", text: "Sabse pehle aapko editor open karna hai" },
-  { id: 7, time: "00:25", text: "Phir File menu mein jaake New Project select karo" },
-  { id: 8, time: "00:31", text: "Yahan se hum apna video import kar sakte hain" },
-  { id: 9, time: "00:37", text: "Timeline mein drag karke drop kar do" },
-  { id: 10, time: "00:42", text: "Ab Text tool select karo aur subtitle add karo" },
-];
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Segment {
+  start: number;
+  end: number;
+  text: string;
+}
+
+interface SubtitleJob {
+  _id: string;
+  originalFileName: string;
+  fileType: "audio" | "video";
+  duration: number;
+  creditsUsed: number;
+  language: string;
+  segments: Segment[];
+  transcription: string;
+  status: string;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function formatDurationSecs(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}m ${s}s`;
+}
 
 const DOWNLOADS = [
   { label: "Download .SRT", sub: "Standard Format", ext: "srt", primary: true },
-  { label: "Download .VTT", sub: "Web Optimized",   ext: "vtt", primary: false },
+  { label: "Download .VTT", sub: "Web Optimized", ext: "vtt", primary: false },
   { label: "Download .ASS", sub: "Advanced Styling", ext: "ass", primary: false },
 ];
 
-const TOTAL_CREDITS = 15;
-const USED_CREDITS  = 3;
-const LEFT_CREDITS  = TOTAL_CREDITS - USED_CREDITS;
-
-function formatDuration(name: string) {
-  // Fake a duration based on file name length for demo purposes
-  const mins = Math.max(1, (name.length % 4) + 1);
-  return `${mins} min ${(name.length % 60)}  sec`;
-}
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ExportView() {
-  const searchParams  = useSearchParams();
-  const router        = useRouter();
-  const fileName      = searchParams.get("name") ?? "video.mp4";
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [activeLine, setActiveLine]     = useState<number>(2);
-  const [editingLine, setEditingLine]   = useState<number | null>(null);
-  const [lines, setLines]               = useState(TRANSCRIPT);
-  const [downloaded, setDownloaded]     = useState<string[]>([]);
+  const jobId = searchParams.get("jobId");
 
+  const [job, setJob] = useState<SubtitleJob | null>(null);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const [activeLine, setActiveLine] = useState<number>(0);
+  const [editingLine, setEditingLine] = useState<number | null>(null);
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [downloaded, setDownloaded] = useState<string[]>([]);
+
+  // Fetch job + credits on mount
+  useEffect(() => {
+    if (!jobId) {
+      setErrorMsg("No job ID found. Please re-upload your file.");
+      setLoading(false);
+      return;
+    }
+
+    Promise.all([
+      axiosInstance.get<{ job: SubtitleJob }>(`/api/subtitles/${jobId}`),
+      axiosInstance.get<{ credits: number }>("/api/subtitles/credits"),
+    ])
+      .then(([jobRes, creditsRes]) => {
+        setJob(jobRes.data.job);
+        setSegments(jobRes.data.job.segments);
+        setCredits(creditsRes.data.credits);
+        setActiveLine(0);
+      })
+      .catch((err) => {
+        const msg =
+          err?.response?.data?.message ?? err.message ?? "Failed to load subtitle data.";
+        setErrorMsg(msg);
+      })
+      .finally(() => setLoading(false));
+  }, [jobId]);
+
+  // Download via direct browser navigation so the backend's Content-Disposition header
+  // triggers a file save without needing an axios blob response.
   const handleDownload = (ext: string) => {
-    setDownloaded((prev) => [...prev, ext]);
-    // Build a tiny mock SRT blob and trigger browser download
-    const content = lines
-      .map((l, i) => `${i + 1}\n00:${l.time}:00,000 --> 00:${l.time}:02,000\n${l.text}\n`)
-      .join("\n");
-    const blob = new Blob([content], { type: "text/plain" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `${fileName.replace(/\.[^.]+$/, "")}.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
+    if (!jobId) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+    const url = `${backendUrl}/api/subtitles/${jobId}/export?format=${ext}`;
+
+    // Fetch as blob to attach Authorization header (direct navigation loses it)
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.blob())
+      .then((blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = `${(job?.originalFileName ?? "subtitles").replace(/\.[^.]+$/, "")}.${ext}`;
+        a.click();
+        URL.revokeObjectURL(objectUrl);
+        setDownloaded((prev) => [...prev, ext]);
+      })
+      .catch(console.error);
   };
 
-  const saveEdit = (id: number, newText: string) => {
-    setLines((prev) => prev.map((l) => (l.id === id ? { ...l, text: newText } : l)));
+  const saveEdit = (idx: number, newText: string) => {
+    setSegments((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, text: newText } : s))
+    );
     setEditingLine(null);
   };
+
+  // ── Loading skeleton ──────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface font-body text-on-surface antialiased flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-on-surface-variant">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-sm font-medium">Loading your subtitles…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Error state ────────────────────────────────────────────────────────────
+
+  if (errorMsg || !job) {
+    return (
+      <div className="min-h-screen bg-surface font-body text-on-surface antialiased flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-sm px-6">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
+            <span className="material-symbols-outlined text-4xl">error</span>
+          </div>
+          <h2 className="font-headline text-h4 font-bold text-on-surface">Something went wrong</h2>
+          <p className="text-sm text-on-surface-variant">{errorMsg}</p>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-2 px-6 py-2.5 bg-on-surface text-white text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors"
+          >
+            Back to home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const totalCredits = (credits ?? 0) + job.creditsUsed;
 
   return (
     <div className="min-h-screen bg-surface font-body text-on-surface antialiased">
@@ -72,7 +164,7 @@ export default function ExportView() {
 
       <main className="pt-28 pb-20 px-6 max-w-6xl mx-auto">
 
-        {/* ── Success header ───────────────────────────────────────────── */}
+        {/* ── Success header ────────────────────────────────────────────── */}
         <section className="mb-12 flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="shrink-0 bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
             <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
@@ -92,21 +184,25 @@ export default function ExportView() {
             <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-on-surface-variant text-sm font-medium">
               <span className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-base">movie</span>
-                {fileName}
+                {job.originalFileName}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-base">schedule</span>
-                {formatDuration(fileName)}
+                {formatDurationSecs(job.duration)}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-base">token</span>
-                {USED_CREDITS} Credits Used
+                {job.creditsUsed} Credit{job.creditsUsed !== 1 ? "s" : ""} Used
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base">language</span>
+                {job.language}
               </span>
             </div>
           </div>
         </section>
 
-        {/* ── Main grid ────────────────────────────────────────────────── */}
+        {/* ── Main grid ─────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* Left — Preview editor */}
@@ -117,83 +213,89 @@ export default function ExportView() {
               <div className="px-6 py-3.5 bg-surface-container-low flex justify-between items-center border-b border-outline-variant/10">
                 <h2 className="font-headline font-semibold text-on-surface text-sm">Preview Editor</h2>
                 <span className="text-xs font-headline font-semibold text-on-surface-variant bg-surface-container-lowest px-3 py-1 rounded-full border border-outline-variant/20">
-                  AI Refined
+                  {segments.length} segments
                 </span>
               </div>
 
               {/* Transcript lines */}
               <div className="flex-1 overflow-y-auto p-4 space-y-0.5 custom-scrollbar">
-                {lines.map((line) => {
-                  const isActive  = activeLine === line.id;
-                  const isEditing = editingLine === line.id;
+                {segments.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
+                    No segments found.
+                  </div>
+                ) : (
+                  segments.map((seg, idx) => {
+                    const isActive = activeLine === idx;
+                    const isEditing = editingLine === idx;
 
-                  return (
-                    <div
-                      key={line.id}
-                      onClick={() => { setActiveLine(line.id); setEditingLine(null); }}
-                      className={[
-                        "group flex items-start gap-4 px-4 py-3 rounded-xl cursor-pointer transition-all",
-                        isActive
-                          ? "bg-primary/5 border-l-[3px] border-primary"
-                          : "border-l-[3px] border-transparent hover:bg-surface-container-low",
-                      ].join(" ")}
-                    >
-                      {/* Play button */}
-                      <button
-                        onClick={(e) => e.stopPropagation()}
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => { setActiveLine(idx); setEditingLine(null); }}
                         className={[
-                          "material-symbols-outlined text-xl shrink-0 mt-0.5 transition-colors",
-                          isActive ? "text-primary" : "text-on-surface-variant/30 group-hover:text-primary/60",
-                        ].join(" ")}
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        play_circle
-                      </button>
-
-                      {/* Timestamp */}
-                      <span
-                        className={[
-                          "font-headline text-xs w-12 shrink-0 pt-1 font-semibold",
-                          isActive ? "text-primary" : "text-on-surface-variant",
+                          "group flex items-start gap-4 px-4 py-3 rounded-xl cursor-pointer transition-all",
+                          isActive
+                            ? "bg-primary/5 border-l-[3px] border-primary"
+                            : "border-l-[3px] border-transparent hover:bg-surface-container-low",
                         ].join(" ")}
                       >
-                        [{line.time}]
-                      </span>
-
-                      {/* Text — editable on double-click */}
-                      {isEditing ? (
-                        <input
-                          autoFocus
-                          defaultValue={line.text}
+                        {/* Play button */}
+                        <button
                           onClick={(e) => e.stopPropagation()}
-                          onBlur={(e) => saveEdit(line.id, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveEdit(line.id, e.currentTarget.value);
-                            if (e.key === "Escape") setEditingLine(null);
-                          }}
-                          className="flex-1 bg-transparent border-b border-primary outline-none text-body text-on-surface font-body leading-relaxed"
-                        />
-                      ) : (
-                        <p
-                          className="flex-1 text-body text-on-surface font-body leading-relaxed"
-                          onDoubleClick={(e) => { e.stopPropagation(); setEditingLine(line.id); }}
-                          title="Double-click to edit"
+                          className={[
+                            "material-symbols-outlined text-xl shrink-0 mt-0.5 transition-colors",
+                            isActive ? "text-primary" : "text-on-surface-variant/30 group-hover:text-primary/60",
+                          ].join(" ")}
+                          style={{ fontVariationSettings: "'FILL' 1" }}
                         >
-                          {line.text}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
+                          play_circle
+                        </button>
+
+                        {/* Timestamp */}
+                        <span
+                          className={[
+                            "font-headline text-xs w-14 shrink-0 pt-1 font-semibold",
+                            isActive ? "text-primary" : "text-on-surface-variant",
+                          ].join(" ")}
+                        >
+                          [{formatTime(seg.start)}]
+                        </span>
+
+                        {/* Text — editable on double-click */}
+                        {isEditing ? (
+                          <input
+                            autoFocus
+                            defaultValue={seg.text}
+                            onClick={(e) => e.stopPropagation()}
+                            onBlur={(e) => saveEdit(idx, e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveEdit(idx, e.currentTarget.value);
+                              if (e.key === "Escape") setEditingLine(null);
+                            }}
+                            className="flex-1 bg-transparent border-b border-primary outline-none text-body text-on-surface font-body leading-relaxed"
+                          />
+                        ) : (
+                          <p
+                            className="flex-1 text-body text-on-surface font-body leading-relaxed"
+                            onDoubleClick={(e) => { e.stopPropagation(); setEditingLine(idx); }}
+                            title="Double-click to edit"
+                          >
+                            {seg.text}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
             {/* Secondary actions */}
             <div className="mt-6 flex flex-wrap gap-3">
               {[
-                { icon: "edit_note",  label: "Edit subtitles" },
-                { icon: "refresh",    label: "Regenerate" },
-                { icon: "translate",  label: "Convert to Hinglish / English" },
+                { icon: "edit_note", label: "Edit subtitles" },
+                { icon: "refresh", label: "Regenerate" },
+                { icon: "translate", label: "Convert to Hinglish / English" },
               ].map(({ icon, label }) => (
                 <button
                   key={label}
@@ -253,10 +355,13 @@ export default function ExportView() {
             <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-sm text-on-surface-variant font-body">
-                  Credits left: <strong className="text-on-surface font-headline">{LEFT_CREDITS}</strong>
+                  Credits left:{" "}
+                  <strong className="text-on-surface font-headline">
+                    {credits ?? "—"}
+                  </strong>
                 </span>
                 <span className="text-xs font-headline font-bold text-tertiary uppercase tracking-wider">
-                  Used: {USED_CREDITS}
+                  Used: {job.creditsUsed}
                 </span>
               </div>
 
@@ -264,7 +369,9 @@ export default function ExportView() {
               <div className="w-full bg-surface-container-highest h-2 rounded-full mb-5 overflow-hidden">
                 <div
                   className="bg-primary h-full rounded-full transition-all"
-                  style={{ width: `${(LEFT_CREDITS / TOTAL_CREDITS) * 100}%` }}
+                  style={{
+                    width: totalCredits > 0 ? `${((credits ?? 0) / totalCredits) * 100}%` : "0%",
+                  }}
                 />
               </div>
 

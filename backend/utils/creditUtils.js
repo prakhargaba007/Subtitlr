@@ -12,7 +12,7 @@ const CreditTransaction = require("../models/CreditTransaction");
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Credits awarded to a brand-new user. */
-const DEFAULT_CREDITS = 60;
+const DEFAULT_CREDITS = 12;
 
 /** How many credits one "unit" costs. 1 credit = 1 started minute of media. */
 const CREDITS_PER_MINUTE = 1;

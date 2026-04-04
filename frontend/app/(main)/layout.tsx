@@ -3,6 +3,7 @@ import { Providers } from "../providers";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import TempUserInit from "@/components/TempUserInit";
 
 export const metadata: Metadata = {
   title: "Subtitlr | The Intelligent Canvas for Transcription",
@@ -17,6 +18,7 @@ export default function MainLayout({
 }) {
   return (
     <>
+      <TempUserInit />
       <Navbar />
       {children}
       <Footer />

@@ -1,11 +1,66 @@
+"use client";
+
+import { useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import FadingCircle from "@/components/FadingCircle";
 import LogoLoop from "./reactBit/LogoLoop";
-import { Button } from "@/components/ui/Button";
-import UploadButton from "@/components/UploadButton";
+import { setPendingFile } from "@/utils/fileStore";
 
-const isDirectUploadEnabled = true;
+const ACCEPTED_MIME = new Set([
+  "video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo",
+  "video/webm", "video/x-matroska", "video/3gpp", "video/3gpp2",
+  "video/x-flv", "video/x-ms-wmv", "video/ogg",
+  "audio/mpeg", "audio/mp3", "audio/wav", "audio/wave", "audio/x-wav",
+  "audio/ogg", "audio/flac", "audio/aac", "audio/mp4", "audio/webm",
+  "audio/x-m4a", "audio/m4a", "audio/x-flac",
+]);
 
 export default function HeroSection() {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFile = useCallback(
+    (file: File | undefined | null) => {
+      if (!file) return;
+      setError(null);
+
+      if (!ACCEPTED_MIME.has(file.type)) {
+        setError("Unsupported file type. Please upload a video or audio file (MP4, MOV, MP3, WAV…).");
+        return;
+      }
+
+      setPendingFile(file);
+      router.push(
+        `/processing?name=${encodeURIComponent(file.name)}&size=${file.size}`
+      );
+    },
+    [router]
+  );
+
+  const onDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragOver(false);
+      handleFile(e.dataTransfer.files?.[0]);
+    },
+    [handleFile]
+  );
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const onDragLeave = () => setDragOver(false);
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFile(e.target.files?.[0]);
+    // reset so the same file can be re-selected if needed
+    e.target.value = "";
+  };
+
   return (
     <section className="max-w-9xl mx-auto px-8 mb-40 text-center relative z-10 overflow-x-clip">
       <div
@@ -20,6 +75,7 @@ export default function HeroSection() {
       >
         <FadingCircle size={360} color="var(--color-secondary)" />
       </div>
+
       <div className="inline-flex items-center space-x-2 bg-primary/5 px-4 py-1.5 rounded-full mb-8">
         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
         <span className="text-xs font-headline font-bold uppercase tracking-widest text-primary">
@@ -40,31 +96,61 @@ export default function HeroSection() {
         just pure content flow.
       </p>
 
-      {isDirectUploadEnabled ? (
-        <div className="max-w-2xl mx-auto mb-16">
-          <div className="group relative cursor-pointer">
-            <div className="absolute -inset-1 bg-linear-to-r from-primary/10 to-secondary/10 rounded-[2.5rem] blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-            <div className="relative bg-white/80 backdrop-blur-sm border-2 border-dashed border-primary/20 rounded-[2.5rem] p-12 transition-all hover:border-primary/40 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-4xl [font-variation-settings:'FILL'_1]">
-                  add_circle
-                </span>
-              </div>
-              <h3 className="font-headline text-2xl font-bold text-on-surface mb-2">Drop files to begin</h3>
-              <p className="text-on-surface-variant text-sm font-light">
-                or click to browse your workspace (MP4, MOV, MP3, WAV)
-              </p>
+      {/* Upload zone */}
+      <div className="max-w-2xl mx-auto mb-16">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="video/*,audio/*"
+          className="hidden"
+          onChange={onInputChange}
+        />
+
+        <div
+          className="group relative cursor-pointer"
+          onClick={() => inputRef.current?.click()}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          role="button"
+          tabIndex={0}
+          aria-label="Upload video or audio file"
+          onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
+        >
+          <div
+            className={[
+              "absolute -inset-1 rounded-[2.5rem] blur opacity-75 transition duration-1000",
+              dragOver
+                ? "bg-linear-to-r from-primary/30 to-secondary/30 opacity-100"
+                : "bg-linear-to-r from-primary/10 to-secondary/10 group-hover:opacity-100 group-hover:duration-200",
+            ].join(" ")}
+          />
+          <div
+            className={[
+              "relative bg-white/80 backdrop-blur-sm border-2 border-dashed rounded-[2.5rem] p-12 transition-all flex flex-col items-center justify-center",
+              dragOver
+                ? "border-primary/70 bg-primary/5"
+                : "border-primary/20 hover:border-primary/40",
+            ].join(" ")}
+          >
+            <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-4xl [font-variation-settings:'FILL'_1]">
+                {dragOver ? "file_upload" : "add_circle"}
+              </span>
             </div>
+            <h3 className="font-headline text-2xl font-bold text-on-surface mb-2">
+              {dragOver ? "Drop to upload" : "Drop files to begin"}
+            </h3>
+            <p className="text-on-surface-variant text-sm font-light">
+              or click to browse your workspace (MP4, MOV, MP3, WAV)
+            </p>
           </div>
         </div>
-      ) : (
-        <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-16">
-        <UploadButton />
-          <Button variant="outline" size="xl" className="w-full md:w-auto">
-            Live Demo
-          </Button>
-        </div>
-      )}
+
+        {error && (
+          <p className="mt-4 text-sm text-red-500 font-medium">{error}</p>
+        )}
+      </div>
 
       <div className="mt-8 pt-8 border-t border-slate-200/50 max-w-3xl mx-auto opacity-60">
         <p className="text-xs font-headline font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6">
