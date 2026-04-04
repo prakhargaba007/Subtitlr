@@ -9,10 +9,10 @@ import Footer from "@/components/Footer";
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
-      <Navbar />
+      {/* <Navbar /> */}
       {children}
       <Toaster />
-      <Footer />
+      {/* <Footer /> */}
     </Provider>
   );
 }

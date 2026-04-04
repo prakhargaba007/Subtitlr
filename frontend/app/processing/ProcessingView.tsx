@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import AppNavbar from "@/components/AppNavbar";
 
 // SVG circle: r=74 → circumference = 2π×74 ≈ 465
 const CIRCUMFERENCE = 465;
@@ -68,13 +68,16 @@ export default function ProcessingView() {
     return () => clearInterval(id);
   }, []);
 
-  // Navigate away when done
+  // Navigate to export page when done
   useEffect(() => {
     if (progress >= 100) {
-      const t = setTimeout(() => router.push("/"), 1500);
+      const t = setTimeout(
+        () => router.push(`/export?name=${encodeURIComponent(fileName)}`),
+        1500
+      );
       return () => clearTimeout(t);
     }
-  }, [progress, router]);
+  }, [progress, router, fileName]);
 
   // Derive current step from progress
   const currentStep =
@@ -92,6 +95,8 @@ export default function ProcessingView() {
       }}
     >
 
+
+      <AppNavbar subtitle="Zen Mode" showUserActions={false} />
 
       <main className="pt-32 pb-20 px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
