@@ -159,6 +159,64 @@ const LANGUAGE_MAP = {
   zulu: "zu", zu: "zu",
 };
 
+// ─── Language list (deduplicated, frontend-ready) ─────────────────────────────
+
+/**
+ * Canonical language entries derived from LANGUAGE_MAP.
+ * Only keeps full-name keys (length > 3, or special-cased short ones like "lao").
+ * Each entry has: { value, label, isoCode }
+ *   value   — what the frontend sends in the "language" field
+ *   label   — human-readable display name
+ *   isoCode — ISO 639-1 code (null = auto-detect / Hinglish)
+ */
+const LANGUAGE_LIST = (() => {
+  // Keys we know are full language names despite being ≤ 3 chars
+  const SHORT_FULL_NAMES = new Set(["lao"]);
+  // ISO codes that are also full language names (avoid double-listing "or" for Odia)
+  const seenIsoCodes = new Set();
+
+  const list = [];
+
+  for (const [key, isoCode] of Object.entries(LANGUAGE_MAP)) {
+    // Skip pure ISO alias entries (2-char keys like "en", "hi", or 3-char "haw")
+    // unless they appear in the SHORT_FULL_NAMES set.
+    const isIsoAlias =
+      (key.length <= 3 && !SHORT_FULL_NAMES.has(key)) ||
+      key === "français" ||
+      key === "español" ||
+      key === "português" ||
+      key === "deutsch" ||
+      key === "italiano" ||
+      key === "bangla" ||
+      key === "myanmar" ||
+      key === "mandarin" ||
+      key === "farsi" ||
+      key === "filipino" ||
+      key === "oriya" ||
+      key === "portugues" ||
+      key === "francais" ||
+      key === "espanol";
+
+    if (isIsoAlias) continue;
+
+    // Deduplicate by ISO code (keep the first / canonical name)
+    const dedupeKey = isoCode ?? key; // null isoCode = hinglish, use name as key
+    if (seenIsoCodes.has(dedupeKey)) continue;
+    seenIsoCodes.add(dedupeKey);
+
+    list.push({
+      value: key,
+      label: key.charAt(0).toUpperCase() + key.slice(1),
+      isoCode: isoCode,
+    });
+  }
+
+  // Sort alphabetically by label, but keep "auto" first if present
+  list.sort((a, b) => a.label.localeCompare(b.label));
+
+  return list;
+})();
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -718,4 +776,16 @@ exports.getCreditSummary = async (req, res, next) => {
     if (!err.statusCode) err.statusCode = 500;
     next(err);
   }
+};
+
+/**
+ * GET /api/subtitles/languages
+ * Public endpoint — no auth required.
+ * Returns the full list of supported transcription languages, each with:
+ *   value   — the string to send as the "language" field when generating subtitles
+ *   label   — human-readable display name
+ *   isoCode — ISO 639-1 code (null for Hinglish / auto-detect variants)
+ */
+exports.getLanguages = (_req, res) => {
+  res.json({ languages: LANGUAGE_LIST });
 };

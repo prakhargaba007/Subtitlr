@@ -11,6 +11,7 @@ const {
   getUserCredits,
   getCreditHistory,
   getCreditSummary,
+  getLanguages,
 } = require("../controllers/subtitleController");
 
 // Accepted MIME types for audio and video files
@@ -59,6 +60,9 @@ const upload = multer({
     }
   },
 });
+
+// GET /api/subtitles/languages  (public — no auth)
+router.get("/languages", getLanguages);
 
 // POST /api/subtitles/generate
 // Body: multipart/form-data — field "file" (audio/video) + optional field "language"

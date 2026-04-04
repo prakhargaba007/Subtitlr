@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AppNavbar from "@/components/AppNavbar";
-import { getPendingFile, setPendingFile } from "@/utils/fileStore";
+import { getPendingFile, setPendingFile, getPendingLanguage } from "@/utils/fileStore";
 import axios from "axios";
 import axiosInstance from "@/utils/axios";
 
@@ -108,6 +108,8 @@ export default function ProcessingView() {
 
     const body = new FormData();
     body.append("file", file);
+    const lang = getPendingLanguage();
+    if (lang) body.append("language", lang);
 
     // Tracks how far into the accumulated responseText we have already parsed
     let parsedUpTo = 0;
