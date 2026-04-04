@@ -9,6 +9,8 @@ const {
   getSubtitleJobs,
   getSubtitleJob,
   getUserCredits,
+  getCreditHistory,
+  getCreditSummary,
 } = require("../controllers/subtitleController");
 
 // Accepted MIME types for audio and video files
@@ -64,6 +66,12 @@ router.post("/generate", isAuth, upload.single("file"), generateSubtitles);
 
 // GET /api/subtitles/credits
 router.get("/credits", isAuth, getUserCredits);
+
+// GET /api/subtitles/credits/history?page=1&limit=10
+router.get("/credits/history", isAuth, getCreditHistory);
+
+// GET /api/subtitles/credits/summary
+router.get("/credits/summary", isAuth, getCreditSummary);
 
 // GET /api/subtitles/:id/export?format=srt|vtt|ass
 router.get("/:id/export", isAuth, exportSubtitles);

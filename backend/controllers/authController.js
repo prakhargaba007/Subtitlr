@@ -4,6 +4,7 @@ const { validationResult } = require("express-validator");
 const User = require("../models/User.js");
 const { createOTP, sendOTPEmail, verifyOTP } = require("../utils/otpUtils");
 const { OAuth2Client } = require("google-auth-library");
+const { addCredits, DEFAULT_CREDITS } = require("../utils/creditUtils");
 
 // Function to create a temporary user
 exports.createTempUser = async (req, res, next) => {
@@ -35,6 +36,7 @@ exports.createTempUser = async (req, res, next) => {
     console.log("Saving tempUser to database:", tempUser);
 
     await tempUser.save();
+    await addCredits(tempUser._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
 
     console.log(`Temp user saved. ID: ${tempUser._id}, Username: ${tempUser.userName}`);
 
@@ -115,6 +117,7 @@ exports.optGenerte = async (req, res, next) => {
         isVerified: false, // Will be verified after OTP confirmation
       });
       await user.save();
+      await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
     }
 
     // Create and send OTP
@@ -198,7 +201,7 @@ exports.signup = async (req, res, next) => {
 
     // Save the user to the database
     await user.save();
-
+    await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
 
     const payload = {
       user: {
@@ -284,6 +287,7 @@ exports.login = async (req, res, next) => {
           profilePicture: photo,
         });
         await user.save();
+        await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
 
       } else {
         const error = new Error("Invalid credentials");
@@ -758,6 +762,7 @@ exports.googleExchange = async (req, res, next) => {
         profilePicture: picture,
       });
       await user.save();
+      await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
     } else {
       // Update profile image/name if changed
       const shouldUpdate = (picture && user.profilePicture !== picture) || (displayName && user.name !== displayName);

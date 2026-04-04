@@ -58,7 +58,7 @@ const UserSchema = new Schema(
     },
     interests: [String],
     profilePicture: {
-      type: String, 
+      type: String,
     },
     bio: {
       type: String,
@@ -76,7 +76,7 @@ const UserSchema = new Schema(
     },
     credits: {
       type: Number,
-      default: 60,
+      default: 0,
       min: 0,
     },
     preferences: {
@@ -96,7 +96,7 @@ const UserSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("User", UserSchema);

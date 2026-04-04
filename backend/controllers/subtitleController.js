@@ -13,6 +13,13 @@ ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 const SubtitleJob = require("../models/Subtitle");
 const User = require("../models/User");
+const {
+  calculateCreditsNeeded,
+  assertEnoughCredits,
+  deductCredits,
+  getCreditHistory,
+  getCreditSummary,
+} = require("../utils/creditUtils");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -414,7 +421,7 @@ exports.generateSubtitles = async (req, res, next) => {
 
     // Determine duration before anything else so we can credit-check early
     const duration = await getFileDuration(tmpInput);
-    const creditsNeeded = Math.ceil(duration / 60);
+    const creditsNeeded = calculateCreditsNeeded(duration);
 
     const user = await User.findById(req.userId);
     if (!user) {
@@ -422,13 +429,10 @@ exports.generateSubtitles = async (req, res, next) => {
       return res.end();
     }
 
-    const currentCredits = user.credits ?? 0;
-    if (currentCredits < creditsNeeded) {
-      emit({
-        stage: "error",
-        message: `Insufficient credits. You need ${creditsNeeded} credit(s) but have ${currentCredits}.`,
-        statusCode: 402,
-      });
+    try {
+      assertEnoughCredits(user, creditsNeeded);
+    } catch (creditErr) {
+      emit({ stage: "error", message: creditErr.message, statusCode: 402 });
       return res.end();
     }
 
@@ -493,10 +497,19 @@ exports.generateSubtitles = async (req, res, next) => {
 
     const transcription = allSegments.map((s) => s.text).join(" ");
 
-    // Deduct credits atomically
-    await User.findByIdAndUpdate(req.userId, {
-      $inc: { credits: -creditsNeeded },
-    });
+    // Deduct credits atomically and record the transaction
+    const creditsRemaining = await deductCredits(
+      req.userId,
+      creditsNeeded,
+      "subtitle_job",
+      `Transcribed ${req.file.originalname} (${creditsNeeded} min)`,
+      {
+        fileName: req.file.originalname,
+        fileType: isVideo ? "video" : "audio",
+        language: langLabel,
+        duration,
+      }
+    );
 
     const job = await SubtitleJob.create({
       user: req.userId,
@@ -514,7 +527,7 @@ exports.generateSubtitles = async (req, res, next) => {
       stage: "done",
       message: "Subtitles generated successfully.",
       job,
-      creditsRemaining: currentCredits - creditsNeeded,
+      creditsRemaining,
     });
 
     res.end();
@@ -652,6 +665,39 @@ exports.getUserCredits = async (req, res, next) => {
     }
     res.json({ credits: user.credits ?? 0 });
   } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/subtitles/credits/history?page=1&limit=10
+ * Returns a paginated list of every subtitle job that consumed credits,
+ * so the user can see exactly where their credits went.
+ */
+exports.getCreditHistory = async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+
+    const result = await getCreditHistory(req.userId, { page, limit });
+    res.json(result);
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
+};
+
+/**
+ * GET /api/subtitles/credits/summary
+ * Returns an aggregated wallet view: current balance, total spent,
+ * job count, media duration processed, and breakdowns by file type & language.
+ */
+exports.getCreditSummary = async (req, res, next) => {
+  try {
+    const summary = await getCreditSummary(req.userId);
+    res.json(summary);
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
     next(err);
   }
 };
