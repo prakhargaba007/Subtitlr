@@ -1,6 +1,7 @@
 import FadingCircle from "@/components/FadingCircle";
 import LogoLoop from "./reactBit/LogoLoop";
 import { Button } from "@/components/ui/Button";
+import UploadButton from "@/components/UploadButton";
 
 const isDirectUploadEnabled = true;
 
@@ -58,12 +59,7 @@ export default function HeroSection() {
         </div>
       ) : (
         <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-16">
-          <Button variant="primary" size="xl" className="w-full md:w-auto shadow-xl hover:shadow-primary/20">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
-              upload_file
-            </span>
-            Upload File
-          </Button>
+        <UploadButton />
           <Button variant="outline" size="xl" className="w-full md:w-auto">
             Live Demo
           </Button>
