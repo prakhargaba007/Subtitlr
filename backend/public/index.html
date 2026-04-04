@@ -104,6 +104,10 @@
             pointer-events: none;
             z-index: 0;
         }
+
+        .drag-zone-glow {
+            box-shadow: inset 0 0 30px rgba(57, 44, 193, 0.05);
+        }
     </style>
 </head>
 
@@ -114,7 +118,8 @@
             <div class="hidden md:flex items-center space-x-10 font-headline font-medium text-sm tracking-tight">
                 <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300" href="#">Platform</a>
                 <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300" href="#">Features</a>
-                <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300" href="#">Pricing</a>
+                <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300"
+                    href="#pricing">Pricing</a>
                 <a class="text-slate-600 hover:text-indigo-600 transition-colors duration-300"
                     href="#">Documentation</a>
             </div>
@@ -145,24 +150,29 @@
                 The intelligent canvas for creators. High-precision transcription meets editorial elegance. No friction,
                 just pure content flow.
             </p>
-            <div
-                class="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-16">
-                <button
-                    class="w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary px-10 py-5 rounded-2xl font-headline font-bold text-lg flex items-center justify-center space-x-3 shadow-xl hover:shadow-primary/20 transition-all">
-                    <span class="material-symbols-outlined"
-                        style="font-variation-settings: 'FILL' 1;">upload_file</span>
-                    <span>Upload File</span>
-                </button>
-                <button
-                    class="w-full md:w-auto px-10 py-5 rounded-2xl font-headline font-bold text-lg text-primary border border-primary/20 hover:bg-primary/5 transition-all">
-                    Live Demo
-                </button>
+            <div class="max-w-2xl mx-auto mb-16">
+                <div class="group relative cursor-pointer">
+                    <div
+                        class="absolute -inset-1 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-[2.5rem] blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200">
+                    </div>
+                    <div
+                        class="relative bg-white/80 backdrop-blur-sm border-2 border-dashed border-primary/20 rounded-[2.5rem] p-12 transition-all hover:border-primary/40 drag-zone-glow flex flex-col items-center justify-center">
+                        <div
+                            class="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-4xl"
+                                style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                        </div>
+                        <h3 class="font-headline text-2xl font-bold text-on-surface mb-2">Drop files to begin</h3>
+                        <p class="text-on-surface-variant text-sm font-light">or click to browse your workspace (MP4,
+                            MOV, MP3, WAV)</p>
+                    </div>
+                </div>
             </div>
-            <div class="mt-8 pt-8 border-t border-slate-200/50 max-w-3xl mx-auto opacity-60">
-                <p class="text-xs font-headline font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6">
+            <div class="mt-8 pt-8 border-t border-slate-200/50 max-w-3xl mx-auto opacity-40">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6">
                     Trusted by Creators &amp; Teams</p>
                 <div
-                    class="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-sm font-headline font-semibold text-slate-500">
+                    class="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-xs font-headline font-semibold text-slate-400">
                     <span class="whitespace-nowrap">YouTube</span>
                     <span class="text-slate-300">•</span>
                     <span class="whitespace-nowrap">Netflix</span>
@@ -236,13 +246,13 @@
                     class="md:col-span-2 bg-surface-container-lowest p-10 rounded-[2rem] editorial-glow border border-outline-variant/10 overflow-hidden relative group">
                     <div class="relative z-10">
                         <span
-                            class="bg-secondary/10 text-secondary group-hover:text-gray-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-6 inline-block">Editorial
+                            class="bg-secondary/10 text-secondary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-6 inline-block">Editorial
                             Precision</span>
                         <h3 class="font-headline text-3xl font-bold mb-4 max-w-md">Smart Context Engine</h3>
-                        <p class="text-on-surface-variant group-hover:text-gray-300 max-w-sm mb-8">AI that understands punctuation, speaker
+                        <p class="text-on-surface-variant max-w-sm mb-8">AI that understands punctuation, speaker
                             shifts, and industry-specific jargon.</p>
                     </div>
-                    <img class="absolute right-0 bottom-0 w-[100%] opacity-20 group-hover:opacity-90 transition-opacity pointer-events-none"
+                    <img class="absolute right-0 bottom-0 w-2/3 opacity-20 group-hover:opacity-40 transition-opacity pointer-events-none"
                         data-alt="Abstract flowing wave patterns"
                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuBszvSUoBi0dK37R6bs-LDRLCrzXZvVyHqbdUBeSBvNCSxuMllp8HsccsovK04jgyBPgHasEXLpNauIhGZUeCGveFS1I_SSGys0qKwI75Y8ptTNSaMng1ePOhyNPRFXD_G965LQ6wUnOWUqcQeRrzsuC6OnvSUUCivfSkbpyRHb-qSQnAwZRivb4lPc2LfwHNXVG8AtZheISEtmTczgbQko4EdWiWR92Mf6ApR0IWYN6mkPnR17BnFd38yIfC64WX4gxKgO_firwoU" />
                 </div>
@@ -310,8 +320,7 @@
                                 per month</span></li>
                         <li class="flex items-center space-x-3"><span
                                 class="material-symbols-outlined text-primary text-lg">check_circle</span>
-                            <span>Standard speed</span>
-                        </li>
+                            <span>Standard speed</span></li>
                         <li class="flex items-center space-x-3"><span
                                 class="material-symbols-outlined text-primary text-lg">check_circle</span> <span>SRT
                                 Export</span></li>
@@ -358,12 +367,10 @@
                     <ul class="space-y-4 mb-10 text-on-surface-variant text-sm">
                         <li class="flex items-center space-x-3"><span
                                 class="material-symbols-outlined text-primary text-lg">check_circle</span>
-                            <span>Unlimited minutes</span>
-                        </li>
+                            <span>Unlimited minutes</span></li>
                         <li class="flex items-center space-x-3"><span
                                 class="material-symbols-outlined text-primary text-lg">check_circle</span>
-                            <span>Priority processing</span>
-                        </li>
+                            <span>Priority processing</span></li>
                         <li class="flex items-center space-x-3"><span
                                 class="material-symbols-outlined text-primary text-lg">check_circle</span> <span>Custom
                                 dictionaries</span></li>

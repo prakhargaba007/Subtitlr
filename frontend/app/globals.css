@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 /* ── Tailwind v4 theme tokens ─────────────────────────────────────────────── */
 @theme {
@@ -6,6 +7,18 @@
   --font-headline: var(--font-manrope), sans-serif;
   --font-body: var(--font-inter), sans-serif;
   --font-label: var(--font-inter), sans-serif;
+
+  /* ── Type scale ─────────────────────────────────────────────────────── */
+  /* Change these ONE values to rescale the entire UI consistently.       */
+  --font-size-display:  5rem;     /* Hero h1 – desktop                   */
+  --font-size-h1:       3.5rem;   /* Hero h1 – mobile                    */
+  --font-size-h2:       3rem;     /* Section headings – desktop           */
+  --font-size-h3:       2.25rem;  /* Section headings – mobile / cards   */
+  --font-size-h4:       1.5rem;   /* Sub-headings / card titles          */
+  --font-size-body-lg:  1.125rem; /* Large body / lead paragraphs        */
+  --font-size-body:     1rem;     /* Default body                        */
+  --font-size-sm:       0.875rem; /* Secondary text, form labels         */
+  --font-size-xs:       0.75rem;  /* Captions, badges, footnotes         */
 
   /* Border radius */
   --radius:     0.25rem;

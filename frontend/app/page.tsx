@@ -10,7 +10,6 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <>
-      
       <main className="relative pt-32">
         <HeroSection />
         <HowItWorks />

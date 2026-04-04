@@ -6,29 +6,13 @@ import { useDispatch } from "react-redux";
 import { useToast } from "@/hooks/use-toast";
 import axiosInstance from "@/utils/axios";
 import { setUserDetails } from "@/redux/slices/userSlice";
+import { Button } from "@/components/ui/Button";
 
 interface AuthFormProps {
-  /**
-   * Initial email value (useful for pre-filling)
-   */
   initialEmail?: string;
-  /**
-   * Callback when authentication is successful
-   * If not provided, will redirect to dashboard or redirectAfterLogin path
-   */
   onSuccess?: (user: unknown) => void;
-  /**
-   * Custom className for the form container
-   */
   className?: string;
-  /**
-   * Whether to show the form in a compact mode (for modals)
-   */
   compact?: boolean;
-  /**
-   * Whether to automatically redirect after successful auth
-   * @default true
-   */
   autoRedirect?: boolean;
 }
 
@@ -51,19 +35,15 @@ export default function AuthForm({
   const [gsiReady, setGsiReady] = useState(false);
   const codeClientRef = useRef<unknown>(null);
 
-  // Update email when initialEmail prop changes
   useEffect(() => {
     if (initialEmail && !email) {
       setEmail(initialEmail);
     }
   }, [initialEmail, email]);
 
-  // Function to request OTP with a specific email
   const handleRequestOTPWithEmail = useCallback(
     async (emailToUse: string) => {
-      if (!emailToUse || !emailToUse.includes("@")) {
-        return;
-      }
+      if (!emailToUse || !emailToUse.includes("@")) return;
 
       setOtpLoading(true);
       try {
@@ -74,24 +54,15 @@ export default function AuthForm({
 
         if (response.data.success) {
           setShowOtpInput(true);
-          toast({
-            title: "OTP Sent",
-            description: "OTP has been sent to your email",
-          });
+          toast({ title: "OTP Sent", description: "OTP has been sent to your email" });
         }
       } catch (error: unknown) {
         console.error("Error requesting OTP:", error);
         const errorMessage =
           error && typeof error === "object" && "response" in error
-            ? (
-                error as { response?: { data?: { message?: string } } }
-              ).response?.data?.message || "Failed to send OTP"
+            ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to send OTP"
             : "Failed to send OTP";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: errorMessage, variant: "destructive" });
       } finally {
         setOtpLoading(false);
       }
@@ -99,7 +70,6 @@ export default function AuthForm({
     [toast]
   );
 
-  // Callback for GIS code flow
   const handleGoogleAuthCode = useCallback(
     async (response: { code?: string; error?: string }) => {
       try {
@@ -107,7 +77,6 @@ export default function AuthForm({
         const code = response?.code;
         if (!code) throw new Error("Missing authorization code");
 
-        // Check if there's a temp user ID in localStorage
         const tempUserId = localStorage.getItem("userId");
         const isTempUser = localStorage.getItem("isTempUser") === "true";
 
@@ -119,23 +88,14 @@ export default function AuthForm({
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("userData", JSON.stringify(res.data.user));
 
-        // Clear temp user flag if it exists
-        if (isTempUser) {
-          localStorage.removeItem("isTempUser");
-        }
+        if (isTempUser) localStorage.removeItem("isTempUser");
 
         dispatch(setUserDetails(res.data.user));
+        toast({ title: "Success", description: "Signed in with Google successfully!" });
 
-        toast({
-          title: "Success",
-          description: "Signed in with Google successfully!",
-        });
-
-        // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess(res.data.user);
         } else if (autoRedirect) {
-          // Check for redirect path, otherwise go to dashboard
           const redirectPath = localStorage.getItem("redirectAfterLogin");
           if (redirectPath) {
             localStorage.removeItem("redirectAfterLogin");
@@ -148,15 +108,9 @@ export default function AuthForm({
         console.error("Google auth code exchange error:", error);
         const errorMessage =
           error && typeof error === "object" && "response" in error
-            ? (
-                error as { response?: { data?: { message?: string } } }
-              ).response?.data?.message || "Failed to sign in with Google"
+            ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to sign in with Google"
             : "Failed to sign in with Google";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: errorMessage, variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
@@ -164,13 +118,11 @@ export default function AuthForm({
     [dispatch, router, toast, onSuccess, autoRedirect]
   );
 
-  // Load Google Identity Services script and initialize
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const existing = document.getElementById("google-gsi");
     if (existing) {
-      // Script already loaded, just initialize if needed
       const googleWindow = window as typeof window & {
         google?: {
           accounts?: {
@@ -186,21 +138,16 @@ export default function AuthForm({
           };
         };
       };
-      if (
-        googleWindow.google &&
-        googleWindow.google.accounts &&
-        googleWindow.google.accounts.oauth2
-      ) {
+      if (googleWindow.google?.accounts?.oauth2) {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
         if (clientId) {
-          codeClientRef.current =
-            googleWindow.google.accounts.oauth2.initCodeClient({
-              client_id: clientId,
-              scope: "openid email profile",
-              ux_mode: "popup",
-              redirect_uri: "postmessage",
-              callback: handleGoogleAuthCode,
-            });
+          codeClientRef.current = googleWindow.google.accounts.oauth2.initCodeClient({
+            client_id: clientId,
+            scope: "openid email profile",
+            ux_mode: "popup",
+            redirect_uri: "postmessage",
+            callback: handleGoogleAuthCode,
+          });
           setGsiReady(true);
         }
       }
@@ -234,19 +181,14 @@ export default function AuthForm({
           };
         };
       };
-      if (
-        googleWindow.google &&
-        googleWindow.google.accounts &&
-        googleWindow.google.accounts.oauth2
-      ) {
-        codeClientRef.current =
-          googleWindow.google.accounts.oauth2.initCodeClient({
-            client_id: clientId,
-            scope: "openid email profile",
-            ux_mode: "popup",
-            redirect_uri: "postmessage",
-            callback: handleGoogleAuthCode,
-          });
+      if (googleWindow.google?.accounts?.oauth2) {
+        codeClientRef.current = googleWindow.google.accounts.oauth2.initCodeClient({
+          client_id: clientId,
+          scope: "openid email profile",
+          ux_mode: "popup",
+          redirect_uri: "postmessage",
+          callback: handleGoogleAuthCode,
+        });
         setGsiReady(true);
       }
     };
@@ -255,39 +197,24 @@ export default function AuthForm({
 
   const handleRequestOTP = async () => {
     if (!email || !email.includes("@")) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid Email", description: "Please enter a valid email address", variant: "destructive" });
       return;
     }
-
     await handleRequestOTPWithEmail(email);
   };
 
   const handleVerifyOTP = async () => {
     if (!otp || otp.length !== 6) {
-      toast({
-        title: "Invalid OTP",
-        description: "Please enter a 6-digit OTP",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid OTP", description: "Please enter a 6-digit OTP", variant: "destructive" });
       return;
     }
-
     if (!agreedToTerms) {
-      toast({
-        title: "Terms Required",
-        description: "Please agree to the Terms of Service and Privacy Policy.",
-        variant: "destructive",
-      });
+      toast({ title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy.", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     try {
-      // Check if there's a temp user ID in localStorage
       const tempUserId = localStorage.getItem("userId");
       const isTempUser = localStorage.getItem("isTempUser") === "true";
 
@@ -299,28 +226,16 @@ export default function AuthForm({
       });
 
       if (response.data.success) {
-        // Store token and user data
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("userData", JSON.stringify(response.data.user));
+        if (isTempUser) localStorage.removeItem("isTempUser");
 
-        // Clear temp user flag if it exists
-        if (isTempUser) {
-          localStorage.removeItem("isTempUser");
-        }
-
-        // Update Redux store
         dispatch(setUserDetails(response.data.user));
+        toast({ title: "Success", description: "Signed in successfully!" });
 
-        toast({
-          title: "Success",
-          description: "Signed in successfully!",
-        });
-
-        // Call onSuccess callback if provided
         if (onSuccess) {
           onSuccess(response.data.user);
         } else if (autoRedirect) {
-          // Check for redirect path, otherwise go to dashboard
           const redirectPath = localStorage.getItem("redirectAfterLogin");
           if (redirectPath) {
             localStorage.removeItem("redirectAfterLogin");
@@ -334,15 +249,9 @@ export default function AuthForm({
       console.error("Error verifying OTP:", error);
       const errorMessage =
         error && typeof error === "object" && "response" in error
-          ? (
-              error as { response?: { data?: { message?: string } } }
-            ).response?.data?.message || "Failed to verify OTP"
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to verify OTP"
           : "Failed to verify OTP";
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -354,36 +263,25 @@ export default function AuthForm({
       toast({
         title: "Google Sign-In",
         description: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-          ? "Initializing Google... please try again in a moment"
+          ? "Initializing Google… please try again in a moment"
           : "Missing Google Client ID. Please configure it and reload.",
         variant: "default",
       });
       setIsLoading(false);
       return;
     }
-    // Trigger the OAuth Code flow with popup
-    const client = codeClientRef.current as
-      | { requestCode: () => void }
-      | null;
+    const client = codeClientRef.current as { requestCode: () => void } | null;
     if (client && typeof client.requestCode === "function") {
       client.requestCode();
     } else {
-      toast({
-        title: "Error",
-        description: "Google client not ready",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Google client not ready", variant: "destructive" });
       setIsLoading(false);
     }
   };
 
   const inputClass =
-    "w-full rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 text-on-surface placeholder:text-on-surface-variant/60 font-body text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60";
+    "w-full rounded-2xl border border-outline-variant bg-surface-container-lowest px-4 py-3.5 text-on-surface placeholder:text-on-surface-variant/60 font-body text-body outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60";
   const labelClass = "font-headline text-sm font-semibold text-on-surface";
-  const btnPrimaryClass =
-    "inline-flex items-center justify-center w-full rounded-2xl bg-gradient-to-br from-primary to-primary-container px-6 py-3.5 font-headline text-base font-bold text-on-primary shadow-lg transition-all hover:shadow-[0_0_20px_rgba(57,44,193,0.25)] disabled:pointer-events-none disabled:opacity-50";
-  const btnOutlineClass =
-    "inline-flex items-center justify-center rounded-2xl border border-primary/20 bg-surface-container-lowest px-6 py-3.5 font-headline text-sm font-bold text-primary transition-all hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50";
 
   return (
     <div
@@ -391,32 +289,22 @@ export default function AuthForm({
     >
       <div className="space-y-6">
         {/* Google Sign In */}
-        <button
+        <Button
           type="button"
-          className={`${btnOutlineClass} w-full gap-3 text-base`}
+          variant="outline"
+          size="md"
+          className="w-full text-body"
           onClick={handleGoogleSignIn}
           disabled={isLoading}
         >
           <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
           Continue with Google
-        </button>
+        </Button>
 
         {/* Divider */}
         <div className="relative">
@@ -447,14 +335,16 @@ export default function AuthForm({
               autoComplete="email"
             />
             {!showOtpInput && (
-              <button
+              <Button
                 type="button"
-                className={`${btnOutlineClass} min-h-12 shrink-0 whitespace-nowrap sm:px-8`}
+                variant="outline"
+                size="md"
+                className="min-h-12 shrink-0 whitespace-nowrap sm:px-8"
                 onClick={handleRequestOTP}
                 disabled={otpLoading}
               >
-                {otpLoading ? "Sending..." : "Request OTP"}
-              </button>
+                {otpLoading ? "Sending…" : "Request OTP"}
+              </Button>
             )}
           </div>
         </div>
@@ -473,9 +363,7 @@ export default function AuthForm({
                 autoComplete="one-time-code"
                 placeholder="Enter 6-digit OTP"
                 value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 className={`${inputClass} min-h-12`}
                 maxLength={6}
               />
@@ -489,7 +377,7 @@ export default function AuthForm({
                   disabled={otpLoading}
                   className="font-headline font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-50"
                 >
-                  {otpLoading ? "Resending..." : "Resend OTP"}
+                  {otpLoading ? "Resending…" : "Resend OTP"}
                 </button>
               </div>
             </div>
@@ -508,17 +396,11 @@ export default function AuthForm({
                 className="cursor-pointer font-body text-sm leading-relaxed text-on-surface-variant"
               >
                 I agree to the{" "}
-                <a
-                  href="#"
-                  className="font-headline font-semibold text-primary underline-offset-2 hover:underline"
-                >
+                <a href="#" className="font-headline font-semibold text-primary underline-offset-2 hover:underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a
-                  href="#"
-                  className="font-headline font-semibold text-primary underline-offset-2 hover:underline"
-                >
+                <a href="#" className="font-headline font-semibold text-primary underline-offset-2 hover:underline">
                   Privacy Policy
                 </a>
                 .
@@ -526,18 +408,19 @@ export default function AuthForm({
             </div>
 
             {/* Verify OTP Button */}
-            <button
+            <Button
               type="button"
-              className={btnPrimaryClass}
+              variant="primary"
+              size="md"
+              className="w-full"
               disabled={isLoading}
               onClick={handleVerifyOTP}
             >
-              {isLoading ? "Verifying..." : "Verify OTP & Sign In"}
-            </button>
+              {isLoading ? "Verifying…" : "Verify OTP & Sign In"}
+            </Button>
           </>
         )}
       </div>
     </div>
   );
 }
-

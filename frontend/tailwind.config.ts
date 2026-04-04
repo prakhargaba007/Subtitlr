@@ -74,6 +74,18 @@ const config: Config = {
         body: ["var(--font-inter)", "sans-serif"],
         label: ["var(--font-inter)", "sans-serif"],
       },
+      fontSize: {
+        // ── Type scale ──────────────────────────────────────────────────────
+        // Mirror of the CSS variables in globals.css @theme.
+        // Edit the CSS variables there; update these values to match.
+        "display":  ["5rem",     { lineHeight: "1.1" }],
+        "h1":       ["3.5rem",   { lineHeight: "1.1" }],
+        "h2":       ["3rem",     { lineHeight: "1.15" }],
+        "h3":       ["2.25rem",  { lineHeight: "1.2" }],
+        "h4":       ["1.5rem",   { lineHeight: "1.3" }],
+        "body-lg":  ["1.125rem", { lineHeight: "1.6" }],
+        "body":     ["1rem",     { lineHeight: "1.5" }],
+      },
     },
   },
   plugins: [],
