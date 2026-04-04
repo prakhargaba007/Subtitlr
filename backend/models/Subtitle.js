@@ -52,6 +52,16 @@ const SubtitleJobSchema = new Schema(
       type: [SegmentSchema],
       default: [],
     },
+    /** S3 object key for the original uploaded file, e.g. "subtitles/userId/uuid.mp4" */
+    originalFileKey: {
+      type: String,
+      default: null,
+    },
+    /** Public or pre-signed URL to retrieve the original file from S3 */
+    originalFileUrl: {
+      type: String,
+      default: null,
+    },
     errorMessage: {
       type: String,
     },

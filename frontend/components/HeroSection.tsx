@@ -27,7 +27,7 @@ export default function HeroSection() {
         </span>
       </div>
 
-      <h1 className="font-headline text-h1 md:text-display leading-[1.1] font-bold text-on-surface mb-8 tracking-tighter max-w-4xl mx-auto">
+      <h1 className="font-headline text-h1 md:text-display leading-[1.1] font-bold text-on-surface mb-8 tracking-tight max-w-4xl mx-auto">
         Turn Video &amp; Audio into{" "}
         <span className="text-primary bg-clip-text bg-linear-to-r from-primary to-secondary">
           Subtitles

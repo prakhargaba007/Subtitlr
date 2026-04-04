@@ -7,9 +7,9 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 w-full z-50 glass-nav shadow-sm backdrop-blur-sm">
       <nav className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-        <div className="text-2xl font-bold tracking-tighter text-indigo-700 font-headline">
+        <Link href="/" className="text-2xl font-bold tracking-tighter text-indigo-700 font-headline">
           Subtitlr
-        </div>
+        </Link>
 
         <div className="hidden md:flex items-center space-x-10 font-headline font-medium text-sm tracking-tight">
           <a href="#" className="text-slate-600 hover:text-indigo-600 transition-colors duration-300">Platform</a>

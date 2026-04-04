@@ -13,6 +13,7 @@ ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 const SubtitleJob = require("../models/Subtitle");
 const User = require("../models/User");
+const { storage } = require("../utils/storage");
 const {
   calculateCreditsNeeded,
   assertEnoughCredits,
@@ -447,6 +448,20 @@ exports.generateSubtitles = async (req, res, next) => {
       audioPath = tmpMp3;
     }
 
+    // Upload the MP3 (extracted or original audio) to S3
+    emit({ stage: "uploading", message: "Uploading audio to storage…" });
+    let originalFileKey = null;
+    let originalFileUrl = null;
+    try {
+      const s3Key = `subtitles/${req.userId}/${uuidv4()}.mp3`;
+      await storage.saveFile(fs.readFileSync(audioPath), s3Key, "audio/mpeg");
+      originalFileKey = s3Key;
+      originalFileUrl = await storage.getPublicUrl(s3Key);
+    } catch (uploadErr) {
+      // Non-fatal: log and continue without persisting the audio file
+      console.error("S3 upload failed (continuing without audio file):", uploadErr.message);
+    }
+
     // ── Transcribe (with chunking if file exceeds Whisper's 25 MB limit) ──
     const audioSize = fs.statSync(audioPath).size;
     let allSegments = [];
@@ -508,6 +523,7 @@ exports.generateSubtitles = async (req, res, next) => {
         fileType: isVideo ? "video" : "audio",
         language: langLabel,
         duration,
+        originalFileKey,
       }
     );
 
@@ -521,6 +537,8 @@ exports.generateSubtitles = async (req, res, next) => {
       language: langLabel,
       transcription,
       segments: allSegments,
+      originalFileKey,
+      originalFileUrl,
     });
 
     emit({
