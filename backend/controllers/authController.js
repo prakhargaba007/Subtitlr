@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const User = require("../models/User.js");
+const SubtitleJob = require("../models/Subtitle.js");
 const { createOTP, sendOTPEmail, verifyOTP } = require("../utils/otpUtils");
 const { OAuth2Client } = require("google-auth-library");
 const { addCredits, DEFAULT_CREDITS, SIGNUP_CREDITS } = require("../utils/creditUtils");
@@ -536,36 +537,32 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
 
     let user = otpResult.user;
 
-    // If tempUserId is provided, check if we should convert temp user to verified
+    // If tempUserId is provided, decide how to merge the temp session
     if (tempUserId && tempUserId !== user._id.toString()) {
-      // Check if tempUserId exists and is a temp user
       const tempUser = await User.findById(tempUserId);
       if (tempUser && tempUser.tempUser) {
-        // Convert the temp user to a verified user to preserve all references
-        
-        // Update temp user with verified email and remove temp status
-        tempUser.email = email.toLowerCase();
-        tempUser.isVerified = true;
-        tempUser.tempUser = false;
-        
-        if (user.name && !tempUser.name) {
-          tempUser.name = user.name;
+
+        if (user.isVerified && !user.tempUser) {
+          // RETURNING USER: real account already exists.
+          // Migrate any subtitle jobs created during the temp session then discard the temp user.
+          await SubtitleJob.updateMany({ user: tempUser._id }, { user: user._id });
+          await User.findByIdAndDelete(tempUser._id);
+          // `user` keeps pointing to the real account — no reassignment needed.
+        } else {
+          // NEW USER: no prior verified account. Promote the temp user to the real account
+          // so all references (jobs, credits) follow the same document ID.
+          tempUser.email = email.toLowerCase();
+          tempUser.isVerified = true;
+          tempUser.tempUser = false;
+          if (user.name && !tempUser.name) tempUser.name = user.name;
+          if (user.profilePicture && !tempUser.profilePicture) tempUser.profilePicture = user.profilePicture;
+          await tempUser.save();
+          await User.findByIdAndDelete(user._id);
+          user = tempUser;
         }
-        
-        if (user.profilePicture && !tempUser.profilePicture) {
-          tempUser.profilePicture = user.profilePicture;
-        }
-        
-        await tempUser.save();
-        
-        // Delete the old verified user since we're keeping the temp user's ID
-        await User.findByIdAndDelete(user._id);
-        
-        // Use temp user as the final user
-        user = tempUser;
       }
     } else if (tempUserId && tempUserId === user._id.toString()) {
-      // Same user, just update temp status
+      // Same document — temp user is verifying their own account
       user.tempUser = false;
     }
 
@@ -734,33 +731,32 @@ exports.googleExchange = async (req, res, next) => {
     // Upsert user
     let user = await User.findOne({ email });
     
-    // If tempUserId is provided, check if we should convert temp user to verified
+    // If tempUserId is provided, decide how to merge the temp session
     if (tempUserId && (!user || user._id.toString() !== tempUserId)) {
       const tempUser = await User.findById(tempUserId);
       if (tempUser && tempUser.tempUser) {
-        // If user exists with email but different ID, convert temp user to verified
-        if (user && user._id.toString() !== tempUserId) {
+
+        if (user && user.isVerified && !user.tempUser) {
+          // RETURNING USER: real account already exists.
+          // Migrate any subtitle jobs created during the temp session then discard the temp user.
+          await SubtitleJob.updateMany({ user: tempUser._id }, { user: user._id });
+          await User.findByIdAndDelete(tempUser._id);
+          // `user` keeps pointing to the real account — update profile details from Google.
+          if (picture && !user.profilePicture) user.profilePicture = picture;
+          if (displayName && !user.name) user.name = displayName;
+        } else if (user && user._id.toString() !== tempUserId) {
+          // NEW USER: unverified placeholder exists. Promote temp user, delete placeholder.
           tempUser.email = email;
           tempUser.name = displayName || tempUser.name;
           tempUser.profilePicture = picture || tempUser.profilePicture;
           tempUser.isVerified = true;
           tempUser.tempUser = false;
-          
-          // Merge any additional data from the existing user if needed
-          if (user.profilePicture && !tempUser.profilePicture) {
-            tempUser.profilePicture = user.profilePicture;
-          }
-          
+          if (user.profilePicture && !tempUser.profilePicture) tempUser.profilePicture = user.profilePicture;
           await tempUser.save();
-          
-          // Delete the old verified user since we're keeping the temp user's ID
-          // This ensures all existing references remain valid
           await User.findByIdAndDelete(user._id);
-          
-          // Use temp user as the final user
           user = tempUser;
         } else if (!user) {
-          // No user with email exists, convert temp user to verified user
+          // No user with this email at all — convert temp user to verified account.
           tempUser.email = email;
           tempUser.name = displayName;
           tempUser.profilePicture = picture;

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import DashboardRightPanel from "@/components/dashboard/DashboardRightPanel";
 import DashboardInit from "@/components/dashboard/DashboardInit";
 import UploadFAB from "@/components/dashboard/UploadFAB";
 
@@ -20,9 +19,8 @@ export default function DashboardLayout({
       <DashboardInit />
       <DashboardSidebar />
       <DashboardHeader />
-      <DashboardRightPanel />
 
-      <main className="ml-20 lg:ml-64 xl:mr-80 pt-16 h-screen overflow-y-auto custom-scrollbar relative">
+      <main className="ml-20 lg:ml-64 pt-16 h-screen overflow-y-auto custom-scrollbar relative">
         {children}
       </main>
 
