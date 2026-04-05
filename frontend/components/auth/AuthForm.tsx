@@ -36,10 +36,9 @@ export default function AuthForm({
   const codeClientRef = useRef<unknown>(null);
 
   useEffect(() => {
-    if (initialEmail && !email) {
-      setEmail(initialEmail);
-    }
-  }, [initialEmail, email]);
+    if (!initialEmail) return;
+    setEmail((prev) => (prev.trim() === "" ? initialEmail : prev));
+  }, [initialEmail]);
 
   const handleRequestOTPWithEmail = useCallback(
     async (emailToUse: string) => {

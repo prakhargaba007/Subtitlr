@@ -84,6 +84,16 @@ exports.createTempUser = async (req, res, next) => {
 
 exports.optGenerte = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const first = errors.array()[0];
+      return res.status(400).json({
+        success: false,
+        message: first?.msg || "Valid email is required",
+        errors: errors.array(),
+      });
+    }
+
     const { email, purpose = "email_verification" } = req.body;
     // console.log("req.body");
 
@@ -496,6 +506,16 @@ exports.verifyOTPAndResetPassword = async (req, res, next) => {
 
 // Function to verify OTP for sign-in
 exports.verifyOTPForSignIn = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const first = errors.array()[0];
+    return res.status(400).json({
+      success: false,
+      message: first?.msg || "Validation failed",
+      errors: errors.array(),
+    });
+  }
+
   const { email, otp, purpose = "email_verification", tempUserId } = req.body;
 
   try {

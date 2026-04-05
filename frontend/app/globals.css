@@ -117,3 +117,7 @@ button {
   pointer-events: none;
   z-index: 0;
 }
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-surface-container-highest); border-radius: 10px; }

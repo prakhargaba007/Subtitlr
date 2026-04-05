@@ -352,37 +352,62 @@ export default function ExportView() {
             </div>
 
             {/* Credits card */}
-            <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-on-surface-variant font-body">
-                  Credits left:{" "}
-                  <strong className="text-on-surface font-headline">
+            <div className="bg-surface-container-low rounded-2xl border border-outline-variant/10 overflow-hidden">
+              {/* Header */}
+              <div className="px-5 pt-5 pb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-lg">toll</span>
+                <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant">
+                  Credit Balance
+                </p>
+              </div>
+
+              {/* Stat row */}
+              <div className="px-5 grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-primary/10 rounded-xl px-4 py-3 text-center">
+                  <p className="text-2xl font-headline font-bold text-primary leading-none">
                     {credits ?? "—"}
-                  </strong>
-                </span>
-                <span className="text-xs font-headline font-bold text-tertiary uppercase tracking-wider">
-                  Used: {job.creditsUsed}
-                </span>
+                  </p>
+                  <p className="text-[11px] font-body text-primary/70 mt-1 uppercase tracking-wide">
+                    Remaining
+                  </p>
+                </div>
+                <div className="bg-surface-container-highest rounded-xl px-4 py-3 text-center">
+                  <p className="text-2xl font-headline font-bold text-on-surface leading-none">
+                    {job.creditsUsed}
+                  </p>
+                  <p className="text-[11px] font-body text-on-surface-variant mt-1 uppercase tracking-wide">
+                    Used this job
+                  </p>
+                </div>
               </div>
 
               {/* Progress bar */}
-              <div className="w-full bg-surface-container-highest h-2 rounded-full mb-5 overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all"
-                  style={{
-                    width: totalCredits > 0 ? `${((credits ?? 0) / totalCredits) * 100}%` : "0%",
-                  }}
-                />
+              <div className="px-5 mb-1">
+                <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all"
+                    style={{
+                      width: totalCredits > 0 ? `${((credits ?? 0) / totalCredits) * 100}%` : "0%",
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1.5">
+                  <span className="text-[10px] font-body text-on-surface-variant">0</span>
+                  <span className="text-[10px] font-body text-on-surface-variant">{totalCredits} total</span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Actions */}
+              <div className="px-4 pb-4 pt-3 grid grid-cols-2 gap-2.5">
                 <button
                   onClick={() => router.push("/")}
-                  className="py-2.5 bg-surface-container-lowest text-on-surface text-sm font-headline font-bold rounded-full hover:bg-white transition-colors border border-outline-variant/20"
+                  className="py-2.5 bg-surface-container-lowest text-on-surface text-sm font-headline font-bold rounded-full hover:bg-white transition-colors border border-outline-variant/20 flex items-center justify-center gap-1.5"
                 >
-                  Upload another
+                  <span className="material-symbols-outlined text-base">upload_file</span>
+                  New upload
                 </button>
-                <button className="py-2.5 bg-on-surface text-white text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors">
+                <button className="py-2.5 bg-on-surface text-surface text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">rocket_launch</span>
                   Upgrade
                 </button>
               </div>

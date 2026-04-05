@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-
 <html class="light" lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Subtitlr - Export Ready</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap"
@@ -13,330 +11,333 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
+    <style type="text/tailwindcss">
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #eef2ff;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3, .font-headline {
+            font-family: 'Manrope', sans-serif;
+        }
+        .dropzone-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border: 2px dashed #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .dropzone-gradient:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+        }
+        .action-gradient {
+            background: linear-gradient(135deg, #4F46E5 0%, #6366f1 100%);
+        }
+        .hero-glow {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, rgba(247, 249, 251, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+    </style>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    "colors": {
-                        "on-tertiary-container": "#ffd2be",
-                        "on-secondary-fixed": "#07006c",
-                        "on-surface": "#191c1e",
-                        "on-surface-variant": "#464555",
-                        "on-secondary-fixed-variant": "#2f2ebe",
-                        "outline": "#777587",
-                        "inverse-on-surface": "#eff1f3",
-                        "primary-fixed": "#e3dfff",
-                        "surface-bright": "#f7f9fb",
-                        "primary-container": "#534ad9",
-                        "surface-container-highest": "#e0e3e5",
-                        "on-primary": "#ffffff",
-                        "secondary-fixed-dim": "#c0c1ff",
-                        "on-tertiary-fixed": "#351000",
-                        "inverse-primary": "#c3c0ff",
-                        "error-container": "#ffdad6",
-                        "on-secondary": "#ffffff",
-                        "surface-container-high": "#e6e8ea",
-                        "secondary-fixed": "#e1e0ff",
-                        "on-background": "#191c1e",
-                        "error": "#ba1a1a",
-                        "on-tertiary": "#ffffff",
-                        "surface-container-lowest": "#ffffff",
-                        "secondary-container": "#6063ee",
-                        "secondary": "#4648d4",
-                        "surface": "#f7f9fb",
-                        "tertiary-fixed-dim": "#ffb695",
-                        "on-secondary-container": "#fffbff",
-                        "on-primary-fixed": "#100069",
-                        "inverse-surface": "#2d3133",
-                        "surface-dim": "#d8dadc",
-                        "surface-tint": "#5148d7",
-                        "surface-container": "#eceef0",
-                        "surface-variant": "#e0e3e5",
-                        "on-primary-fixed-variant": "#372abf",
-                        "tertiary-fixed": "#ffdbcc",
-                        "on-tertiary-fixed-variant": "#7b2f00",
-                        "surface-container-low": "#f2f4f6",
-                        "on-error-container": "#93000a",
-                        "tertiary-container": "#a44100",
-                        "on-error": "#ffffff",
-                        "background": "#f7f9fb",
-                        "primary": "#392cc1",
-                        "outline-variant": "#c7c4d8",
-                        "tertiary": "#7e3000",
-                        "primary-fixed-dim": "#c3c0ff",
-                        "on-primary-container": "#dbd7ff"
+                    colors: {
+                        primary: "#4F46E5",
+                        background: "#fcfcfd",
+                        surface: "#ffffff",
                     },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "1.5rem",
-                        "full": "9999px"
-                    },
-                    "fontFamily": {
-                        "headline": ["Manrope"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Inter"],
                     }
                 },
-            },
+            }
         }
     </script>
-    <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
-        .glass-nav {
-            backdrop-filter: blur(24px);
-        }
-
-        .editorial-shadow {
-            box-shadow: 0 10px 40px -10px rgba(25, 28, 30, 0.04);
-        }
-
-        .active-line-glow {
-            box-shadow: inset 4px 0 0 0 #392cc1;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #e0e3e5;
-            border-radius: 10px;
-        }
-    </style>
 </head>
 
-<body class="bg-surface font-body text-on-surface antialiased">
-    <!-- TopNavBar -->
-    <nav
-        class="fixed top-0 w-full z-50 bg-[#f7f9fb]/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none flex justify-between items-center px-8 py-4 max-w-full mx-auto">
-        <div class="flex items-center gap-8">
-            <span
-                class="text-2xl font-bold tracking-tighter text-[#392cc1] dark:text-white font-headline">Subtitlr</span>
-            <div class="hidden md:flex gap-6">
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] font-inter text-sm transition-colors"
-                    href="#">Projects</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] font-inter text-sm transition-colors"
-                    href="#">Library</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] font-inter text-sm transition-colors"
-                    href="#">Team</a>
+<body class="bg-background text-slate-900 overflow-hidden">
+    <aside
+        class="h-screen w-20 lg:w-64 fixed left-0 top-0 bg-white border-r border-slate-100 flex flex-col py-8 px-4 z-50 transition-all duration-300">
+        <div class="mb-10 px-4 hidden lg:block">
+            <h1 class="font-headline text-xl font-extrabold text-primary tracking-tight">Subtitlr</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Workspace</p>
+        </div>
+        <div class="mb-10 lg:hidden flex justify-center">
+            <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold">S</div>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-primary bg-indigo-50/50 font-semibold"
+                href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm lg:block hidden">Launchpad</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:text-primary hover:bg-slate-50"
+                href="#">
+                <span class="material-symbols-outlined">folder</span>
+                <span class="text-sm lg:block hidden">Projects</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:text-primary hover:bg-slate-50"
+                href="#">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span class="text-sm lg:block hidden">AI Tools</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:text-primary hover:bg-slate-50"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-sm lg:block hidden">Settings</span>
+            </a>
+        </nav>
+        <div class="mt-auto px-2">
+            <div class="flex items-center gap-3 p-2 rounded-2xl border border-slate-100 bg-slate-50/50">
+                <div class="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                    <img alt="User" class="w-full h-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOOg1JhQVZzdqQ5KtGilaOJM7I0YEq6dRxRRkLeuvYvXvFD1-7Bk1yMSBGDgKPqERIK5Q5sKUnHwk93WpJ3qO6Aqz0qT_Ck1QM2CUYKCLU01KdR-SngWevzVTwOBbi6BeUXosuxr1KXp1MS-GsrWtNlzkK2XoONFcoUBznJhxA88M6QYcNZBqI5SeH_cDMZiAXoEMLPPu-eLaR8QZX42i_7tith72UW2mJ4q2gq48gbpB1W9IfUgFMApfZYwoSEjhPaX6PGZ4P88k" />
+                </div>
+                <div class="hidden lg:block overflow-hidden">
+                    <p class="text-xs font-bold text-slate-900 truncate">Alex Rivers</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">Pro Plan</p>
+                </div>
             </div>
+        </div>
+    </aside>
+    <header
+        class="fixed top-0 right-0 left-20 lg:left-64 h-16 z-40 bg-background/80 backdrop-blur-md flex items-center justify-between px-8 border-b border-slate-100/50">
+        <div>
+            <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Dynamic Launchpad</h2>
         </div>
         <div class="flex items-center gap-4">
-            <button
-                class="material-symbols-outlined p-2 rounded-full hover:bg-slate-100/50 transition-colors text-on-surface-variant">notifications</button>
-            <button
-                class="material-symbols-outlined p-2 rounded-full hover:bg-slate-100/50 transition-colors text-on-surface-variant">settings</button>
-            <div class="h-8 w-8 rounded-full bg-primary-fixed overflow-hidden">
-                <img alt="User profile"
-                    data-alt="professional headshot of a creative director in a modern studio setting with soft side lighting"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxFDHnj6-Jx3mkCGnjCnp9cq0fONfpLbAfk9r6bkg5jvMizJxEaTfQ4lX2J2kLqcvs0cRnwU0ltts8a_NF1kNcdA4b0LMUwNQpd6WNVjqGgeeOom4Yx-PGhcyxJQp-ToV-0juTAsEjQweTgzb6K3sPVtCC5pHj0VsX8wmGcIryOWPxLVf71PNTwxn2qmXtesy-sDdx2448pB7BPQBpLc4rSckvKFq5hqIGgahNpKCSR6_1hdAlG8V5gTb4Z6qU2_AXxTC2mYimKBM" />
+            <div class="relative group">
+                <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                <input
+                    class="bg-slate-100/50 border-none rounded-full py-1.5 pl-9 pr-4 text-xs w-48 focus:w-64 transition-all focus:ring-1 focus:ring-primary/20 placeholder:text-slate-400"
+                    placeholder="Jump to project..." type="text" />
             </div>
             <button
-                class="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2 rounded-full font-headline font-bold text-sm scale-95 active:scale-90 transition-transform">Export</button>
+                class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-primary hover:bg-white transition-colors">
+                <span class="material-symbols-outlined text-xl">notifications</span>
+            </button>
         </div>
-    </nav>
-    <main class="pt-24 pb-20 px-6 max-w-6xl mx-auto">
-        <!-- Top Section: Success + Summary -->
-        <section class="mb-16 flex flex-col md:flex-row items-center md:items-start gap-8">
-            <div class="flex-shrink-0 bg-white p-6 rounded-xl editorial-shadow">
-                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-                    <span class="material-symbols-outlined text-4xl"
-                        style="font-variation-settings: 'wght' 600;">check_circle</span>
+    </header>
+    <aside
+        class="fixed top-16 right-0 w-80 h-[calc(100vh-4rem)] border-l border-slate-100 bg-white z-30 hidden xl:flex flex-col">
+        <div class="p-6 space-y-8 overflow-y-auto custom-scrollbar">
+            <section>
+                <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase">Usage</p>
+                            <span class="text-[10px] font-bold text-primary">84%</span>
+                        </div>
+                        <p class="text-xl font-extrabold text-slate-900">420<span
+                                class="text-sm text-slate-400 font-medium">/500</span></p>
+                        <div class="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                            <div class="h-full bg-primary w-[84%]"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="flex-1 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Saved</p>
+                            <p class="text-xl font-extrabold text-slate-900">42.5h</p>
+                        </div>
+                        <div class="flex-1 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Files</p>
+                            <p class="text-xl font-extrabold text-slate-900">1.2k</p>
+                        </div>
+                    </div>
                 </div>
+            </section>
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Recent Activity</h3>
+                    <button class="text-[10px] font-bold text-primary hover:underline">Clear</button>
+                </div>
+                <div class="space-y-5">
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-green-600 text-sm">check_circle</span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">Credits Top-up</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">500 credits added successfully.</p>
+                            <span class="text-[9px] text-slate-400 uppercase mt-1 block">2h ago</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-indigo-600 text-sm">bolt</span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">New Feature</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">AI Summaries are now available.</p>
+                            <span class="text-[9px] text-slate-400 uppercase mt-1 block">Yesterday</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="p-4 rounded-2xl bg-indigo-600 text-white">
+                <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">Next Billing</p>
+                <div class="flex items-end justify-between">
+                    <h4 class="text-2xl font-extrabold">$29.00</h4>
+                    <p class="text-[10px] font-medium opacity-80">Nov 12</p>
+                </div>
+                <button
+                    class="w-full mt-4 py-2 bg-white/20 hover:bg-white/30 transition-colors rounded-xl text-xs font-bold">
+                    Manage Billing
+                </button>
             </div>
-            <div class="flex-grow text-center md:text-left">
-                <h1 class="text-4xl font-headline font-bold tracking-tight text-on-surface mb-3">Subtitles Generated
-                    Successfully</h1>
+        </div>
+    </aside>
+    <main class="ml-20 lg:ml-64 xl:mr-80 pt-16 h-screen overflow-y-auto custom-scrollbar relative">
+        <div class="hero-glow"></div>
+        <div class="max-w-4xl mx-auto px-8 py-12 relative z-10">
+            <div class="mb-12 text-center">
+                <h2 class="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">What are we creating
+                    today?</h2>
+                <p class="text-slate-500 text-lg">Good morning, Alex. Upload your media and let's get to work.</p>
+            </div>
+            <section class="mb-16">
                 <div
-                    class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-on-surface-variant font-medium">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">movie</span>
-                        video.mp4
+                    class="dropzone-gradient rounded-[2.5rem] p-12 lg:p-20 text-center flex flex-col items-center justify-center group cursor-pointer shadow-xl shadow-indigo-500/5">
+                    <div
+                        class="w-24 h-24 rounded-3xl bg-indigo-50 text-primary flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                        <span class="material-symbols-outlined text-4xl">cloud_upload</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">schedule</span>
-                        2 min 34 sec
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">token</span>
-                        3 Credits Used
-                    </div>
-                </div>
-            </div>
-        </section>
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <!-- Left Column: Subtitle Preview (Main Canvas) -->
-            <div class="lg:col-span-8">
-                <div
-                    class="bg-surface-container-lowest rounded-xl editorial-shadow overflow-hidden flex flex-col h-[500px]">
-                    <div class="px-6 py-4 bg-surface-container-low flex justify-between items-center">
-                        <h2 class="font-headline font-semibold text-on-surface">Preview Editor</h2>
-                        <span
-                            class="text-xs font-label text-on-surface-variant bg-white px-3 py-1 rounded-full border border-outline-variant/20">AI
-                            Refined</span>
-                    </div>
-                    <div class="flex-grow overflow-y-auto p-6 space-y-1 custom-scrollbar">
-                        <!-- Transcription Lines -->
-                        <div
-                            class="group flex items-start gap-4 p-4 rounded-lg hover:bg-surface-container-low transition-colors">
-                            <button
-                                class="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl p-0.5"
-                                style="font-variation-settings: 'FILL' 1;">play_circle</button>
-                            <span class="font-label text-xs text-on-surface-variant w-14 pt-1.5">[00:01]</span>
-                            <p class="font-body text-base text-on-surface leading-relaxed">Hello bhai kya scene hai</p>
-                        </div>
-                        <div class="group flex items-start gap-4 p-4 rounded-lg bg-primary/5 active-line-glow">
-                            <button class="material-symbols-outlined text-primary transition-colors text-xl p-0.5"
-                                style="font-variation-settings: 'FILL' 1;">play_circle</button>
-                            <span class="font-label text-xs text-primary font-semibold w-14 pt-1.5">[00:03]</span>
-                            <p class="font-body text-base text-on-surface font-medium leading-relaxed">Aaj hum ek new
-                                video banayenge</p>
-                        </div>
-                        <div
-                            class="group flex items-start gap-4 p-4 rounded-lg hover:bg-surface-container-low transition-colors">
-                            <button
-                                class="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl p-0.5"
-                                style="font-variation-settings: 'FILL' 1;">play_circle</button>
-                            <span class="font-label text-xs text-on-surface-variant w-14 pt-1.5">[00:07]</span>
-                            <p class="font-body text-base text-on-surface leading-relaxed">Is video mein hum subtitles
-                                generate karna seekhenge</p>
-                        </div>
-                        <div
-                            class="group flex items-start gap-4 p-4 rounded-lg hover:bg-surface-container-low transition-colors">
-                            <button
-                                class="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl p-0.5"
-                                style="font-variation-settings: 'FILL' 1;">play_circle</button>
-                            <span class="font-label text-xs text-on-surface-variant w-14 pt-1.5">[00:12]</span>
-                            <p class="font-body text-base text-on-surface leading-relaxed">Kaafi logon ne pucha tha ki
-                                transitions kaise apply karein</p>
-                        </div>
-                        <div
-                            class="group flex items-start gap-4 p-4 rounded-lg hover:bg-surface-container-low transition-colors">
-                            <button
-                                class="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl p-0.5"
-                                style="font-variation-settings: 'FILL' 1;">play_circle</button>
-                            <span class="font-label text-xs text-on-surface-variant w-14 pt-1.5">[00:15]</span>
-                            <p class="font-body text-base text-on-surface leading-relaxed">Toh aaj focus karte hain
-                                alignment aur readable text par</p>
-                        </div>
-                        <div
-                            class="group flex items-start gap-4 p-4 rounded-lg hover:bg-surface-container-low transition-colors">
-                            <button
-                                class="material-symbols-outlined text-on-surface-variant/40 hover:text-primary transition-colors text-xl p-0.5"
-                                style="font-variation-settings: 'FILL' 1;">play_circle</button>
-                            <span class="font-label text-xs text-on-surface-variant w-14 pt-1.5">[00:20]</span>
-                            <p class="font-body text-base text-on-surface leading-relaxed">Sabse pehle aapko editor open
-                                karna hai.</p>
-                        </div>
-                    </div>
-                </div>
-                <!-- Secondary Actions -->
-                <div class="mt-8 flex flex-wrap gap-4">
-                    <button
-                        class="flex items-center gap-2 px-5 py-2.5 bg-white border border-outline-variant/30 text-on-surface font-label font-medium rounded-full hover:bg-surface-container-low transition-all">
-                        <span class="material-symbols-outlined text-lg">edit_note</span>
-                        Edit subtitles
-                    </button>
-                    <button
-                        class="flex items-center gap-2 px-5 py-2.5 bg-white border border-outline-variant/30 text-on-surface font-label font-medium rounded-full hover:bg-surface-container-low transition-all">
-                        <span class="material-symbols-outlined text-lg">refresh</span>
-                        Regenerate
-                    </button>
-                    <button
-                        class="flex items-center gap-2 px-5 py-2.5 bg-white border border-outline-variant/30 text-on-surface font-label font-medium rounded-full hover:bg-surface-container-low transition-all">
-                        <span class="material-symbols-outlined text-lg">translate</span>
-                        Convert to Hinglish / English
-                    </button>
-                </div>
-            </div>
-            <!-- Right Column: Downloads & Billing -->
-            <div class="lg:col-span-4 space-y-8">
-                <!-- Download Section -->
-                <div class="space-y-4">
-                    <h3 class="font-headline font-bold text-lg text-on-surface px-1">Download Files</h3>
-                    <button
-                        class="w-full group flex items-center justify-between p-5 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl editorial-shadow hover:shadow-lg transition-all transform hover:-translate-y-0.5">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-2xl">download</span>
-                            <div class="text-left">
-                                <p class="font-headline font-bold">Download .SRT</p>
-                                <p class="text-xs opacity-80 font-label">Standard Format</p>
-                            </div>
-                        </div>
-                        <span
-                            class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                    </button>
-                    <button
-                        class="w-full group flex items-center justify-between p-5 bg-white border border-outline-variant/30 text-on-surface rounded-xl hover:bg-surface-container-low transition-all">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-2xl text-primary">download</span>
-                            <div class="text-left">
-                                <p class="font-headline font-bold">Download .VTT</p>
-                                <p class="text-xs text-on-surface-variant font-label">Web Optimized</p>
-                            </div>
-                        </div>
-                    </button>
-                    <button
-                        class="w-full group flex items-center justify-between p-5 bg-white border border-outline-variant/30 text-on-surface rounded-xl hover:bg-surface-container-low transition-all">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-2xl text-primary">download</span>
-                            <div class="text-left">
-                                <p class="font-headline font-bold">Download .ASS</p>
-                                <p class="text-xs text-on-surface-variant font-label">Advanced Styling</p>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-                <!-- Credits Info Card -->
-                <div class="bg-surface-container-low p-6 rounded-xl border border-white/50">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-sm font-label text-on-surface-variant">Credits left: 12</span>
-                        <span class="text-xs font-label text-tertiary font-semibold uppercase tracking-wider">Used: 3
-                            credits</span>
-                    </div>
-                    <div class="w-full bg-surface-container-highest h-2 rounded-full mb-6 overflow-hidden">
-                        <div class="bg-primary h-full w-3/4 rounded-full"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <h3 class="text-2xl lg:text-3xl font-extrabold text-slate-900 mb-4">Start a New Project</h3>
+                    <p class="text-slate-400 mb-10 max-w-sm mx-auto">Drag and drop your video or audio files here, or
+                        click to browse your library.</p>
+                    <div class="flex flex-wrap items-center justify-center gap-4">
                         <button
-                            class="py-2.5 bg-white text-on-surface text-sm font-headline font-bold rounded-full hover:bg-white/80 transition-colors">Upload
-                            another</button>
+                            class="action-gradient text-white px-10 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
+                            <span class="material-symbols-outlined">add_circle</span>
+                            Upload Media
+                        </button>
                         <button
-                            class="py-2.5 bg-on-surface text-white text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors">Upgrade</button>
+                            class="bg-white border border-slate-200 text-slate-600 px-10 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all">
+                            Select from Library
+                        </button>
+                    </div>
+                    <div
+                        class="mt-12 flex items-center gap-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">movie</span> MP4, MOV
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">mic</span> WAV, MP3
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">timer</span> UP TO 2GB
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
+            <section>
+                <div class="flex items-center justify-between mb-6 px-2">
+                    <h3 class="text-xl font-extrabold text-slate-900">Recent Projects</h3>
+                    <a class="text-sm font-bold text-primary hover:underline flex items-center gap-1" href="#">
+                        See All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </a>
+                </div>
+                <div class="space-y-3">
+                    <div
+                        class="group bg-white hover:bg-slate-50/50 p-4 rounded-2xl flex items-center gap-4 transition-all border border-slate-100 hover:border-indigo-100">
+                        <div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative">
+                            <img alt="Thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB8yi7lJltU8l7hQCgShmBz-10jYoY9rgP6MsqPIaEdNjNbv1pc75lox-NXAHixQF7ATHOe0B2yKjV4VOMl5Xa6Pp-eb0iUnbZWpaoxToQpFLnjaZwVzd53x1H0oLqx6bf67-fXCnQpa5ys_AvFtM0H3eaQmmtbdUT_rc0GaJijAoknX7iwCZJrZiUkSdd8GjA159LfE1rHtaQDMHZmRRoFj_ZGOi7Pruw4yzYzphhVxlbOrtVswJghtUS0SKAPv_BC-uYzcapdok" />
+                            <div
+                                class="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-white text-lg">play_arrow</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-slate-900 truncate text-sm">Keynote_Interview_Final.mp4</h4>
+                            <p class="text-[11px] text-slate-400 font-medium">Modified 2h ago • 12:45 min</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="px-3 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-extrabold uppercase tracking-wider border border-green-100">Ready</span>
+                            <button
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                                <span class="material-symbols-outlined">more_vert</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="group bg-white hover:bg-slate-50/50 p-4 rounded-2xl flex items-center gap-4 transition-all border border-slate-100 hover:border-indigo-100">
+                        <div
+                            class="w-14 h-14 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0 text-primary">
+                            <span class="material-symbols-outlined text-2xl">mic</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-slate-900 truncate text-sm">Product_Podcast_E04.wav</h4>
+                            <p class="text-[11px] text-slate-400 font-medium">Modified 5h ago • 45:20 min</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-extrabold uppercase tracking-wider border border-indigo-100">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                                Syncing
+                            </div>
+                            <button
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                                <span class="material-symbols-outlined">more_vert</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="group bg-white hover:bg-slate-50/50 p-4 rounded-2xl flex items-center gap-4 transition-all border border-slate-100 hover:border-indigo-100">
+                        <div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative">
+                            <img alt="Thumbnail" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHgkeiJFAi2VfBQTSA_lYT9hKPZwdzu_Ldx1EEO8RJMRWNb7D1GMCXIYEuytUsTGAIoKIrQvK7-KflZuQRFxK2CQujPzDllsnNAukFqh9V7vMviyHvc73LvMNhknriD9AzokC5_zOdyLQMOKn8iH47Z8vN7uGhXILqnK7suz__RkjjABMjczUPRXlapm3jkol6kKhVqhrUlvCdCUHSb-OxRhL13fe2yfa6rkK-dz4UUzuLBYA55fFj5hRWm6fTeEWYzxW3VIuD2Xc" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-slate-900 truncate text-sm">Corporate_Brand_Manifesto.mp4</h4>
+                            <p class="text-[11px] text-slate-400 font-medium">Modified Yesterday • 02:15 min</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="px-3 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-extrabold uppercase tracking-wider border border-green-100">Ready</span>
+                            <button
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                                <span class="material-symbols-outlined">more_vert</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
-    <!-- Footer -->
-    <footer class="w-full py-12 bg-[#f7f9fb] dark:bg-slate-950 border-t border-slate-200/20 dark:border-slate-800/20">
-        <div class="flex flex-col md:flex-row justify-between items-center px-10 max-w-7xl mx-auto gap-4">
-            <span class="font-inter text-sm antialiased text-slate-500 dark:text-slate-400">© 2024 Subtitlr AI. All
-                rights reserved.</span>
-            <div class="flex gap-8">
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] transition-all font-inter text-sm"
-                    href="#">Privacy Policy</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] transition-all font-inter text-sm"
-                    href="#">Terms of Service</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] transition-all font-inter text-sm"
-                    href="#">Help Center</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-[#392cc1] transition-all font-inter text-sm"
-                    href="#">API Status</a>
-            </div>
-        </div>
-    </footer>
+    <button
+        class="xl:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full action-gradient text-white shadow-xl shadow-primary/40 flex items-center justify-center z-50">
+        <span class="material-symbols-outlined text-3xl">add</span>
+    </button>
+
 </body>
 
 </html>

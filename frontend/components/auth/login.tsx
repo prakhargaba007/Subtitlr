@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Lock } from "lucide-react";
 import FadingCircle from "@/components/FadingCircle";
 import AuthForm from "@/components/auth/AuthForm";
@@ -12,16 +12,15 @@ const benefits = [
 ];
 
 const Auth = () => {
-  const [initialEmail] = useState(() => {
-    if (typeof window !== "undefined") {
-      const pendingEmail = localStorage.getItem("pendingEmail");
-      if (pendingEmail) {
-        localStorage.removeItem("pendingEmail");
-        return pendingEmail;
-      }
+  const [initialEmail, setInitialEmail] = useState("");
+
+  useEffect(() => {
+    const pendingEmail = localStorage.getItem("pendingEmail");
+    if (pendingEmail) {
+      localStorage.removeItem("pendingEmail");
+      setInitialEmail(pendingEmail);
     }
-    return "";
-  });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
