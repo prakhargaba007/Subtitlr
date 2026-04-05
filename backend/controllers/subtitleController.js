@@ -4,12 +4,12 @@ const os = require("os");
 const { v4: uuidv4 } = require("uuid");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegStatic = require("ffmpeg-static");
-const ffprobeInstaller = require("@ffprobe-installer/ffprobe");
+const ffprobeStatic = require("ffprobe-static");
 const OpenAI = require("openai");
 const mongoose = require("mongoose");
 
 ffmpeg.setFfmpegPath(ffmpegStatic);
-ffmpeg.setFfprobePath(ffprobeInstaller.path);
+ffmpeg.setFfprobePath(ffprobeStatic.path);
 
 const SubtitleJob = require("../models/Subtitle");
 const User = require("../models/User");
