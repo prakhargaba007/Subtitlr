@@ -4,7 +4,7 @@ const { validationResult } = require("express-validator");
 const User = require("../models/User.js");
 const { createOTP, sendOTPEmail, verifyOTP } = require("../utils/otpUtils");
 const { OAuth2Client } = require("google-auth-library");
-const { addCredits, DEFAULT_CREDITS } = require("../utils/creditUtils");
+const { addCredits, DEFAULT_CREDITS, SIGNUP_CREDITS } = require("../utils/creditUtils");
 
 // Function to create a temporary user
 exports.createTempUser = async (req, res, next) => {
@@ -211,7 +211,7 @@ exports.signup = async (req, res, next) => {
 
     // Save the user to the database
     await user.save();
-    await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
+    await addCredits(user._id, SIGNUP_CREDITS, "signup_bonus", "Welcome credits");
 
     const payload = {
       user: {
@@ -581,6 +581,13 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
     
     await user.save();
 
+    // Top up credits to SIGNUP_CREDITS for newly verified accounts
+    if ((user.credits ?? 0) < SIGNUP_CREDITS) {
+      const toAdd = SIGNUP_CREDITS - (user.credits ?? 0);
+      await addCredits(user._id, toAdd, "signup_bonus", "Welcome credits top-up");
+      user.credits = SIGNUP_CREDITS;
+    }
+
     // Create and return a JWT token
     const payload = {
       user: {
@@ -782,7 +789,7 @@ exports.googleExchange = async (req, res, next) => {
         profilePicture: picture,
       });
       await user.save();
-      await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
+      await addCredits(user._id, SIGNUP_CREDITS, "signup_bonus", "Welcome credits");
     } else {
       // Update profile image/name if changed
       const shouldUpdate = (picture && user.profilePicture !== picture) || (displayName && user.name !== displayName);
@@ -795,6 +802,11 @@ exports.googleExchange = async (req, res, next) => {
         user.tempUser = false;
       }
       await user.save();
+      // Top up credits to SIGNUP_CREDITS for first-time Google sign-in
+      if ((user.credits ?? 0) < SIGNUP_CREDITS) {
+        const toAdd = SIGNUP_CREDITS - (user.credits ?? 0);
+        await addCredits(user._id, toAdd, "signup_bonus", "Welcome credits top-up");
+      }
     }
 
     // Issue app JWT

@@ -142,7 +142,7 @@ function LanguagePicker({
 
 // ── UploadCard ────────────────────────────────────────────────────────────────
 
-export default function UploadCard() {
+export default function UploadCard({ basePath = "" }: { basePath?: string }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -188,7 +188,7 @@ export default function UploadCard() {
     if (!selectedFile) return;
     setPendingFile(selectedFile);
     setPendingLanguage(language);
-    router.push(`/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`);
+    router.push(`${basePath}/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`);
   };
 
   return (

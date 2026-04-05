@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardRightPanel from "@/components/dashboard/DashboardRightPanel";
+import DashboardInit from "@/components/dashboard/DashboardInit";
 import UploadFAB from "@/components/dashboard/UploadFAB";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="bg-background text-on-surface">
+      <DashboardInit />
       <DashboardSidebar />
       <DashboardHeader />
       <DashboardRightPanel />

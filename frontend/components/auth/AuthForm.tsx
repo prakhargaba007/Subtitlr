@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { useToast } from "@/hooks/use-toast";
 import axiosInstance from "@/utils/axios";
@@ -24,6 +24,7 @@ export default function AuthForm({
   autoRedirect = true,
 }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { toast } = useToast();
   const [email, setEmail] = useState(initialEmail);
@@ -86,7 +87,7 @@ export default function AuthForm({
 
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("userData", JSON.stringify(res.data.user));
-
+        document.cookie = `token=${res.data.token}; path=/; max-age=86400; SameSite=Lax`;
         if (isTempUser) localStorage.removeItem("isTempUser");
 
         dispatch(setUserDetails(res.data.user));
@@ -95,13 +96,9 @@ export default function AuthForm({
         if (onSuccess) {
           onSuccess(res.data.user);
         } else if (autoRedirect) {
-          const redirectPath = localStorage.getItem("redirectAfterLogin");
-          if (redirectPath) {
-            localStorage.removeItem("redirectAfterLogin");
-            router.push(redirectPath);
-          } else {
-            router.push("/dashboard");
-          }
+          const nextPath = searchParams.get("next") || localStorage.getItem("redirectAfterLogin") || "/dashboard";
+          localStorage.removeItem("redirectAfterLogin");
+          router.push(nextPath);
         }
       } catch (error: unknown) {
         console.error("Google auth code exchange error:", error);
@@ -227,6 +224,7 @@ export default function AuthForm({
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("userData", JSON.stringify(response.data.user));
+        document.cookie = `token=${response.data.token}; path=/; max-age=86400; SameSite=Lax`;
         if (isTempUser) localStorage.removeItem("isTempUser");
 
         dispatch(setUserDetails(response.data.user));
@@ -235,13 +233,9 @@ export default function AuthForm({
         if (onSuccess) {
           onSuccess(response.data.user);
         } else if (autoRedirect) {
-          const redirectPath = localStorage.getItem("redirectAfterLogin");
-          if (redirectPath) {
-            localStorage.removeItem("redirectAfterLogin");
-            router.push(redirectPath);
-          } else {
-            router.push("/dashboard");
-          }
+          const nextPath = searchParams.get("next") || localStorage.getItem("redirectAfterLogin") || "/dashboard";
+          localStorage.removeItem("redirectAfterLogin");
+          router.push(nextPath);
         }
       }
     } catch (error: unknown) {

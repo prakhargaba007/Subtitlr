@@ -11,8 +11,11 @@ const CreditTransaction = require("../models/CreditTransaction");
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-/** Credits awarded to a brand-new user. */
+/** Credits awarded to a temporary (anonymous) user on first visit. */
 const DEFAULT_CREDITS = 12;
+
+/** Credits awarded when a user creates a verified account (OTP, Google, email). */
+const SIGNUP_CREDITS = 60;
 
 /** How many credits one "unit" costs. 1 credit = 1 started minute of media. */
 const CREDITS_PER_MINUTE = 1;
@@ -300,6 +303,7 @@ const getCreditSummary = async (userId) => {
 
 module.exports = {
   DEFAULT_CREDITS,
+  SIGNUP_CREDITS,
   CREDITS_PER_MINUTE,
   calculateCreditsNeeded,
   formatDuration,

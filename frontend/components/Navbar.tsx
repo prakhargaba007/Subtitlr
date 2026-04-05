@@ -1,9 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 export default function Navbar() {
+  const [isRealUser, setIsRealUser] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userDataStr = localStorage.getItem("userData");
+    if (token && userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        setIsRealUser(!userData.tempUser);
+      } catch {
+        setIsRealUser(false);
+      }
+    }
+  }, []);
+
   return (
     <header className="fixed top-0 w-full z-50 glass-nav shadow-sm backdrop-blur-sm">
       <nav className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
@@ -19,15 +35,27 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center space-x-6">
-          <Link
-            href="/login"
-            className="text-slate-600 font-medium text-sm hover:text-indigo-600 transition-colors"
-          >
-            Sign In
-          </Link>
-          <Button variant="primary" size="sm" pill className="hover:shadow-[0_0_15px_rgba(57,44,193,0.3)] scale-100 hover:scale-[1.02] active:scale-95">
-            Get Started
-          </Button>
+          {isRealUser ? (
+            <Link href="/dashboard">
+              <Button variant="primary" size="sm" pill className="hover:shadow-[0_0_15px_rgba(57,44,193,0.3)] scale-100 hover:scale-[1.02] active:scale-95">
+                Dashboard →
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-slate-600 font-medium text-sm hover:text-indigo-600 transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link href="/login">
+                <Button variant="primary" size="sm" pill className="hover:shadow-[0_0_15px_rgba(57,44,193,0.3)] scale-100 hover:scale-[1.02] active:scale-95">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </header>

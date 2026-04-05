@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Providers } from "../providers";
-import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TempUserInit from "@/components/TempUserInit";

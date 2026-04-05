@@ -1,10 +1,11 @@
 export interface Project {
-  id: number;
+  id: string | number;
   name: string;
   meta: string;
   status: "Ready" | "Syncing";
   thumbnail?: string;
   icon?: string;
+  jobId?: string;
 }
 
 export default function ProjectCard({ project }: { project: Project }) {
