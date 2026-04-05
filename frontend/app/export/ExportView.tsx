@@ -112,13 +112,13 @@ export default function ExportView() {
 
   const handleDownload = (ext: string) => {
     if (!jobId) return;
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
-    const url = `${backendUrl}/api/subtitles/${jobId}/export?format=${ext}`;
-
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => res.blob())
-      .then((blob) => {
+    axiosInstance
+      .get(`/api/subtitles/${jobId}/export`, {
+        params: { format: ext },
+        responseType: "blob",
+      })
+      .then((res) => {
+        const blob = res.data;
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = objectUrl;
