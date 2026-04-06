@@ -31,6 +31,12 @@ const {
   selectBestInworldVoice,
   synthesizeInworldTts,
 } = require("../utils/inworldTtsUtils");
+const {
+  isSmallestConfigured,
+  fetchSmallestVoiceCatalog,
+  selectBestSmallestVoice,
+  synthesizeSmallestTts,
+} = require("../utils/smallestTtsUtils");
 
 // Dubbing costs more credits than subtitles — 5 credits per minute
 const DUBBING_CREDITS_PER_MINUTE = 5;
@@ -117,6 +123,14 @@ exports.startDubbingJob = async (req, res) => {
       emit({
         stage: "error",
         message: "INWORLD_API_KEY is required when DUBBING_TTS_PROVIDER=inworld.",
+        statusCode: 422,
+      });
+      return res.end();
+    }
+    if (ttsProvider === "smallest" && !isSmallestConfigured()) {
+      emit({
+        stage: "error",
+        message: "SMALLEST_API_KEY is required when DUBBING_TTS_PROVIDER=smallest.",
         statusCode: 422,
       });
       return res.end();
@@ -235,7 +249,7 @@ exports.startDubbingJob = async (req, res) => {
 
     emit({ stage: "translating", message: "Translation complete." });
 
-    // ── Step 5: Match each speaker to a TTS voice (OpenAI, Inworld, or ElevenLabs) ─
+    // ── Step 5: Match each speaker to a TTS voice (OpenAI, Inworld, Smallest, or ElevenLabs) ─
     emit({ stage: "generating", message: "Matching speakers to voices…" });
     await DubbingJob.findByIdAndUpdate(job._id, { status: "generating" });
 
@@ -244,9 +258,11 @@ exports.startDubbingJob = async (req, res) => {
         ? "openai"
         : ttsProvider === "inworld"
           ? "inworld"
-          : ttsProvider === "auto"
-            ? "openai"
-            : "elevenlabs";
+          : ttsProvider === "smallest"
+            ? "smallest"
+            : ttsProvider === "auto"
+              ? "openai"
+              : "elevenlabs";
     let voiceMap = {};
     let updatedProfiles = [];
 
@@ -290,8 +306,29 @@ exports.startDubbingJob = async (req, res) => {
         speakerProfiles: updatedProfiles,
         ttsProvider: "inworld",
       });
+    } else if (ttsProvider === "smallest") {
+      emit({ stage: "generating", message: "Loading Smallest.ai Waves voice catalog…" });
+      const smallestCatalog = await fetchSmallestVoiceCatalog();
+      emit({ stage: "generating", message: "Selecting Smallest TTS voices for speakers…" });
+      for (const profile of speaker_profiles) {
+        emit({
+          stage: "generating",
+          message: `Selecting voice for ${profile.speaker_id}…`,
+        });
+        const v = await selectBestSmallestVoice(profile.voice_description, smallestCatalog);
+        voiceMap[profile.speaker_id] = v;
+        updatedProfiles.push({
+          speaker_id: profile.speaker_id,
+          voice_description: profile.voice_description,
+          elevenlabs_voice_id: v,
+        });
+      }
+      await DubbingJob.findByIdAndUpdate(job._id, {
+        speakerProfiles: updatedProfiles,
+        ttsProvider: "smallest",
+      });
     } else if (ttsProvider === "auto") {
-      // Voice map + synthesis for auto: Inworld → ElevenLabs → OpenAI (Step 6)
+      // Voice map + synthesis for auto: Inworld → Smallest → ElevenLabs → OpenAI (Step 6)
     } else {
       const availableVoices = await fetchAvailableVoices();
       for (const profile of speaker_profiles) {
@@ -359,6 +396,22 @@ exports.startDubbingJob = async (req, res) => {
         tmpPaths.push(ttsPath);
         rawDubbedPaths.push(ttsPath);
       }
+    } else if (ttsProvider === "smallest") {
+      for (let i = 0; i < totalSegments; i++) {
+        const seg = translatedSegments[i];
+        const voiceKey = voiceMap[seg.speaker_id];
+        if (!voiceKey) {
+          throw new Error(`No voice selected for speaker: ${seg.speaker_id}`);
+        }
+        emit({
+          stage: "generating",
+          message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
+          progress: Math.round(((i + 1) / totalSegments) * 100),
+        });
+        const { audioPath: ttsPath } = await synthesizeSmallestTts(seg.translatedText, voiceKey);
+        tmpPaths.push(ttsPath);
+        rawDubbedPaths.push(ttsPath);
+      }
     } else if (ttsProvider === "auto") {
       let autoDone = false;
       const iwPaths = [];
@@ -411,7 +464,60 @@ exports.startDubbingJob = async (req, res) => {
           rawDubbedPaths.length = 0;
           emit({
             stage: "generating",
-            message: `Inworld TTS failed; trying ElevenLabs. (${iwErr.message})`,
+            message: `Inworld TTS failed; trying Smallest.ai. (${iwErr.message})`,
+          });
+        }
+      }
+
+      if (!autoDone && isSmallestConfigured()) {
+        const smPaths = [];
+        try {
+          emit({ stage: "generating", message: "Trying Smallest.ai Waves TTS…" });
+          const smallestCatalog = await fetchSmallestVoiceCatalog();
+          voiceMap = {};
+          updatedProfiles = [];
+          for (const profile of speaker_profiles) {
+            emit({
+              stage: "generating",
+              message: `Selecting Smallest voice for ${profile.speaker_id}…`,
+            });
+            const v = await selectBestSmallestVoice(profile.voice_description, smallestCatalog);
+            voiceMap[profile.speaker_id] = v;
+            updatedProfiles.push({
+              speaker_id: profile.speaker_id,
+              voice_description: profile.voice_description,
+              elevenlabs_voice_id: v,
+            });
+          }
+          await DubbingJob.findByIdAndUpdate(job._id, {
+            speakerProfiles: updatedProfiles,
+            ttsProvider: "smallest",
+          });
+
+          for (let i = 0; i < totalSegments; i++) {
+            const seg = translatedSegments[i];
+            emit({
+              stage: "generating",
+              message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
+              progress: Math.round(((i + 1) / totalSegments) * 100),
+            });
+            const { audioPath: ttsPath } = await synthesizeSmallestTts(
+              seg.translatedText,
+              voiceMap[seg.speaker_id]
+            );
+            tmpPaths.push(ttsPath);
+            rawDubbedPaths.push(ttsPath);
+            smPaths.push(ttsPath);
+          }
+          resolvedTtsProvider = "smallest";
+          autoDone = true;
+        } catch (smErr) {
+          console.warn("[dubbing] Smallest TTS failed:", smErr.message);
+          stripAndCleanupPaths(smPaths);
+          rawDubbedPaths.length = 0;
+          emit({
+            stage: "generating",
+            message: `Smallest TTS failed; trying ElevenLabs. (${smErr.message})`,
           });
         }
       }

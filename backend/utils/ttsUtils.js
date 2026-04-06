@@ -41,13 +41,21 @@ const OPENAI_TTS_VOICE_NAMES = OPENAI_TTS_VOICES.map((v) => v.voice);
 const DEFAULT_OPENAI_TTS_VOICE = "nova";
 
 /**
- * Dubbing TTS backend: `openai` | `elevenlabs` | `inworld` | `auto`.
- * `auto`: Inworld (if INWORLD_API_KEY) → ElevenLabs → OpenAI.
+ * Dubbing TTS backend: `openai` | `elevenlabs` | `inworld` | `smallest` | `auto`.
+ * `auto`: Inworld (if INWORLD_API_KEY) → Smallest (if SMALLEST_API_KEY) → ElevenLabs → OpenAI.
  * Default: auto
  */
 const getTtsProvider = () => {
   const raw = (process.env.DUBBING_TTS_PROVIDER || "auto").trim().toLowerCase();
-  if (raw === "openai" || raw === "elevenlabs" || raw === "inworld" || raw === "auto") return raw;
+  if (
+    raw === "openai" ||
+    raw === "elevenlabs" ||
+    raw === "inworld" ||
+    raw === "smallest" ||
+    raw === "auto"
+  ) {
+    return raw;
+  }
   return "auto";
 };
 

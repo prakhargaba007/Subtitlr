@@ -1,0 +1,6 @@
+[
+  { "voiceId": "emily", "blurb": "Default Waves voice (Smallest.ai docs)." },
+  { "voiceId": "roma", "blurb": "Female-presenting; used in streaming examples." },
+  { "voiceId": "nyah", "blurb": "Used in Atoms / agent examples." },
+  { "voiceId": "rebecca", "blurb": "Female-presenting; long-form Lightning tests." }
+]

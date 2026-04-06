@@ -78,7 +78,7 @@ const dubbingJobSchema = new mongoose.Schema(
     },
     ttsProvider: {
       type: String,
-      enum: ["openai", "elevenlabs", "inworld", null],
+      enum: ["openai", "elevenlabs", "inworld", "smallest", null],
       default: null,
     },
     // Transcription + dubbing data
