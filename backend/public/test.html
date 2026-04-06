@@ -1,64 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Subtitle Generator — Test</title>
+  <title>AI Media Tools — Test</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0d0f17;
+      --surface: #141720;
+      --border: #252840;
+      --muted: #3a3f5c;
+      --text: #e2e8f0;
+      --sub: #64748b;
+      --accent: #6366f1;
+      --accent-h: #4f46e5;
+      --green: #10b981;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --purple: #a855f7;
+    }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 24px;
+      padding: 32px 16px 64px;
     }
 
-    .card {
-      background: #1a1d27;
-      border: 1px solid #2d3148;
-      border-radius: 16px;
-      padding: 36px;
+    .wrapper {
       width: 100%;
-      max-width: 560px;
+      max-width: 680px;
     }
 
-    h1 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 6px;
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--sub);
+      margin-top: 6px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--sub);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
       color: #fff;
     }
 
-    .subtitle {
-      font-size: 13px;
-      color: #64748b;
-      margin-bottom: 28px;
+    .tab-pane {
+      display: none;
     }
 
-    .field { margin-bottom: 18px; }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    /* ── Form elements ── */
+    .field {
+      margin-bottom: 18px;
+    }
 
     label {
       display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sub);
       margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.07em;
     }
 
     input[type="text"],
+    input[type="password"],
     select {
       width: 100%;
-      background: #0f1117;
-      border: 1px solid #2d3148;
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      color: #e2e8f0;
+      color: var(--text);
       font-size: 14px;
       padding: 10px 14px;
       outline: none;
@@ -66,13 +139,25 @@
     }
 
     input[type="text"]:focus,
-    select:focus { border-color: #6366f1; }
+    input[type="password"]:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
 
-    select option { background: #1a1d27; }
+    select option {
+      background: var(--surface);
+    }
 
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ── File drop ── */
     .file-drop {
-      border: 2px dashed #2d3148;
-      border-radius: 8px;
+      border: 2px dashed var(--border);
+      border-radius: 10px;
       padding: 28px 20px;
       text-align: center;
       cursor: pointer;
@@ -82,8 +167,8 @@
 
     .file-drop:hover,
     .file-drop.dragover {
-      border-color: #6366f1;
-      background: rgba(99,102,241,0.05);
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.04);
     }
 
     .file-drop input[type="file"] {
@@ -95,24 +180,43 @@
       height: 100%;
     }
 
-    .file-drop .icon { font-size: 28px; margin-bottom: 8px; }
+    .file-drop .icon {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
 
     .file-drop .hint {
       font-size: 13px;
-      color: #64748b;
+      color: var(--sub);
+      line-height: 1.5;
     }
 
-    .file-drop .file-name {
+    .file-drop .fname {
       margin-top: 8px;
       font-size: 13px;
-      color: #6366f1;
+      color: var(--accent);
       font-weight: 500;
       word-break: break-all;
     }
 
-    button[type="submit"] {
+    /* ── Credits badge ── */
+    .credits-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #818cf8;
+      margin-bottom: 22px;
+    }
+
+    /* ── Submit button ── */
+    .btn-primary {
       width: 100%;
-      background: #6366f1;
+      background: var(--accent);
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -120,43 +224,172 @@
       font-weight: 600;
       padding: 12px;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 4px;
       transition: background 0.2s, opacity 0.2s;
     }
 
-    button[type="submit"]:hover { background: #4f46e5; }
-    button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .progress {
-      display: none;
-      margin-top: 18px;
-      background: #0f1117;
-      border-radius: 8px;
-      overflow: hidden;
-      height: 6px;
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-h);
     }
 
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: #6366f1;
-      transition: width 0.3s;
-      animation: indeterminate 1.4s infinite;
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
-    @keyframes indeterminate {
-      0%   { transform: translateX(-100%); width: 60%; }
-      100% { transform: translateX(200%);  width: 60%; }
-    }
-
-    .result {
+    /* ── Progress log (SSE stream) ── */
+    .log-box {
       display: none;
       margin-top: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
     }
 
-    .result-header {
+    .log-header {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sub);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .log-entries {
+      padding: 12px 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .log-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-validating {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+    }
+
+    .badge-extracting {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+    }
+
+    .badge-separating {
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--purple);
+    }
+
+    .badge-transcribing {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+    }
+
+    .badge-translating {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+
+    .badge-generating {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+    }
+
+    .badge-syncing {
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--purple);
+    }
+
+    .badge-merging {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+
+    .badge-uploading {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+    }
+
+    .badge-saving {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+
+    .badge-done {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--green);
+    }
+
+    .badge-error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    .badge-transliterating {
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--purple);
+    }
+
+    .log-msg {
+      color: var(--text);
+    }
+
+    .log-extra {
+      color: var(--sub);
+      font-size: 12px;
+    }
+
+    /* ── Result panel ── */
+    .result-panel {
+      display: none;
+      margin-top: 16px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .result-panel-header {
       padding: 12px 16px;
       font-size: 13px;
       font-weight: 600;
@@ -165,12 +398,19 @@
       gap: 8px;
     }
 
-    .result.success .result-header { background: rgba(16,185,129,0.15); color: #10b981; }
-    .result.error   .result-header { background: rgba(239,68,68,0.15);  color: #ef4444; }
+    .result-panel.success .result-panel-header {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--green);
+    }
 
-    .result pre {
-      background: #0f1117;
-      border: 1px solid #2d3148;
+    .result-panel.error .result-panel-header {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--red);
+    }
+
+    .result-panel pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-top: none;
       padding: 16px;
       font-size: 12px;
@@ -179,18 +419,20 @@
       white-space: pre-wrap;
       word-break: break-word;
       color: #94a3b8;
-      max-height: 320px;
+      max-height: 340px;
       overflow-y: auto;
     }
 
+    /* ── Download buttons ── */
     .downloads {
       display: none;
-      margin-top: 16px;
-      display: none;
+      margin-top: 14px;
       gap: 10px;
     }
 
-    .downloads.visible { display: flex; }
+    .downloads.visible {
+      display: flex;
+    }
 
     .dl-btn {
       flex: 1;
@@ -203,240 +445,641 @@
       cursor: pointer;
       border: none;
       transition: opacity 0.2s;
+      color: #fff;
     }
 
-    .dl-btn:hover { opacity: 0.8; }
-    .dl-btn.srt { background: #1d4ed8; color: #fff; }
-    .dl-btn.vtt { background: #0f766e; color: #fff; }
-    .dl-btn.ass { background: #7c3aed; color: #fff; }
+    .dl-btn:hover {
+      opacity: 0.8;
+    }
 
-    .credits-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(99,102,241,0.12);
-      border: 1px solid rgba(99,102,241,0.3);
-      border-radius: 20px;
-      padding: 4px 12px;
+    .dl-btn.srt {
+      background: #1d4ed8;
+    }
+
+    .dl-btn.vtt {
+      background: #0f766e;
+    }
+
+    .dl-btn.ass {
+      background: #7c3aed;
+    }
+
+    .dl-btn.vid {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+    }
+
+    /* ── Speakers info ── */
+    .speakers-grid {
+      display: none;
+      margin-top: 14px;
+      gap: 10px;
+      flex-direction: column;
+    }
+
+    .speakers-grid.visible {
+      display: flex;
+    }
+
+    .speaker-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .speaker-card-title {
       font-size: 12px;
-      color: #818cf8;
-      margin-bottom: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+
+    .speaker-card-desc {
+      font-size: 13px;
+      color: var(--sub);
+      line-height: 1.5;
+    }
+
+    /* ── Video player ── */
+    .video-player {
+      display: none;
+      margin-top: 14px;
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .video-player video {
+      width: 100%;
+      display: block;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
     }
   </style>
 </head>
-<body>
-  <div class="card">
-    <h1>🎙 Subtitle Generator</h1>
-    <p class="subtitle">Upload an audio or video file to generate subtitles via Whisper API</p>
 
-    <div class="credits-badge" id="creditsBadge">
-      ⚡ <span id="creditsVal">— </span> credits remaining
+<body>
+  <div class="wrapper">
+
+    <div class="header">
+      <h1>🎙 AI Media Tools</h1>
+      <p>Test interface for subtitle generation and AI voice dubbing</p>
     </div>
 
-    <form id="uploadForm">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('subtitles', this)">📝 Subtitle Generator</button>
+      <button class="tab-btn" onclick="switchTab('dubbing',   this)">🎬 AI Voice Dubbing</button>
+    </div>
 
-      <div class="field">
-        <label>JWT Token</label>
-        <input type="text" id="token" placeholder="Paste your Bearer token here" />
-      </div>
+    <!-- ═══════════════════════════════════════════════════════════════
+         TAB 1: SUBTITLE GENERATOR
+    ═══════════════════════════════════════════════════════════════ -->
+    <div class="tab-pane active" id="pane-subtitles">
+      <div class="card">
+        <div class="credits-badge">⚡ <span id="sub-credits">—</span> credits remaining</div>
 
-      <div class="field">
-        <label>Language</label>
-        <select id="language">
-          <option value="english">English</option>
-          <option value="hindi">Hindi</option>
-          <option value="hinglish">Hinglish (auto-detect)</option>
-          <option value="german">German</option>
-          <option value="french">French</option>
-          <option value="spanish">Spanish</option>
-          <option value="arabic">Arabic</option>
-          <option value="chinese">Chinese (Mandarin)</option>
-          <option value="japanese">Japanese</option>
-          <option value="portuguese">Portuguese</option>
-          <option value="russian">Russian</option>
-          <option value="korean">Korean</option>
-          <option value="italian">Italian</option>
-          <option value="turkish">Turkish</option>
-          <option value="dutch">Dutch</option>
-          <option value="polish">Polish</option>
-          <option value="urdu">Urdu</option>
-          <option value="bengali">Bengali</option>
-          <option value="tamil">Tamil</option>
-          <option value="telugu">Telugu</option>
-          <option value="marathi">Marathi</option>
-          <option value="gujarati">Gujarati</option>
-          <option value="punjabi">Punjabi</option>
-          <option value="kannada">Kannada</option>
-          <option value="malayalam">Malayalam</option>
-          <option value="vietnamese">Vietnamese</option>
-          <option value="thai">Thai</option>
-          <option value="indonesian">Indonesian</option>
-          <option value="malay">Malay</option>
-          <option value="ukrainian">Ukrainian</option>
-          <option value="swedish">Swedish</option>
-          <option value="norwegian">Norwegian</option>
-          <option value="danish">Danish</option>
-          <option value="finnish">Finnish</option>
-          <option value="greek">Greek</option>
-          <option value="czech">Czech</option>
-          <option value="romanian">Romanian</option>
-          <option value="hungarian">Hungarian</option>
-          <option value="persian">Persian / Farsi</option>
-          <option value="hebrew">Hebrew</option>
-          <option value="swahili">Swahili</option>
-        </select>
-      </div>
+        <form id="subForm">
+          <div class="field">
+            <label>JWT Token</label>
+            <input type="password" id="sub-token" placeholder="Paste your Bearer token" oninput="syncToken('sub')" />
+          </div>
 
-      <div class="field">
-        <label>Audio / Video File</label>
-        <div class="file-drop" id="fileDrop">
-          <input type="file" id="fileInput" accept="audio/*,video/*" />
-          <div class="icon">📁</div>
-          <div class="hint">Click or drag &amp; drop an audio / video file<br><small>MP3, WAV, OGG, MP4, MOV, MKV, WebM … up to 500 MB</small></div>
-          <div class="file-name" id="fileName"></div>
+          <div class="field">
+            <label>Language</label>
+            <select id="sub-lang">
+              <option value="">Auto-detect</option>
+              <option value="english">English</option>
+              <option value="hindi">Hindi</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="german">German</option>
+              <option value="french">French</option>
+              <option value="spanish">Spanish</option>
+              <option value="arabic">Arabic</option>
+              <option value="chinese">Chinese (Mandarin)</option>
+              <option value="japanese">Japanese</option>
+              <option value="portuguese">Portuguese</option>
+              <option value="russian">Russian</option>
+              <option value="korean">Korean</option>
+              <option value="italian">Italian</option>
+              <option value="turkish">Turkish</option>
+              <option value="dutch">Dutch</option>
+              <option value="polish">Polish</option>
+              <option value="urdu">Urdu</option>
+              <option value="bengali">Bengali</option>
+              <option value="tamil">Tamil</option>
+              <option value="telugu">Telugu</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Audio / Video File</label>
+            <div class="file-drop" id="sub-drop">
+              <input type="file" id="sub-file" accept="audio/*,video/*" />
+              <div class="icon">📁</div>
+              <div class="hint">Click or drag &amp; drop<br><small>MP3, WAV, MP4, MOV, MKV … up to 500 MB</small></div>
+              <div class="fname" id="sub-fname"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="sub-btn">Generate Subtitles</button>
+        </form>
+
+        <!-- SSE log -->
+        <div class="log-box" id="sub-log">
+          <div class="log-header"><span class="pulse" id="sub-pulse"></span><span>Processing…</span></div>
+          <div class="log-entries" id="sub-entries"></div>
+        </div>
+
+        <!-- Result -->
+        <div class="result-panel" id="sub-result">
+          <div class="result-panel-header" id="sub-result-hdr"></div>
+          <pre id="sub-result-body"></pre>
+        </div>
+
+        <!-- Downloads -->
+        <div class="downloads" id="sub-downloads">
+          <button class="dl-btn srt" onclick="dlSubtitle('srt')">⬇ SRT</button>
+          <button class="dl-btn vtt" onclick="dlSubtitle('vtt')">⬇ VTT</button>
+          <button class="dl-btn ass" onclick="dlSubtitle('ass')">⬇ ASS</button>
         </div>
       </div>
-
-      <button type="submit" id="submitBtn">Generate Subtitles</button>
-    </form>
-
-    <div class="progress" id="progress"><div class="progress-bar"></div></div>
-
-    <div class="result" id="result">
-      <div class="result-header" id="resultHeader"></div>
-      <pre id="resultBody"></pre>
     </div>
 
-    <div class="downloads" id="downloads">
-      <button class="dl-btn srt" onclick="download('srt')">⬇ Download SRT</button>
-      <button class="dl-btn vtt" onclick="download('vtt')">⬇ Download VTT</button>
-      <button class="dl-btn ass" onclick="download('ass')">⬇ Download ASS</button>
+    <!-- ═══════════════════════════════════════════════════════════════
+         TAB 2: AI VOICE DUBBING
+    ═══════════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-dubbing">
+      <div class="card">
+        <div class="credits-badge">⚡ <span id="dub-credits">—</span> credits remaining &nbsp;·&nbsp; 5 credits / min
+        </div>
+
+        <form id="dubForm">
+          <div class="field">
+            <label>JWT Token</label>
+            <input type="password" id="dub-token" placeholder="Paste your Bearer token" oninput="syncToken('dub')" />
+          </div>
+
+          <div class="row-2">
+            <div class="field">
+              <label>Source Language <span style="color:var(--sub);font-weight:400">(optional)</span></label>
+              <select id="dub-src-lang">
+                <option value="">Auto-detect</option>
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+                <option value="spanish">Spanish</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="arabic">Arabic</option>
+                <option value="chinese">Chinese</option>
+                <option value="japanese">Japanese</option>
+                <option value="portuguese">Portuguese</option>
+                <option value="russian">Russian</option>
+                <option value="korean">Korean</option>
+                <option value="italian">Italian</option>
+                <option value="turkish">Turkish</option>
+                <option value="dutch">Dutch</option>
+                <option value="urdu">Urdu</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Target Language <span style="color:var(--red)">*</span></label>
+              <select id="dub-tgt-lang">
+                <option value="english">English</option>
+                <option value="hindi">Hindi</option>
+                <option value="spanish">Spanish</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="arabic">Arabic</option>
+                <option value="chinese">Chinese</option>
+                <option value="japanese">Japanese</option>
+                <option value="portuguese">Portuguese</option>
+                <option value="russian">Russian</option>
+                <option value="korean">Korean</option>
+                <option value="italian">Italian</option>
+                <option value="turkish">Turkish</option>
+                <option value="dutch">Dutch</option>
+                <option value="urdu">Urdu</option>
+                <option value="bengali">Bengali</option>
+                <option value="tamil">Tamil</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Video / Audio File</label>
+            <div class="file-drop" id="dub-drop">
+              <input type="file" id="dub-file" accept="audio/*,video/*" />
+              <div class="icon">🎬</div>
+              <div class="hint">Click or drag &amp; drop a video or audio file<br><small>MP4, MOV, MKV, MP3, WAV … up to
+                  500 MB</small></div>
+              <div class="fname" id="dub-fname"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="dub-btn">🎙 Start AI Dubbing</button>
+        </form>
+
+        <!-- SSE live log -->
+        <div class="log-box" id="dub-log">
+          <div class="log-header"><span class="pulse" id="dub-pulse"></span><span id="dub-log-title">Initialising
+              dubbing pipeline…</span></div>
+          <div class="log-entries" id="dub-entries"></div>
+        </div>
+
+        <!-- Speaker cards -->
+        <div class="speakers-grid" id="dub-speakers"></div>
+
+        <!-- Result -->
+        <div class="result-panel" id="dub-result">
+          <div class="result-panel-header" id="dub-result-hdr"></div>
+          <pre id="dub-result-body"></pre>
+        </div>
+
+        <!-- Video preview + download -->
+        <div class="video-player" id="dub-player">
+          <video controls id="dub-video"></video>
+        </div>
+
+        <div class="downloads" id="dub-downloads">
+          <a class="dl-btn vid" id="dub-dl-link" href="#" download>⬇ Download Dubbed File</a>
+          <a class="dl-btn" id="dub-dl-audio" href="#" download style="display:none">⬇ Dubbed Audio Only (MP3)</a>
+        </div>
+      </div>
     </div>
-  </div>
+
+  </div><!-- /wrapper -->
 
   <script>
     const BASE = 'http://localhost:8080';
-    let currentJobId = null;
+    let subJobId = null;
+    let dubJobId = null;
 
-    // ── File drop UI ──────────────────────────────────────────────────────────
-    const fileDrop = document.getElementById('fileDrop');
-    const fileInput = document.getElementById('fileInput');
-    const fileName  = document.getElementById('fileName');
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('pane-' + name).classList.add('active');
+    }
 
-    fileInput.addEventListener('change', () => {
-      fileName.textContent = fileInput.files[0]?.name || '';
-    });
+    // ── Token sync (keep both inputs in sync so user only types once) ─────────
+    function syncToken(from) {
+      const val = document.getElementById(from + '-token').value;
+      const other = from === 'sub' ? 'dub' : 'sub';
+      document.getElementById(other + '-token').value = val;
+      debounceFetchCredits(val);
+    }
 
-    fileDrop.addEventListener('dragover', (e) => { e.preventDefault(); fileDrop.classList.add('dragover'); });
-    fileDrop.addEventListener('dragleave', ()  => fileDrop.classList.remove('dragover'));
-    fileDrop.addEventListener('drop', (e) => {
-      e.preventDefault();
-      fileDrop.classList.remove('dragover');
-      if (e.dataTransfer.files[0]) {
-        fileInput.files = e.dataTransfer.files;
-        fileName.textContent = e.dataTransfer.files[0].name;
-      }
-    });
+    let creditTimer = null;
+    function debounceFetchCredits(token) {
+      clearTimeout(creditTimer);
+      creditTimer = setTimeout(() => fetchCredits(token), 600);
+    }
 
-    // ── Load credits when token is pasted ─────────────────────────────────────
-    document.getElementById('token').addEventListener('blur', fetchCredits);
-
-    async function fetchCredits() {
-      const token = document.getElementById('token').value.trim();
+    async function fetchCredits(token) {
       if (!token) return;
       try {
         const res = await fetch(`${BASE}/api/subtitles/credits`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        document.getElementById('creditsVal').textContent =
-          res.ok ? data.credits : '—';
-      } catch (_) {
-        document.getElementById('creditsVal').textContent = '—';
-      }
+        const val = res.ok ? data.credits : '—';
+        document.getElementById('sub-credits').textContent = val;
+        document.getElementById('dub-credits').textContent = val;
+      } catch (_) { }
     }
 
-    // ── Form submit ───────────────────────────────────────────────────────────
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    // ── File drop helper ──────────────────────────────────────────────────────
+    function initDrop(dropId, inputId, fnameId) {
+      const drop = document.getElementById(dropId);
+      const input = document.getElementById(inputId);
+      const fname = document.getElementById(fnameId);
+
+      input.addEventListener('change', () => {
+        fname.textContent = input.files[0]?.name || '';
+      });
+      drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+      drop.addEventListener('drop', e => {
+        e.preventDefault();
+        drop.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) {
+          input.files = e.dataTransfer.files;
+          fname.textContent = e.dataTransfer.files[0].name;
+        }
+      });
+    }
+
+    initDrop('sub-drop', 'sub-file', 'sub-fname');
+    initDrop('dub-drop', 'dub-file', 'dub-fname');
+
+    // ── Log helper ────────────────────────────────────────────────────────────
+    function addLogEntry(entriesId, stage, message, extra) {
+      const container = document.getElementById(entriesId);
+      const row = document.createElement('div');
+      row.className = 'log-entry';
+      row.innerHTML = `
+        <span class="log-badge badge-${stage}">${stage}</span>
+        <span>
+          <span class="log-msg">${escHtml(message)}</span>
+          ${extra ? `<br><span class="log-extra">${escHtml(extra)}</span>` : ''}
+        </span>`;
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showResult(panelId, hdrId, bodyId, ok, data) {
+      const panel = document.getElementById(panelId);
+      const hdr = document.getElementById(hdrId);
+      const body = document.getElementById(bodyId);
+      panel.className = 'result-panel ' + (ok ? 'success' : 'error');
+      hdr.textContent = ok ? '✅  Done' : '❌  Error';
+      body.textContent = JSON.stringify(data, null, 2);
+      panel.style.display = 'block';
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // SUBTITLES — SSE stream handler
+    // ══════════════════════════════════════════════════════════════════════════
+    document.getElementById('subForm').addEventListener('submit', async e => {
       e.preventDefault();
 
-      const token = document.getElementById('token').value.trim();
-      const lang  = document.getElementById('language').value;
-      const file  = fileInput.files[0];
+      const token = document.getElementById('sub-token').value.trim();
+      const lang = document.getElementById('sub-lang').value;
+      const file = document.getElementById('sub-file').files[0];
 
       if (!token) return alert('Please enter your JWT token.');
-      if (!file)  return alert('Please select an audio or video file.');
+      if (!file) return alert('Please select a file.');
 
-      const btn = document.getElementById('submitBtn');
+      const btn = document.getElementById('sub-btn');
       btn.disabled = true;
       btn.textContent = 'Processing…';
 
-      document.getElementById('progress').style.display = 'block';
-      document.getElementById('result').style.display   = 'none';
-      document.getElementById('downloads').classList.remove('visible');
-      currentJobId = null;
+      // Reset UI
+      subJobId = null;
+      document.getElementById('sub-entries').innerHTML = '';
+      document.getElementById('sub-log').style.display = 'block';
+      document.getElementById('sub-result').style.display = 'none';
+      document.getElementById('sub-downloads').classList.remove('visible');
+      document.getElementById('sub-pulse').style.animationPlayState = 'running';
 
       const form = new FormData();
       form.append('file', file);
-      form.append('language', lang);
+      if (lang) form.append('language', lang);
 
       try {
-        const res  = await fetch(`${BASE}/api/subtitles/generate`, {
+        const res = await fetch(`${BASE}/api/subtitles/generate`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: form,
         });
 
-        const data = await res.json();
-        showResult(res.ok, data);
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
 
-        if (res.ok && data.job?._id) {
-          currentJobId = data.job._id;
-          document.getElementById('downloads').classList.add('visible');
-          document.getElementById('creditsVal').textContent = data.creditsRemaining;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+
+          const lines = buf.split('\n');
+          buf = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            let evt;
+            try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+            const stage = evt.stage || 'info';
+            let extra = '';
+            if (evt.progress != null) extra += `${evt.progress}%`;
+            if (evt.chunk != null) extra += (extra ? '  ·  ' : '') + `chunk ${evt.chunk}/${evt.totalChunks}`;
+            addLogEntry('sub-entries', stage, evt.message || stage, extra);
+
+            if (stage === 'done') {
+              document.getElementById('sub-pulse').style.animationPlayState = 'paused';
+              subJobId = evt.job?._id;
+              if (subJobId) document.getElementById('sub-downloads').classList.add('visible');
+              showResult('sub-result', 'sub-result-hdr', 'sub-result-body', true, evt.job || evt);
+              document.getElementById('sub-credits').textContent = evt.creditsRemaining ?? '—';
+              document.getElementById('dub-credits').textContent = evt.creditsRemaining ?? '—';
+            }
+
+            if (stage === 'error') {
+              document.getElementById('sub-pulse').style.animationPlayState = 'paused';
+              showResult('sub-result', 'sub-result-hdr', 'sub-result-body', false, evt);
+            }
+          }
         }
       } catch (err) {
-        showResult(false, { message: err.message });
+        addLogEntry('sub-entries', 'error', err.message);
+        showResult('sub-result', 'sub-result-hdr', 'sub-result-body', false, { message: err.message });
       } finally {
         btn.disabled = false;
         btn.textContent = 'Generate Subtitles';
-        document.getElementById('progress').style.display = 'none';
       }
     });
 
-    function showResult(ok, data) {
-      const box    = document.getElementById('result');
-      const header = document.getElementById('resultHeader');
-      const body   = document.getElementById('resultBody');
-
-      box.className    = `result ${ok ? 'success' : 'error'}`;
-      header.textContent = ok ? '✅  Success' : '❌  Error';
-      body.textContent   = JSON.stringify(data, null, 2);
-      box.style.display  = 'block';
-    }
-
-    // ── Download subtitle ─────────────────────────────────────────────────────
-    async function download(format) {
-      if (!currentJobId) return;
-      const token = document.getElementById('token').value.trim();
-
-      const res = await fetch(`${BASE}/api/subtitles/${currentJobId}/export?format=${format}`, {
+    async function dlSubtitle(format) {
+      if (!subJobId) return;
+      const token = document.getElementById('sub-token').value.trim();
+      const res = await fetch(`${BASE}/api/subtitles/${subJobId}/export?format=${format}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        return alert('Download failed: ' + (err.message || res.statusText));
+        const e = await res.json().catch(() => ({}));
+        return alert('Download failed: ' + (e.message || res.statusText));
       }
-
       const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = `subtitles.${format}`;
-      a.click();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `subtitles.${format}`; a.click();
       URL.revokeObjectURL(url);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // DUBBING — SSE stream handler
+    // ══════════════════════════════════════════════════════════════════════════
+    document.getElementById('dubForm').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const token = document.getElementById('dub-token').value.trim();
+      const srcLang = document.getElementById('dub-src-lang').value;
+      const tgtLang = document.getElementById('dub-tgt-lang').value;
+      const file = document.getElementById('dub-file').files[0];
+
+      if (!token) return alert('Please enter your JWT token.');
+      if (!tgtLang) return alert('Please select a target language.');
+      if (!file) return alert('Please select a file.');
+
+      const btn = document.getElementById('dub-btn');
+      btn.disabled = true;
+      btn.textContent = 'Dubbing in progress…';
+
+      // Reset UI
+      dubJobId = null;
+      document.getElementById('dub-entries').innerHTML = '';
+      document.getElementById('dub-log').style.display = 'block';
+      document.getElementById('dub-log-title').textContent = 'Initialising dubbing pipeline…';
+      document.getElementById('dub-result').style.display = 'none';
+      document.getElementById('dub-downloads').classList.remove('visible');
+      document.getElementById('dub-dl-audio').style.display = 'none';
+      document.getElementById('dub-speakers').classList.remove('visible');
+      document.getElementById('dub-speakers').innerHTML = '';
+      document.getElementById('dub-player').style.display = 'none';
+      document.getElementById('dub-pulse').style.animationPlayState = 'running';
+
+      const form = new FormData();
+      form.append('file', file);
+      form.append('targetLanguage', tgtLang);
+      if (srcLang) form.append('sourceLanguage', srcLang);
+
+      try {
+        const res = await fetch(`${BASE}/api/dubbing/start`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+
+          const lines = buf.split('\n');
+          buf = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            let evt;
+            try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+            const stage = evt.stage || 'info';
+            document.getElementById('dub-log-title').textContent = stageLabel(stage);
+
+            // Build extra detail string
+            let extra = '';
+            if (evt.progress != null) extra += `${evt.progress}%`;
+            if (evt.speakerCount != null) extra += (extra ? '  ·  ' : '') + `${evt.speakerCount} speaker(s) found`;
+            if (evt.segmentCount != null) extra += (extra ? '  ·  ' : '') + `${evt.segmentCount} segments`;
+            if (evt.jobId != null) extra += (extra ? '  ·  ' : '') + `Job ID: ${evt.jobId}`;
+
+            addLogEntry('dub-entries', stage, evt.message || stage, extra);
+
+            // Show speaker cards when we get speakerCount
+            if (evt.speakerCount > 0 && evt.stage === 'transcribing') {
+              // Will be populated with full profile data on 'done'
+            }
+
+            if (stage === 'done') {
+              document.getElementById('dub-pulse').style.animationPlayState = 'paused';
+              document.getElementById('dub-log-title').textContent = '✅ Dubbing complete';
+
+              const job = evt.job || {};
+              dubJobId = job._id;
+
+              // Show speaker profile cards
+              if (job.speakerProfiles?.length) {
+                const grid = document.getElementById('dub-speakers');
+                job.speakerProfiles.forEach(p => {
+                  const card = document.createElement('div');
+                  card.className = 'speaker-card';
+                  card.innerHTML = `<div class="speaker-card-title">${escHtml(p.speaker_id)}</div>
+                    <div class="speaker-card-desc">${escHtml(p.voice_description || '—')}</div>`;
+                  grid.appendChild(card);
+                });
+                grid.classList.add('visible');
+              }
+
+              // Video / audio preview + downloads
+              const videoUrl = evt.dubbedUrl || job.dubbedVideoUrl;
+              const audioOnlyUrl = evt.dubbedAudioUrl || job.dubbedAudioUrl;
+              const audioDl = document.getElementById('dub-dl-audio');
+              if (videoUrl) {
+                document.getElementById('dub-video').src = videoUrl;
+                document.getElementById('dub-player').style.display = 'block';
+                const dlLink = document.getElementById('dub-dl-link');
+                dlLink.href = videoUrl;
+                dlLink.download = `dubbed_${tgtLang}_${file.name}`;
+              }
+              if (audioOnlyUrl) {
+                audioDl.href = audioOnlyUrl;
+                audioDl.download = `dubbed_mix_${tgtLang}.mp3`;
+                audioDl.style.display = '';
+              } else {
+                audioDl.style.display = 'none';
+              }
+              if (videoUrl || audioOnlyUrl) {
+                document.getElementById('dub-downloads').classList.add('visible');
+              }
+
+              showResult('dub-result', 'dub-result-hdr', 'dub-result-body', true, {
+                jobId: job._id,
+                status: job.status,
+                duration: job.duration,
+                creditsUsed: job.creditsUsed,
+                speakers: job.speakerProfiles?.length,
+                segments: job.segments?.length,
+                dubbedVideoUrl: evt.dubbedUrl || job.dubbedVideoUrl,
+                dubbedAudioUrl: audioOnlyUrl,
+                localOutputPath: job.localOutputPath || evt.localOutputPath,
+                separationMethod: job.separationMethod,
+              });
+            }
+
+            if (stage === 'error') {
+              document.getElementById('dub-pulse').style.animationPlayState = 'paused';
+              document.getElementById('dub-log-title').textContent = '❌ Dubbing failed';
+              showResult('dub-result', 'dub-result-hdr', 'dub-result-body', false, evt);
+            }
+          }
+        }
+      } catch (err) {
+        addLogEntry('dub-entries', 'error', err.message);
+        showResult('dub-result', 'dub-result-hdr', 'dub-result-body', false, { message: err.message });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🎙 Start AI Dubbing';
+      }
+    });
+
+    function stageLabel(stage) {
+      const map = {
+        validating: 'Validating file & credits…',
+        extracting: 'Extracting audio…',
+        separating: 'Separating vocals from background…',
+        transcribing: 'Transcribing & identifying speakers…',
+        translating: 'Translating to target language…',
+        generating: 'Generating dubbed voices…',
+        syncing: 'Synchronising timing…',
+        merging: 'Mixing audio & muxing video…',
+        saving: 'Saving results…',
+        done: '✅ Dubbing complete',
+        error: '❌ Error',
+      };
+      return map[stage] || stage;
     }
   </script>
 </body>
+
 </html>

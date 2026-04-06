@@ -1,0 +1,11 @@
+[
+  { "voiceId": "Alex", "blurb": "Energetic and expressive mid-range male voice, mildly nasal (Inworld catalog)." },
+  { "voiceId": "Ashley", "blurb": "Warm, natural female voice (Inworld catalog)." },
+  { "voiceId": "Dennis", "blurb": "Middle-aged man; smooth, calm, friendly (Inworld catalog)." },
+  { "voiceId": "Jason", "blurb": "Male-presenting, clear narrator style." },
+  { "voiceId": "Deborah", "blurb": "Female-presenting, mature professional." },
+  { "voiceId": "Elizabeth", "blurb": "Female-presenting, warm and articulate." },
+  { "voiceId": "Mark", "blurb": "Male-presenting, conversational." },
+  { "voiceId": "Sarah", "blurb": "Female-presenting, friendly." },
+  { "voiceId": "Will", "blurb": "Male-presenting, youthful energy." }
+]

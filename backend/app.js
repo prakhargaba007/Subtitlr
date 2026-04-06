@@ -116,6 +116,7 @@ const fileRoutes = require("./routes/fileRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const blogRoutes = require("./routes/blogRoutes");
 const subtitleRoutes = require("./routes/subtitleRoutes");
+const dubbingRoutes = require("./routes/dubbingRoutes");
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -128,6 +129,7 @@ app.use("/api/blog", blogRoutes);
 // app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/subtitles", subtitleRoutes);
+app.use("/api/dubbing", dubbingRoutes);
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.log(error);

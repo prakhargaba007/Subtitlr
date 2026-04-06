@@ -34,7 +34,7 @@ const CreditTransactionSchema = new Schema(
     /** Where the credit movement originated */
     source: {
       type: String,
-      enum: ["signup_bonus", "subtitle_job", "purchase", "refund", "admin_grant"],
+      enum: ["signup_bonus", "subtitle_job", "dubbing_job", "purchase", "refund", "admin_grant"],
       required: true,
     },
     /** Human-readable label shown in the UI, e.g. "Transcribed video.mp4 (3 min)" */

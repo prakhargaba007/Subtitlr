@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.884.0",
     "@aws-sdk/s3-request-presigner": "^3.884.0",
+    "@elevenlabs/elevenlabs-js": "^2.41.1",
     "@google/genai": "^1.34.0",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
@@ -40,7 +41,9 @@
     "openai": "^6.15.0",
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.17.2",
+    "replicate": "^1.4.0",
     "sharp": "^0.34.4",
+    "smallestai": "^1.0.1",
     "uuid": "^10.0.0"
   }
 }
