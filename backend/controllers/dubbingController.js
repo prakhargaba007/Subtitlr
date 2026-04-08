@@ -25,6 +25,7 @@ const {
 const { syncSegmentTiming, buildTimeline } = require("../utils/timingSyncUtils");
 const { layerSpeechOverBackground, muxWithVideo, mergeAudioOnly } = require("../utils/audioMergeUtils");
 const { getJobOutputDir, saveArtifact } = require("../utils/dubbingOutputUtils");
+const { lipSyncVideo } = require("../utils/lipSyncRunner");
 const {
   isInworldConfigured,
   fetchInworldVoiceCatalog,
@@ -684,13 +685,32 @@ exports.startDubbingJob = async (req, res) => {
     let finalExt;
 
     if (isVideo) {
-      emit({ stage: "merging", message: "Muxing dubbed audio into video…" });
       finalOutputPath = path.join(os.tmpdir(), `dub_final_${uuidv4()}.mp4`);
       finalMimeType = "video/mp4";
       finalExt = ".mp4";
       tmpPaths.push(finalOutputPath);
-      await muxWithVideo(tmpInput, mixedAudioPath, finalOutputPath);
-      saveArtifact(jobIdStr, "final_dubbed.mp4", finalOutputPath);
+
+      let lipsyncedPath = null;
+      try {
+        emit({ stage: "lipsync", message: "Lip-syncing video…" });
+        lipsyncedPath = await lipSyncVideo({
+          inputVideoPath: tmpInput,
+          inputAudioPath: mixedAudioPath,
+          outputVideoPath: finalOutputPath,
+        });
+      } catch (lipErr) {
+        const strict = String(process.env.LIPSYNC_STRICT || "0").trim() === "1";
+        console.warn("Lip-sync failed:", lipErr && lipErr.message ? lipErr.message : lipErr);
+        if (strict) throw lipErr;
+      }
+
+      if (lipsyncedPath) {
+        saveArtifact(jobIdStr, "final_dubbed_lipsynced.mp4", finalOutputPath);
+      } else {
+        emit({ stage: "merging", message: "Muxing dubbed audio into video…" });
+        await muxWithVideo(tmpInput, mixedAudioPath, finalOutputPath);
+        saveArtifact(jobIdStr, "final_dubbed.mp4", finalOutputPath);
+      }
     } else {
       finalOutputPath = mixedAudioPath;
       finalMimeType = "audio/mpeg";
