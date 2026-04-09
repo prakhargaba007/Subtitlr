@@ -5,6 +5,9 @@
  */
 let pendingFile: File | null = null;
 let pendingLanguage: string = "";
+let pendingMode: "subtitles" | "dubbing" = "dubbing";
+let pendingTargetLanguage: string = "";
+let pendingSourceLanguage: string = "";
 
 export const setPendingFile = (file: File | null): void => {
   pendingFile = file;
@@ -17,3 +20,21 @@ export const setPendingLanguage = (lang: string): void => {
 };
 
 export const getPendingLanguage = (): string => pendingLanguage;
+
+export const setPendingMode = (mode: "subtitles" | "dubbing"): void => {
+  pendingMode = mode;
+};
+
+export const getPendingMode = (): "subtitles" | "dubbing" => pendingMode;
+
+export const setPendingTargetLanguage = (lang: string): void => {
+  pendingTargetLanguage = lang;
+};
+
+export const getPendingTargetLanguage = (): string => pendingTargetLanguage;
+
+export const setPendingSourceLanguage = (lang: string): void => {
+  pendingSourceLanguage = lang;
+};
+
+export const getPendingSourceLanguage = (): string => pendingSourceLanguage;

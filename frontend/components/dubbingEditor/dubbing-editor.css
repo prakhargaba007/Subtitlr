@@ -1,0 +1,21 @@
+/* Canva-like dark editor chrome + native video preview */
+.dubbing-editor-root {
+  --de-bg: #1a1d21;
+  --de-panel: #242830;
+  --de-panel-border: rgba(255, 255, 255, 0.08);
+  --de-text: #f4f6f8;
+  --de-muted: #9aa3ad;
+  --de-accent: #6b63ff;
+}
+
+.dubbing-editor-root .de-native-video-shell {
+  min-height: 200px;
+}
+
+.dubbing-editor-root .de-native-video {
+  display: block;
+  max-height: min(70vh, 720px);
+  min-height: 0;
+  object-fit: contain;
+  background: #000;
+}

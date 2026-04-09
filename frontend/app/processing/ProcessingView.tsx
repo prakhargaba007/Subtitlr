@@ -4,7 +4,14 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import AppNavbar from "@/components/AppNavbar";
-import { getPendingFile, setPendingFile, getPendingLanguage } from "@/utils/fileStore";
+import {
+  getPendingFile,
+  setPendingFile,
+  getPendingLanguage,
+  getPendingMode,
+  getPendingSourceLanguage,
+  getPendingTargetLanguage,
+} from "@/utils/fileStore";
 import axios from "axios";
 import axiosInstance from "@/utils/axios";
 
@@ -17,6 +24,12 @@ interface SSEEvent {
   | "uploading"
   | "transcribing"
   | "transliterating"
+  | "separating"
+  | "translating"
+  | "generating"
+  | "syncing"
+  | "merging"
+  | "lipsync"
   | "saving"
   | "done"
   | "error";
@@ -35,14 +48,26 @@ const STAGE_PROGRESS: Record<string, number> = {
   uploading: 25,
   transcribing: 30,
   transliterating: 88,
+  separating: 28,
+  translating: 40,
+  generating: 55,
+  syncing: 72,
+  merging: 88,
+  lipsync: 92,
   saving: 94,
   done: 100,
 };
 
-const STEPS = [
+const SUBTITLE_STEPS = [
   { id: "analyze", label: "Analyzing Audio" },
   { id: "generate", label: "Generating Subtitles" },
   { id: "align", label: "Aligning Timestamps" },
+];
+
+const DUBBING_STEPS = [
+  { id: "extract", label: "Extracting & Separating" },
+  { id: "translate", label: "Translating & Generating Voice" },
+  { id: "merge", label: "Syncing & Building Output" },
 ];
 
 const PREVIEW_LINES = [
@@ -79,6 +104,8 @@ export default function ProcessingView() {
 
   const homeHref = inDashboard ? "/dashboard" : "/";
   const exportBase = inDashboard ? "/dashboard" : "";
+  const mode = getPendingMode();
+  const steps = mode === "dubbing" ? DUBBING_STEPS : SUBTITLE_STEPS;
 
   // Rotate preview quote every 4 s with a fade
   useEffect(() => {
@@ -108,8 +135,15 @@ export default function ProcessingView() {
 
     const body = new FormData();
     body.append("file", file);
-    const lang = getPendingLanguage();
-    if (lang) body.append("language", lang);
+    if (mode === "subtitles") {
+      const lang = getPendingLanguage();
+      if (lang) body.append("language", lang);
+    } else {
+      const targetLanguage = getPendingTargetLanguage();
+      const sourceLanguage = getPendingSourceLanguage();
+      if (targetLanguage) body.append("targetLanguage", targetLanguage);
+      if (sourceLanguage) body.append("sourceLanguage", sourceLanguage);
+    }
 
     let parsedUpTo = 0;
 
@@ -150,14 +184,18 @@ export default function ProcessingView() {
         if (event.stage === "done" && event.job) {
           setPendingFile(null);
           setTimeout(() => {
-            router.push(`${exportBase}/export?jobId=${event.job!._id}`);
+            if (mode === "dubbing") {
+              router.push(`${exportBase}/dubbing/editor?jobId=${event.job!._id}`);
+            } else {
+              router.push(`${exportBase}/export?jobId=${event.job!._id}`);
+            }
           }, 1200);
         }
       }
     };
 
     axiosInstance
-      .post<string>("/api/subtitles/generate", body, {
+      .post<string>(mode === "dubbing" ? "/api/dubbing/start" : "/api/subtitles/generate", body, {
         responseType: "text",
         signal: controller.signal,
         headers: { "Content-Type": undefined },
@@ -206,7 +244,9 @@ export default function ProcessingView() {
             <p className="text-on-surface-variant text-body-lg leading-relaxed max-w-md">
               {errorMsg
                 ? "Something went wrong. Please try again."
-                : "Sit back and relax. We're meticulously crafting your subtitles with high-precision AI."}
+                : mode === "dubbing"
+                  ? "Sit back and relax. We're generating your dubbed audio with high-precision AI."
+                  : "Sit back and relax. We're meticulously crafting your subtitles with high-precision AI."}
             </p>
           </div>
 
@@ -294,7 +334,7 @@ export default function ProcessingView() {
           {/* Steps timeline */}
           {!errorMsg && (
             <div className="space-y-5 pl-2 border-l-2 border-surface-container ml-[68px]">
-              {STEPS.map((step, i) => {
+              {steps.map((step, i) => {
                 const done = i < currentStep;
                 const active = i === currentStep;
                 return (
@@ -382,10 +422,16 @@ export default function ProcessingView() {
                   style={{ animation: "pulse 4s cubic-bezier(0.4,0,0.6,1) infinite" }}
                 >
                   {errorMsg
-                    ? "Transcription failed"
+                    ? mode === "dubbing"
+                      ? "Dubbing failed"
+                      : "Transcription failed"
                     : progress >= 100
-                      ? "Transcription complete!"
-                      : "Transcription in progress…"}
+                      ? mode === "dubbing"
+                        ? "Dubbing complete!"
+                        : "Transcription complete!"
+                      : mode === "dubbing"
+                        ? "Dubbing in progress…"
+                        : "Transcription in progress…"}
                 </h3>
 
                 {/* Stage description */}

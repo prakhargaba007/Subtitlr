@@ -1,8 +1,14 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { setPendingFile, setPendingLanguage } from "@/utils/fileStore";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  setPendingFile,
+  setPendingLanguage,
+  setPendingMode,
+  setPendingSourceLanguage,
+  setPendingTargetLanguage,
+} from "@/utils/fileStore";
 import axiosInstance from "@/utils/axios";
 
 // ── Accepted MIME types ───────────────────────────────────────────────────────
@@ -144,6 +150,7 @@ function LanguagePicker({
 
 export default function UploadCard({ basePath = "" }: { basePath?: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [dragOver, setDragOver] = useState(false);
@@ -151,6 +158,8 @@ export default function UploadCard({ basePath = "" }: { basePath?: string }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState("");
   const [languages, setLanguages] = useState<ApiLanguage[]>([AUTO_DETECT]);
+
+  const mode = (searchParams.get("mode") || "dubbing").toLowerCase() === "subtitles" ? "subtitles" : "dubbing";
 
   useEffect(() => {
     axiosInstance
@@ -187,7 +196,14 @@ export default function UploadCard({ basePath = "" }: { basePath?: string }) {
   const handleNext = () => {
     if (!selectedFile) return;
     setPendingFile(selectedFile);
-    setPendingLanguage(language);
+    setPendingMode(mode);
+    if (mode === "subtitles") {
+      setPendingLanguage(language);
+    } else {
+      // For dubbing we treat the picker as *target language* for now
+      setPendingTargetLanguage(language);
+      setPendingSourceLanguage(""); // auto
+    }
     router.push(`${basePath}/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`);
   };
 
@@ -280,13 +296,17 @@ export default function UploadCard({ basePath = "" }: { basePath?: string }) {
             <div className="flex flex-col gap-4 p-6 bg-surface-container-lowest/50">
               <div>
                 <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
-                  Subtitle Language
+                  {mode === "dubbing" ? "Dubbing Language (Target)" : "Subtitle Language"}
                 </p>
                 <LanguagePicker languages={languages} value={language} onChange={setLanguage} />
                 <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
                   {language === ""
-                    ? "Whisper will detect the language automatically."
-                    : `Transcribing in ${languages.find((l) => l.value === language)?.label ?? language}.`}
+                    ? mode === "dubbing"
+                      ? "We will auto-detect the source language and dub into your selected target."
+                      : "Whisper will detect the language automatically."
+                    : mode === "dubbing"
+                      ? `Dubbing to ${languages.find((l) => l.value === language)?.label ?? language}.`
+                      : `Transcribing in ${languages.find((l) => l.value === language)?.label ?? language}.`}
                 </p>
               </div>
 
@@ -303,7 +323,7 @@ export default function UploadCard({ basePath = "" }: { basePath?: string }) {
                 ].join(" ")}
               >
                 <span className="material-symbols-outlined text-lg">auto_awesome</span>
-                Generate Subtitles
+                {mode === "dubbing" ? "Start Dubbing" : "Generate Subtitles"}
               </button>
 
               {!selectedFile && (

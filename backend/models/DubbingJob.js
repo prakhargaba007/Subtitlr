@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const segmentSchema = new mongoose.Schema(
   {
+    // Stable id used by editor UI for updates/regenerations
+    segmentId: { type: String, default: null },
+    // Incremented on each edit/regenerate
+    revision: { type: Number, default: 0 },
     start: { type: Number, required: true },
     end: { type: Number, required: true },
     speaker_id: { type: String, required: true },

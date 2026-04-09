@@ -3,6 +3,7 @@ const path = require("path");
 const os = require("os");
 const { v4: uuidv4 } = require("uuid");
 const mongoose = require("mongoose");
+const OpenAI = require("openai");
 
 const DubbingJob = require("../models/DubbingJob");
 const User = require("../models/User");
@@ -44,6 +45,48 @@ const DUBBING_CREDITS_PER_MINUTE = 5;
 
 const calculateDubbingCredits = (durationSeconds) =>
   Math.ceil(durationSeconds / 60) * DUBBING_CREDITS_PER_MINUTE;
+
+let _openai = null;
+const getOpenAI = () => {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+};
+
+async function streamToBuffer(body) {
+  if (!body) return Buffer.alloc(0);
+  if (Buffer.isBuffer(body)) return body;
+  if (typeof body.transformToByteArray === "function") {
+    const arr = await body.transformToByteArray();
+    return Buffer.from(arr);
+  }
+  // Node stream
+  return await new Promise((resolve, reject) => {
+    const chunks = [];
+    body.on("data", (c) => chunks.push(Buffer.from(c)));
+    body.on("end", () => resolve(Buffer.concat(chunks)));
+    body.on("error", reject);
+  });
+}
+
+async function ensureJobEditable(req, jobId) {
+  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+    const err = new Error("Dubbing job not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+  const job = await DubbingJob.findById(jobId);
+  if (!job) {
+    const err = new Error("Dubbing job not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+  if (job.user.toString() !== req.userId) {
+    const err = new Error("Access denied.");
+    err.statusCode = 403;
+    throw err;
+  }
+  return job;
+}
 
 // ─── Controllers ──────────────────────────────────────────────────────────────
 
@@ -755,12 +798,15 @@ exports.startDubbingJob = async (req, res) => {
 
     // Persist final state to DB
     const segmentsForDb = timeline.map((seg, i) => ({
+      segmentId: uuidv4(),
+      revision: 0,
       start: seg.start,
       end: seg.end,
       speaker_id: seg.speaker_id,
       originalText: translatedSegments[i].originalText,
       translatedText: seg.translatedText,
       timingStrategy: seg.strategy,
+      dubbedAudioKey: null,
     }));
 
     const finalJob = await DubbingJob.findByIdAndUpdate(
@@ -873,5 +919,436 @@ exports.getDubbingJobs = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+};
+
+/**
+ * GET /api/dubbing/:id/editor
+ * Returns job data needed for the editor UI.
+ * Backfills missing segmentId values for older jobs.
+ */
+exports.getDubbingEditor = async (req, res, next) => {
+  try {
+    const job = await ensureJobEditable(req, req.params.id);
+
+    let touched = false;
+    const segments = (job.segments || []).map((s) => {
+      if (!s.segmentId) {
+        touched = true;
+        return { ...s.toObject?.() ?? s, segmentId: uuidv4(), revision: s.revision ?? 0 };
+      }
+      return s;
+    });
+
+    if (touched) {
+      job.segments = segments;
+      await job.save();
+    }
+
+    res.json({
+      job: {
+        _id: job._id,
+        status: job.status,
+        originalFileName: job.originalFileName,
+        fileType: job.fileType,
+        sourceLanguage: job.sourceLanguage,
+        targetLanguage: job.targetLanguage,
+        duration: job.duration,
+        dubbedVideoUrl: job.dubbedVideoUrl,
+        dubbedAudioUrl: job.dubbedAudioUrl,
+        originalVideoKey: job.originalVideoKey,
+        vocalsKey: job.vocalsKey,
+        backgroundKey: job.backgroundKey,
+        ttsProvider: job.ttsProvider,
+        speakerProfiles: job.speakerProfiles,
+        segments: job.segments,
+      },
+    });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
+};
+
+/**
+ * PATCH /api/dubbing/:id/segments/:segmentId
+ * Updates editable segment metadata (text/timing/strategy).
+ */
+exports.patchDubbingSegment = async (req, res, next) => {
+  try {
+    const job = await ensureJobEditable(req, req.params.id);
+    const { segmentId } = req.params;
+
+    const idx = (job.segments || []).findIndex((s) => s.segmentId === segmentId);
+    if (idx === -1) {
+      const err = new Error("Segment not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const patch = req.body || {};
+    const seg = job.segments[idx];
+
+    if (typeof patch.translatedText === "string") {
+      seg.translatedText = patch.translatedText;
+    }
+    if (typeof patch.start === "number") seg.start = patch.start;
+    if (typeof patch.end === "number") seg.end = patch.end;
+    if (typeof patch.timingStrategy === "string") seg.timingStrategy = patch.timingStrategy;
+
+    // Basic validation
+    if (!(Number.isFinite(seg.start) && Number.isFinite(seg.end)) || seg.end <= seg.start) {
+      const err = new Error("Invalid segment timing.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    seg.revision = (seg.revision ?? 0) + 1;
+    await job.save();
+
+    res.json({ segment: seg });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
+};
+
+/**
+ * POST /api/dubbing/:id/segments/:segmentId/improve
+ * Improves translated text for natural speech while keeping timing constraints.
+ */
+exports.improveDubbingSegment = async (req, res, next) => {
+  try {
+    const job = await ensureJobEditable(req, req.params.id);
+    const { segmentId } = req.params;
+    const seg = (job.segments || []).find((s) => s.segmentId === segmentId);
+    if (!seg) {
+      const err = new Error("Segment not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const targetSeconds = Math.max(0.2, (seg.end ?? 0) - (seg.start ?? 0));
+    const systemPrompt = `You are a professional dubbing script editor.
+
+Task: Rewrite the provided text to sound natural for SPOKEN delivery in ${job.targetLanguage}.
+
+Constraints:
+1) Keep the meaning the same.
+2) Fit a time budget of ~${targetSeconds.toFixed(2)} seconds when spoken.
+3) Keep names/technical terms unchanged.
+4) Keep it as ONE segment (do not add/remove sentences).
+5) Return ONLY valid JSON: { "improved_text": "..." }`;
+
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: JSON.stringify({
+            original_text: seg.originalText || "",
+            current_translated_text: seg.translatedText || "",
+          }),
+        },
+      ],
+    });
+
+    let improvedText = "";
+    try {
+      let text = response.choices[0].message.content.trim();
+      text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+      const parsed = JSON.parse(text);
+      improvedText = String(parsed.improved_text || "").trim();
+    } catch (parseErr) {
+      const err = new Error(`Improve response parse failed: ${parseErr.message}`);
+      err.statusCode = 500;
+      throw err;
+    }
+
+    res.json({ improvedText });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
+};
+
+/**
+ * POST /api/dubbing/:id/segments/:segmentId/regenerate
+ * Generates new TTS audio for a segment and stores it in the job.
+ */
+exports.regenerateDubbingSegment = async (req, res, next) => {
+  const tmpPaths = [];
+  try {
+    const job = await ensureJobEditable(req, req.params.id);
+    const { segmentId } = req.params;
+    const seg = (job.segments || []).find((s) => s.segmentId === segmentId);
+    if (!seg) {
+      const err = new Error("Segment not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const speakerProfile = (job.speakerProfiles || []).find((p) => p.speaker_id === seg.speaker_id);
+    const voiceKey = speakerProfile?.elevenlabs_voice_id;
+    if (!voiceKey) {
+      const err = new Error(`No voice configured for speaker: ${seg.speaker_id}`);
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const provider = job.ttsProvider || getTtsProvider();
+    const rawText = String(seg.translatedText || "").trim();
+    if (!rawText) {
+      const err = new Error("Segment translatedText is empty.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    // Step 1: Generate raw TTS
+    let ttsPath;
+    if (provider === "openai") {
+      const out = await generateSpeechOpenAI(rawText, voiceKey);
+      ttsPath = out.audioPath;
+    } else if (provider === "inworld") {
+      const out = await synthesizeInworldTts(rawText, voiceKey);
+      ttsPath = out.audioPath;
+    } else if (provider === "smallest") {
+      const out = await synthesizeSmallestTts(rawText, voiceKey);
+      ttsPath = out.audioPath;
+    } else {
+      const out = await generateSpeech(rawText, voiceKey);
+      ttsPath = out.audioPath;
+    }
+    tmpPaths.push(ttsPath);
+
+    // Step 2: Sync timing to segment slot
+    const originalDuration = (seg.end ?? 0) - (seg.start ?? 0);
+    const synced = await syncSegmentTiming(ttsPath, originalDuration);
+    tmpPaths.push(synced.adjustedPath);
+
+    // Step 3: Upload per-segment audio
+    const nextRev = (seg.revision ?? 0) + 1;
+    const key = `dubbing/${req.userId}/${job._id.toString()}/segments/${segmentId}_r${nextRev}.mp3`;
+    await storage.saveFile(fs.readFileSync(synced.adjustedPath), key, "audio/mpeg");
+    const url = await storage.getPublicUrl(key);
+
+    seg.dubbedAudioKey = key;
+    seg.timingStrategy = synced.strategy;
+    seg.revision = nextRev;
+    await job.save();
+
+    res.json({
+      segment: seg,
+      audio: {
+        key,
+        url,
+        strategy: synced.strategy,
+        adjustedDuration: synced.adjustedDuration,
+      },
+    });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  } finally {
+    tmpPaths.forEach(cleanupPath);
+  }
+};
+
+/**
+ * POST /api/dubbing/:id/rebuild
+ * Rebuilds the full dubbed mix (and muxes video if needed) using stored per-segment audio when available.
+ */
+exports.rebuildDubbingJob = async (req, res, next) => {
+  const tmpPaths = [];
+  try {
+    const stream = String(req.query.stream || "0").trim() === "1";
+    const emit =
+      stream
+        ? (data) => {
+            try {
+              res.write(`data: ${JSON.stringify(data)}\n\n`);
+            } catch (_) {}
+          }
+        : null;
+
+    if (stream) {
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.flushHeaders();
+    }
+
+    const job = await ensureJobEditable(req, req.params.id);
+    await DubbingJob.findByIdAndUpdate(job._id, { status: "merging" }).catch(() => {});
+    if (emit) emit({ stage: "merging", message: "Starting rebuild…" });
+
+    if (!job.backgroundKey) {
+      const err = new Error("Cannot rebuild: background stem not available for this job.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    // Download background stem
+    if (emit) emit({ stage: "merging", message: "Loading background stem…" });
+    const bgBody = await storage.getFile(job.backgroundKey);
+    const bgBuf = await streamToBuffer(bgBody);
+    const bgPath = path.join(os.tmpdir(), `dub_bg_${uuidv4()}.mp3`);
+    fs.writeFileSync(bgPath, bgBuf);
+    tmpPaths.push(bgPath);
+
+    // Prepare local adjusted paths for each segment
+    const provider = job.ttsProvider || getTtsProvider();
+    const speakerVoiceMap = {};
+    for (const p of job.speakerProfiles || []) speakerVoiceMap[p.speaker_id] = p.elevenlabs_voice_id;
+
+    const segmentAudioLocal = [];
+    const allSegs = job.segments || [];
+    for (let i = 0; i < allSegs.length; i++) {
+      const seg = allSegs[i];
+      if (emit) {
+        emit({
+          stage: "merging",
+          message: `Preparing segment ${i + 1}/${allSegs.length}…`,
+          progress: Math.round(((i + 1) / allSegs.length) * 60),
+          segmentId: seg.segmentId,
+        });
+      }
+      let localMp3Path = null;
+
+      if (seg.dubbedAudioKey) {
+        const body = await storage.getFile(seg.dubbedAudioKey);
+        const buf = await streamToBuffer(body);
+        localMp3Path = path.join(os.tmpdir(), `seg_${seg.segmentId}_${uuidv4()}.mp3`);
+        fs.writeFileSync(localMp3Path, buf);
+        tmpPaths.push(localMp3Path);
+      } else {
+        const voiceKey = speakerVoiceMap[seg.speaker_id];
+        if (!voiceKey) {
+          const err = new Error(`No voice configured for speaker: ${seg.speaker_id}`);
+          err.statusCode = 422;
+          throw err;
+        }
+        const rawText = String(seg.translatedText || "").trim();
+        if (!rawText) continue;
+
+        let ttsPath;
+        if (provider === "openai") {
+          const out = await generateSpeechOpenAI(rawText, voiceKey);
+          ttsPath = out.audioPath;
+        } else if (provider === "inworld") {
+          const out = await synthesizeInworldTts(rawText, voiceKey);
+          ttsPath = out.audioPath;
+        } else if (provider === "smallest") {
+          const out = await synthesizeSmallestTts(rawText, voiceKey);
+          ttsPath = out.audioPath;
+        } else {
+          const out = await generateSpeech(rawText, voiceKey);
+          ttsPath = out.audioPath;
+        }
+        tmpPaths.push(ttsPath);
+        localMp3Path = ttsPath;
+      }
+
+      const originalDuration = (seg.end ?? 0) - (seg.start ?? 0);
+      const synced = await syncSegmentTiming(localMp3Path, originalDuration);
+      tmpPaths.push(synced.adjustedPath);
+
+      segmentAudioLocal.push({
+        start: seg.start,
+        adjustedPath: synced.adjustedPath,
+        adjustedDuration: synced.adjustedDuration,
+      });
+    }
+
+    if (emit) emit({ stage: "merging", message: "Mixing dubbed speech over background…", progress: 75 });
+    const mixedAudioPath = path.join(os.tmpdir(), `dub_mix_${uuidv4()}.mp3`);
+    tmpPaths.push(mixedAudioPath);
+    await layerSpeechOverBackground(segmentAudioLocal, bgPath, mixedAudioPath, job.duration || 0);
+
+    // Upload mix
+    if (emit) emit({ stage: "merging", message: "Uploading rebuilt audio…" , progress: 85});
+    const dubbedAudioKey = `dubbing/${req.userId}/${uuidv4()}_dubbed_audio_rebuild.mp3`;
+    await storage.saveFile(fs.readFileSync(mixedAudioPath), dubbedAudioKey, "audio/mpeg");
+    const dubbedAudioUrl = await storage.getPublicUrl(dubbedAudioKey);
+
+    let dubbedVideoUrl = job.dubbedVideoUrl;
+    let dubbedVideoKey = job.dubbedVideoKey;
+
+    if (job.fileType === "video") {
+      if (!job.originalVideoKey) {
+        const err = new Error("Cannot rebuild video: original video key not available.");
+        err.statusCode = 422;
+        throw err;
+      }
+      if (emit) emit({ stage: "merging", message: "Rebuilding video output…", progress: 90 });
+      const vidBody = await storage.getFile(job.originalVideoKey);
+      const vidBuf = await streamToBuffer(vidBody);
+      const vidPath = path.join(os.tmpdir(), `dub_vid_${uuidv4()}.mp4`);
+      fs.writeFileSync(vidPath, vidBuf);
+      tmpPaths.push(vidPath);
+
+      const outVideoPath = path.join(os.tmpdir(), `dub_final_${uuidv4()}.mp4`);
+      tmpPaths.push(outVideoPath);
+
+      // Try lipsync (optional) else mux
+      let lipsyncedPath = null;
+      try {
+        lipsyncedPath = await lipSyncVideo({
+          inputVideoPath: vidPath,
+          inputAudioPath: mixedAudioPath,
+          outputVideoPath: outVideoPath,
+        });
+      } catch (lipErr) {
+        const strict = String(process.env.LIPSYNC_STRICT || "0").trim() === "1";
+        if (strict) throw lipErr;
+      }
+      if (!lipsyncedPath) {
+        await muxWithVideo(vidPath, mixedAudioPath, outVideoPath);
+      }
+
+      const key = `dubbing/${req.userId}/${uuidv4()}_dubbed_rebuild.mp4`;
+      await storage.saveFile(fs.readFileSync(outVideoPath), key, "video/mp4");
+      dubbedVideoKey = key;
+      dubbedVideoUrl = await storage.getPublicUrl(key);
+    }
+
+    const updated = await DubbingJob.findByIdAndUpdate(
+      job._id,
+      {
+        status: "completed",
+        dubbedAudioKey,
+        dubbedAudioUrl,
+        dubbedVideoKey,
+        dubbedVideoUrl,
+      },
+      { new: true }
+    );
+
+    if (emit) {
+      emit({ stage: "done", message: "Rebuild complete.", job: updated, progress: 100 });
+      return res.end();
+    }
+    res.json({ job: updated });
+  } catch (err) {
+    const stream = String(req.query.stream || "0").trim() === "1";
+    if (stream) {
+      try {
+        res.write(
+          `data: ${JSON.stringify({
+            stage: "error",
+            message: err.message || "Rebuild failed.",
+            statusCode: err.statusCode || 500,
+          })}\n\n`
+        );
+        return res.end();
+      } catch (_) {}
+    }
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  } finally {
+    tmpPaths.forEach(cleanupPath);
   }
 };
