@@ -1,0 +1,6 @@
+{
+  "venvPath": ".",
+  "venv": ".venv-vad",
+  "include": ["scripts"],
+  "exclude": ["**/node_modules", "**/__pycache__"]
+}
