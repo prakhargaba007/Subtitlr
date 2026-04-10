@@ -12,6 +12,7 @@ const {
   improveDubbingSegment,
   regenerateDubbingSegment,
   rebuildDubbingJob,
+  listLocalInworldVoices,
 } = require("../controllers/dubbingController");
 
 const AUDIO_VIDEO_MIMES = new Set([
@@ -66,6 +67,9 @@ const upload = multer({
 //   - targetLanguage: e.g. "french", "spanish", "hindi"
 //   - sourceLanguage: (optional) e.g. "english" — auto-detected if omitted
 router.post("/start", isAuth, upload.single("file"), startDubbingJob);
+
+// GET /api/dubbing/voices/local-inworld — curated Inworld IDs from backend/voices (must be before /:id)
+router.get("/voices/local-inworld", isAuth, listLocalInworldVoices);
 
 // GET /api/dubbing/:id/editor — editor payload (segments + profiles + urls)
 router.get("/:id/editor", isAuth, getDubbingEditor);

@@ -10,10 +10,17 @@ const User = require("../models/User");
 const { storage } = require("../utils/storage");
 const { calculateCreditsNeeded, assertEnoughCredits, deductCredits } = require("../utils/creditUtils");
 
-const { getFileDuration, extractAudio, cleanupPath } = require("../utils/audioUtils");
+const { getFileDuration, extractAudio, cleanupPath, ensureMinAudioDuration } = require("../utils/audioUtils");
 const { separateVocalsAndBackground } = require("../utils/sourceSeparationUtils");
 const { transcribeWithSpeakers } = require("../utils/transcribeUtils");
 const { translateToSpeechReady } = require("../utils/translationUtils");
+const { enrichSegmentsWithInworldVoiceProfile } = require("../utils/inworldSttUtils");
+const { resolveMaxAtempo } = require("../utils/dubbingConfig");
+const { textForInworldTts, textForNonInworldTts } = require("../utils/dubbingTextUtils");
+const {
+  flattenTranslatedSegmentsForTts,
+  flattenJobSegmentForTts,
+} = require("../utils/dubbingSegmentFlatten");
 const {
   getTtsProvider,
   isElevenLabsLibraryVoiceBlockedError,
@@ -39,6 +46,7 @@ const {
   selectBestSmallestVoice,
   synthesizeSmallestTts,
 } = require("../utils/smallestTtsUtils");
+const { loadLocalInworldVoices } = require("../utils/localInworldVoices");
 
 // Dubbing costs more credits than subtitles — 5 credits per minute
 const DUBBING_CREDITS_PER_MINUTE = 5;
@@ -50,6 +58,16 @@ let _openai = null;
 const getOpenAI = () => {
   if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return _openai;
+};
+
+/** GET — bundled Inworld voice list from backend/voices/inworld_voices_last.json */
+exports.listLocalInworldVoices = (req, res, next) => {
+  try {
+    const voices = loadLocalInworldVoices();
+    res.json({ voices, count: voices.length });
+  } catch (err) {
+    next(err);
+  }
 };
 
 async function streamToBuffer(body) {
@@ -66,6 +84,25 @@ async function streamToBuffer(body) {
     body.on("end", () => resolve(Buffer.concat(chunks)));
     body.on("error", reject);
   });
+}
+
+async function synthesizeDubbingTts(ttsProviderResolved, text, voiceKey, targetLanguage) {
+  const plain = textForNonInworldTts(text);
+  const iwText = textForInworldTts(text, targetLanguage);
+  if (ttsProviderResolved === "openai") {
+    const o = await generateSpeechOpenAI(plain, voiceKey);
+    return { audioPath: o.audioPath, wordTimestamps: [] };
+  }
+  if (ttsProviderResolved === "inworld") {
+    const o = await synthesizeInworldTts(iwText, voiceKey);
+    return { audioPath: o.audioPath, wordTimestamps: o.wordTimestamps || [] };
+  }
+  if (ttsProviderResolved === "smallest") {
+    const o = await synthesizeSmallestTts(plain, voiceKey);
+    return { audioPath: o.audioPath, wordTimestamps: [] };
+  }
+  const o = await generateSpeech(plain, voiceKey);
+  return { audioPath: o.audioPath, wordTimestamps: [] };
 }
 
 async function ensureJobEditable(req, jobId) {
@@ -271,7 +308,8 @@ exports.startDubbingJob = async (req, res) => {
 
     const { segments: rawSegments, speaker_profiles } = await transcribeWithSpeakers(
       vocalsPath,
-      sourceLanguage
+      sourceLanguage,
+      { fullMixPath: audioPath, backgroundPath }
     );
 
     emit({
@@ -281,14 +319,19 @@ exports.startDubbingJob = async (req, res) => {
       segmentCount: rawSegments.length,
     });
 
+    emit({ stage: "transcribing", message: "Enriching segments with voice profile (optional)…" });
+    const segmentsForTranslate = await enrichSegmentsWithInworldVoiceProfile(rawSegments, audioPath);
+
     // ── Step 4: Translate to speech-ready target language ────────────────────
     emit({ stage: "translating", message: `Translating to ${targetLanguage}…` });
     await DubbingJob.findByIdAndUpdate(job._id, { status: "translating" });
 
+    const translationMode = String(req.body.translationMode || "auto").trim() || "auto";
     const translatedSegments = await translateToSpeechReady(
-      rawSegments,
+      segmentsForTranslate,
       targetLanguage,
-      speaker_profiles
+      speaker_profiles,
+      { sourceLanguage, translationMode }
     );
 
     emit({ stage: "translating", message: "Translation complete." });
@@ -296,6 +339,8 @@ exports.startDubbingJob = async (req, res) => {
     // ── Step 5: Match each speaker to a TTS voice (OpenAI, Inworld, Smallest, or ElevenLabs) ─
     emit({ stage: "generating", message: "Matching speakers to voices…" });
     await DubbingJob.findByIdAndUpdate(job._id, { status: "generating" });
+
+    const dubbingSpeakerCount = speaker_profiles.length;
 
     let resolvedTtsProvider =
       ttsProvider === "openai"
@@ -312,12 +357,17 @@ exports.startDubbingJob = async (req, res) => {
 
     if (ttsProvider === "openai") {
       emit({ stage: "generating", message: "Selecting OpenAI TTS voices for speakers…" });
+      const assignedVoiceIds = [];
       for (const profile of speaker_profiles) {
         emit({
           stage: "generating",
           message: `Selecting voice for ${profile.speaker_id}…`,
         });
-        const v = await selectBestOpenAIVoice(profile.voice_description);
+        const v = await selectBestOpenAIVoice(profile.voice_description, {
+          excludeVoiceIds: assignedVoiceIds,
+          speakerCount: dubbingSpeakerCount,
+        });
+        assignedVoiceIds.push(v);
         voiceMap[profile.speaker_id] = v;
         updatedProfiles.push({
           speaker_id: profile.speaker_id,
@@ -333,12 +383,17 @@ exports.startDubbingJob = async (req, res) => {
       emit({ stage: "generating", message: "Loading Inworld voice catalog…" });
       const inworldCatalog = await fetchInworldVoiceCatalog();
       emit({ stage: "generating", message: "Selecting Inworld TTS voices for speakers…" });
+      const assignedInworldIds = [];
       for (const profile of speaker_profiles) {
         emit({
           stage: "generating",
           message: `Selecting voice for ${profile.speaker_id}…`,
         });
-        const v = await selectBestInworldVoice(profile.voice_description, inworldCatalog);
+        const v = await selectBestInworldVoice(profile.voice_description, inworldCatalog, {
+          excludeVoiceIds: assignedInworldIds,
+          speakerCount: dubbingSpeakerCount,
+        });
+        assignedInworldIds.push(v);
         voiceMap[profile.speaker_id] = v;
         updatedProfiles.push({
           speaker_id: profile.speaker_id,
@@ -354,12 +409,17 @@ exports.startDubbingJob = async (req, res) => {
       emit({ stage: "generating", message: "Loading Smallest.ai Waves voice catalog…" });
       const smallestCatalog = await fetchSmallestVoiceCatalog();
       emit({ stage: "generating", message: "Selecting Smallest TTS voices for speakers…" });
+      const assignedSmallestIds = [];
       for (const profile of speaker_profiles) {
         emit({
           stage: "generating",
           message: `Selecting voice for ${profile.speaker_id}…`,
         });
-        const v = await selectBestSmallestVoice(profile.voice_description, smallestCatalog);
+        const v = await selectBestSmallestVoice(profile.voice_description, smallestCatalog, {
+          excludeVoiceIds: assignedSmallestIds,
+          speakerCount: dubbingSpeakerCount,
+        });
+        assignedSmallestIds.push(v);
         voiceMap[profile.speaker_id] = v;
         updatedProfiles.push({
           speaker_id: profile.speaker_id,
@@ -375,12 +435,16 @@ exports.startDubbingJob = async (req, res) => {
       // Voice map + synthesis for auto: Inworld → Smallest → ElevenLabs → OpenAI (Step 6)
     } else {
       const availableVoices = await fetchAvailableVoices();
+      const assignedElIds = [];
       for (const profile of speaker_profiles) {
         emit({
           stage: "generating",
           message: `Selecting voice for ${profile.speaker_id}…`,
         });
-        const voiceId = await selectBestVoice(profile.voice_description, availableVoices);
+        const voiceId = await selectBestVoice(profile.voice_description, availableVoices, {
+          excludeVoiceIds: assignedElIds,
+        });
+        assignedElIds.push(voiceId);
         voiceMap[profile.speaker_id] = voiceId;
         updatedProfiles.push({
           speaker_id: profile.speaker_id,
@@ -397,8 +461,13 @@ exports.startDubbingJob = async (req, res) => {
     // ── Step 6: Generate TTS audio for each segment ──────────────────────────
     emit({ stage: "generating", message: "Generating dubbed audio for each segment…" });
 
+    const ttsRows = flattenTranslatedSegmentsForTts(translatedSegments);
+    const totalTtsUnits = ttsRows.length;
+    const maxAtempo = resolveMaxAtempo(targetLanguage);
+    const syncOpts = { maxAtempo };
+
     const rawDubbedPaths = [];
-    const totalSegments = translatedSegments.length;
+    let wordTsForRows = [];
 
     const stripAndCleanupPaths = (paths) => {
       const set = new Set(paths);
@@ -409,52 +478,55 @@ exports.startDubbingJob = async (req, res) => {
     };
 
     if (ttsProvider === "openai") {
-      for (let i = 0; i < totalSegments; i++) {
-        const seg = translatedSegments[i];
-        const voiceKey = voiceMap[seg.speaker_id];
+      for (let k = 0; k < totalTtsUnits; k++) {
+        const row = ttsRows[k];
+        const voiceKey = voiceMap[row.speaker_id];
         if (!voiceKey) {
-          throw new Error(`No voice selected for speaker: ${seg.speaker_id}`);
+          throw new Error(`No voice selected for speaker: ${row.speaker_id}`);
         }
         emit({
           stage: "generating",
-          message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-          progress: Math.round(((i + 1) / totalSegments) * 100),
+          message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+          progress: Math.round(((k + 1) / totalTtsUnits) * 100),
         });
-        const { audioPath: ttsPath } = await generateSpeechOpenAI(seg.translatedText, voiceKey);
-        tmpPaths.push(ttsPath);
-        rawDubbedPaths.push(ttsPath);
+        const { audioPath, wordTimestamps } = await synthesizeDubbingTts("openai", row.text, voiceKey, targetLanguage);
+        tmpPaths.push(audioPath);
+        rawDubbedPaths.push(audioPath);
+        wordTsForRows.push(wordTimestamps);
       }
     } else if (ttsProvider === "inworld") {
-      for (let i = 0; i < totalSegments; i++) {
-        const seg = translatedSegments[i];
-        const voiceKey = voiceMap[seg.speaker_id];
+      for (let k = 0; k < totalTtsUnits; k++) {
+        const row = ttsRows[k];
+        const voiceKey = voiceMap[row.speaker_id];
         if (!voiceKey) {
-          throw new Error(`No voice selected for speaker: ${seg.speaker_id}`);
+          throw new Error(`No voice selected for speaker: ${row.speaker_id}`);
         }
         emit({
           stage: "generating",
-          message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-          progress: Math.round(((i + 1) / totalSegments) * 100),
+          message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+          progress: Math.round(((k + 1) / totalTtsUnits) * 100),
         });
-        const { audioPath: ttsPath } = await synthesizeInworldTts(seg.translatedText, voiceKey);
-        tmpPaths.push(ttsPath);
-        rawDubbedPaths.push(ttsPath);
+        const { audioPath, wordTimestamps } = await synthesizeDubbingTts("inworld", row.text, voiceKey, targetLanguage);
+        tmpPaths.push(audioPath);
+        rawDubbedPaths.push(audioPath);
+        wordTsForRows.push(wordTimestamps);
       }
     } else if (ttsProvider === "smallest") {
-      for (let i = 0; i < totalSegments; i++) {
-        const seg = translatedSegments[i];
-        const voiceKey = voiceMap[seg.speaker_id];
+      for (let k = 0; k < totalTtsUnits; k++) {
+        const row = ttsRows[k];
+        const voiceKey = voiceMap[row.speaker_id];
         if (!voiceKey) {
-          throw new Error(`No voice selected for speaker: ${seg.speaker_id}`);
+          throw new Error(`No voice selected for speaker: ${row.speaker_id}`);
         }
         emit({
           stage: "generating",
-          message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-          progress: Math.round(((i + 1) / totalSegments) * 100),
+          message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+          progress: Math.round(((k + 1) / totalTtsUnits) * 100),
         });
-        const { audioPath: ttsPath } = await synthesizeSmallestTts(seg.translatedText, voiceKey);
-        tmpPaths.push(ttsPath);
-        rawDubbedPaths.push(ttsPath);
+        const { audioPath, wordTimestamps } = await synthesizeDubbingTts("smallest", row.text, voiceKey, targetLanguage);
+        tmpPaths.push(audioPath);
+        rawDubbedPaths.push(audioPath);
+        wordTsForRows.push(wordTimestamps);
       }
     } else if (ttsProvider === "auto") {
       let autoDone = false;
@@ -467,12 +539,17 @@ exports.startDubbingJob = async (req, res) => {
           const inworldCatalog = await fetchInworldVoiceCatalog();
           voiceMap = {};
           updatedProfiles = [];
+          const assignedIwAuto = [];
           for (const profile of speaker_profiles) {
             emit({
               stage: "generating",
               message: `Selecting Inworld voice for ${profile.speaker_id}…`,
             });
-            const v = await selectBestInworldVoice(profile.voice_description, inworldCatalog);
+            const v = await selectBestInworldVoice(profile.voice_description, inworldCatalog, {
+              excludeVoiceIds: assignedIwAuto,
+              speakerCount: dubbingSpeakerCount,
+            });
+            assignedIwAuto.push(v);
             voiceMap[profile.speaker_id] = v;
             updatedProfiles.push({
               speaker_id: profile.speaker_id,
@@ -485,20 +562,24 @@ exports.startDubbingJob = async (req, res) => {
             ttsProvider: "inworld",
           });
 
-          for (let i = 0; i < totalSegments; i++) {
-            const seg = translatedSegments[i];
+          wordTsForRows = [];
+          for (let k = 0; k < totalTtsUnits; k++) {
+            const row = ttsRows[k];
             emit({
               stage: "generating",
-              message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-              progress: Math.round(((i + 1) / totalSegments) * 100),
+              message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+              progress: Math.round(((k + 1) / totalTtsUnits) * 100),
             });
-            const { audioPath: ttsPath } = await synthesizeInworldTts(
-              seg.translatedText,
-              voiceMap[seg.speaker_id]
+            const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+              "inworld",
+              row.text,
+              voiceMap[row.speaker_id],
+              targetLanguage
             );
-            tmpPaths.push(ttsPath);
-            rawDubbedPaths.push(ttsPath);
-            iwPaths.push(ttsPath);
+            tmpPaths.push(audioPath);
+            rawDubbedPaths.push(audioPath);
+            iwPaths.push(audioPath);
+            wordTsForRows.push(wordTimestamps);
           }
           resolvedTtsProvider = "inworld";
           autoDone = true;
@@ -506,6 +587,7 @@ exports.startDubbingJob = async (req, res) => {
           console.warn("[dubbing] Inworld TTS failed:", iwErr.message);
           stripAndCleanupPaths(iwPaths);
           rawDubbedPaths.length = 0;
+          wordTsForRows = [];
           emit({
             stage: "generating",
             message: `Inworld TTS failed; trying Smallest.ai. (${iwErr.message})`,
@@ -520,12 +602,17 @@ exports.startDubbingJob = async (req, res) => {
           const smallestCatalog = await fetchSmallestVoiceCatalog();
           voiceMap = {};
           updatedProfiles = [];
+          const assignedSmAuto = [];
           for (const profile of speaker_profiles) {
             emit({
               stage: "generating",
               message: `Selecting Smallest voice for ${profile.speaker_id}…`,
             });
-            const v = await selectBestSmallestVoice(profile.voice_description, smallestCatalog);
+            const v = await selectBestSmallestVoice(profile.voice_description, smallestCatalog, {
+              excludeVoiceIds: assignedSmAuto,
+              speakerCount: dubbingSpeakerCount,
+            });
+            assignedSmAuto.push(v);
             voiceMap[profile.speaker_id] = v;
             updatedProfiles.push({
               speaker_id: profile.speaker_id,
@@ -538,20 +625,24 @@ exports.startDubbingJob = async (req, res) => {
             ttsProvider: "smallest",
           });
 
-          for (let i = 0; i < totalSegments; i++) {
-            const seg = translatedSegments[i];
+          wordTsForRows = [];
+          for (let k = 0; k < totalTtsUnits; k++) {
+            const row = ttsRows[k];
             emit({
               stage: "generating",
-              message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-              progress: Math.round(((i + 1) / totalSegments) * 100),
+              message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+              progress: Math.round(((k + 1) / totalTtsUnits) * 100),
             });
-            const { audioPath: ttsPath } = await synthesizeSmallestTts(
-              seg.translatedText,
-              voiceMap[seg.speaker_id]
+            const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+              "smallest",
+              row.text,
+              voiceMap[row.speaker_id],
+              targetLanguage
             );
-            tmpPaths.push(ttsPath);
-            rawDubbedPaths.push(ttsPath);
-            smPaths.push(ttsPath);
+            tmpPaths.push(audioPath);
+            rawDubbedPaths.push(audioPath);
+            smPaths.push(audioPath);
+            wordTsForRows.push(wordTimestamps);
           }
           resolvedTtsProvider = "smallest";
           autoDone = true;
@@ -559,6 +650,7 @@ exports.startDubbingJob = async (req, res) => {
           console.warn("[dubbing] Smallest TTS failed:", smErr.message);
           stripAndCleanupPaths(smPaths);
           rawDubbedPaths.length = 0;
+          wordTsForRows = [];
           emit({
             stage: "generating",
             message: `Smallest TTS failed; trying ElevenLabs. (${smErr.message})`,
@@ -573,12 +665,16 @@ exports.startDubbingJob = async (req, res) => {
           const availableVoices = await fetchAvailableVoices();
           voiceMap = {};
           updatedProfiles = [];
+          const assignedElAuto = [];
           for (const profile of speaker_profiles) {
             emit({
               stage: "generating",
               message: `Selecting voice for ${profile.speaker_id}…`,
             });
-            const voiceId = await selectBestVoice(profile.voice_description, availableVoices);
+            const voiceId = await selectBestVoice(profile.voice_description, availableVoices, {
+              excludeVoiceIds: assignedElAuto,
+            });
+            assignedElAuto.push(voiceId);
             voiceMap[profile.speaker_id] = voiceId;
             updatedProfiles.push({
               speaker_id: profile.speaker_id,
@@ -591,26 +687,31 @@ exports.startDubbingJob = async (req, res) => {
             ttsProvider: "elevenlabs",
           });
 
-          for (let i = 0; i < totalSegments; i++) {
-            const seg = translatedSegments[i];
+          wordTsForRows = [];
+          for (let k = 0; k < totalTtsUnits; k++) {
+            const row = ttsRows[k];
             emit({
               stage: "generating",
-              message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-              progress: Math.round(((i + 1) / totalSegments) * 100),
+              message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+              progress: Math.round(((k + 1) / totalTtsUnits) * 100),
             });
-            const { audioPath: ttsPath } = await generateSpeech(
-              seg.translatedText,
-              voiceMap[seg.speaker_id]
+            const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+              "elevenlabs",
+              row.text,
+              voiceMap[row.speaker_id],
+              targetLanguage
             );
-            tmpPaths.push(ttsPath);
-            rawDubbedPaths.push(ttsPath);
-            elPaths.push(ttsPath);
+            tmpPaths.push(audioPath);
+            rawDubbedPaths.push(audioPath);
+            elPaths.push(audioPath);
+            wordTsForRows.push(wordTimestamps);
           }
           resolvedTtsProvider = "elevenlabs";
           autoDone = true;
         } catch (elErr) {
           stripAndCleanupPaths(elPaths);
           rawDubbedPaths.length = 0;
+          wordTsForRows = [];
           const blocked = isElevenLabsLibraryVoiceBlockedError(elErr);
           console.warn("[dubbing] ElevenLabs TTS failed:", elErr.message);
           emit({
@@ -626,12 +727,17 @@ exports.startDubbingJob = async (req, res) => {
         emit({ stage: "generating", message: "Selecting OpenAI TTS voices for speakers…" });
         voiceMap = {};
         updatedProfiles = [];
+        const assignedOaiAuto = [];
         for (const profile of speaker_profiles) {
           emit({
             stage: "generating",
             message: `Selecting voice for ${profile.speaker_id}…`,
           });
-          const v = await selectBestOpenAIVoice(profile.voice_description);
+          const v = await selectBestOpenAIVoice(profile.voice_description, {
+            excludeVoiceIds: assignedOaiAuto,
+            speakerCount: dubbingSpeakerCount,
+          });
+          assignedOaiAuto.push(v);
           voiceMap[profile.speaker_id] = v;
           updatedProfiles.push({
             speaker_id: profile.speaker_id,
@@ -645,36 +751,46 @@ exports.startDubbingJob = async (req, res) => {
         });
         resolvedTtsProvider = "openai";
 
-        for (let i = 0; i < totalSegments; i++) {
-          const seg = translatedSegments[i];
+        wordTsForRows = [];
+        for (let k = 0; k < totalTtsUnits; k++) {
+          const row = ttsRows[k];
           emit({
             stage: "generating",
-            message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-            progress: Math.round(((i + 1) / totalSegments) * 100),
+            message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+            progress: Math.round(((k + 1) / totalTtsUnits) * 100),
           });
-          const { audioPath: ttsPath } = await generateSpeechOpenAI(
-            seg.translatedText,
-            voiceMap[seg.speaker_id]
+          const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+            "openai",
+            row.text,
+            voiceMap[row.speaker_id],
+            targetLanguage
           );
-          tmpPaths.push(ttsPath);
-          rawDubbedPaths.push(ttsPath);
+          tmpPaths.push(audioPath);
+          rawDubbedPaths.push(audioPath);
+          wordTsForRows.push(wordTimestamps);
         }
       }
     } else {
-      for (let i = 0; i < totalSegments; i++) {
-        const seg = translatedSegments[i];
-        const voiceId = voiceMap[seg.speaker_id];
+      for (let k = 0; k < totalTtsUnits; k++) {
+        const row = ttsRows[k];
+        const voiceId = voiceMap[row.speaker_id];
         if (!voiceId) {
-          throw new Error(`No voice selected for speaker: ${seg.speaker_id}`);
+          throw new Error(`No voice selected for speaker: ${row.speaker_id}`);
         }
         emit({
           stage: "generating",
-          message: `Generating speech: segment ${i + 1}/${totalSegments}…`,
-          progress: Math.round(((i + 1) / totalSegments) * 100),
+          message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+          progress: Math.round(((k + 1) / totalTtsUnits) * 100),
         });
-        const { audioPath: ttsPath } = await generateSpeech(seg.translatedText, voiceId);
-        tmpPaths.push(ttsPath);
-        rawDubbedPaths.push(ttsPath);
+        const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+          "elevenlabs",
+          row.text,
+          voiceId,
+          targetLanguage
+        );
+        tmpPaths.push(audioPath);
+        rawDubbedPaths.push(audioPath);
+        wordTsForRows.push(wordTimestamps);
       }
     }
 
@@ -691,16 +807,45 @@ exports.startDubbingJob = async (req, res) => {
     await DubbingJob.findByIdAndUpdate(job._id, { status: "syncing" });
 
     const syncedBuffers = [];
-    for (let i = 0; i < translatedSegments.length; i++) {
-      const seg = translatedSegments[i];
-      const originalDuration = seg.end - seg.start;
-
-      const synced = await syncSegmentTiming(rawDubbedPaths[i], originalDuration);
+    const timelineSegments = [];
+    for (let k = 0; k < ttsRows.length; k++) {
+      const row = ttsRows[k];
+      const originalDuration = Math.max(0.05, row.end - row.start);
+      const synced = await syncSegmentTiming(rawDubbedPaths[k], originalDuration, syncOpts);
       tmpPaths.push(synced.adjustedPath);
       syncedBuffers.push(synced);
+      timelineSegments.push({
+        start: row.start,
+        end: row.end,
+        speaker_id: row.speaker_id,
+        translatedText: row.text,
+      });
     }
 
-    const timeline = buildTimeline(translatedSegments, syncedBuffers);
+    const timeline = buildTimeline(timelineSegments, syncedBuffers);
+
+    const parentSubSegments = new Map();
+    const parentSolo = new Map();
+    translatedSegments.forEach((_, i) => parentSubSegments.set(i, []));
+    for (let k = 0; k < ttsRows.length; k++) {
+      const row = ttsRows[k];
+      const sync = syncedBuffers[k];
+      const wts = wordTsForRows[k];
+      if (row.subIndex >= 0) {
+        parentSubSegments.get(row.parentIndex).push({
+          relStart: row.relStart,
+          relEnd: row.relEnd,
+          translatedText: row.text,
+          timingStrategy: sync.strategy,
+          ttsWordTimestamps: wts && wts.length ? wts : undefined,
+        });
+      } else {
+        parentSolo.set(row.parentIndex, {
+          timingStrategy: sync.strategy,
+          ttsWordTimestamps: wts && wts.length ? wts : undefined,
+        });
+      }
+    }
 
     syncedBuffers.forEach((synced, idx) => {
       saveArtifact(
@@ -721,7 +866,22 @@ exports.startDubbingJob = async (req, res) => {
 
     await layerSpeechOverBackground(timeline, backgroundPath, mixedAudioPath, duration);
 
-    saveArtifact(jobIdStr, "dubbed_mix.mp3", mixedAudioPath);
+    const mixTargetSec = Math.max(
+      duration,
+      (await getFileDuration(tmpInput).catch(() => 0)) || 0,
+      (await getFileDuration(backgroundPath).catch(() => 0)) || 0
+    );
+    const paddedMixPath = path.join(os.tmpdir(), `dub_mixed_pad_${uuidv4()}.mp3`);
+    const mixResult = await ensureMinAudioDuration(mixedAudioPath, mixTargetSec, paddedMixPath);
+    if (mixResult.padded) {
+      tmpPaths.push(paddedMixPath);
+      console.warn(
+        `[dubbing] Final mix was ${mixResult.before.toFixed(2)}s; padded to ${mixResult.after.toFixed(2)}s (target ${mixTargetSec.toFixed(2)}s) so audio matches video length.`
+      );
+    }
+    const mixedAudioForOutput = mixResult.path;
+
+    saveArtifact(jobIdStr, "dubbed_mix.mp3", mixedAudioForOutput);
 
     let finalOutputPath;
     let finalMimeType;
@@ -738,7 +898,7 @@ exports.startDubbingJob = async (req, res) => {
         emit({ stage: "lipsync", message: "Lip-syncing video…" });
         lipsyncedPath = await lipSyncVideo({
           inputVideoPath: tmpInput,
-          inputAudioPath: mixedAudioPath,
+          inputAudioPath: mixedAudioForOutput,
           outputVideoPath: finalOutputPath,
         });
       } catch (lipErr) {
@@ -751,11 +911,11 @@ exports.startDubbingJob = async (req, res) => {
         saveArtifact(jobIdStr, "final_dubbed_lipsynced.mp4", finalOutputPath);
       } else {
         emit({ stage: "merging", message: "Muxing dubbed audio into video…" });
-        await muxWithVideo(tmpInput, mixedAudioPath, finalOutputPath);
+        await muxWithVideo(tmpInput, mixedAudioForOutput, finalOutputPath);
         saveArtifact(jobIdStr, "final_dubbed.mp4", finalOutputPath);
       }
     } else {
-      finalOutputPath = mixedAudioPath;
+      finalOutputPath = mixedAudioForOutput;
       finalMimeType = "audio/mpeg";
       finalExt = ".mp3";
       saveArtifact(jobIdStr, "final_dubbed.mp3", finalOutputPath);
@@ -768,7 +928,7 @@ exports.startDubbingJob = async (req, res) => {
     let dubbedAudioUrl = null;
     try {
       dubbedAudioKey = `dubbing/${req.userId}/${uuidv4()}_dubbed_audio.mp3`;
-      await storage.saveFile(fs.readFileSync(mixedAudioPath), dubbedAudioKey, "audio/mpeg");
+      await storage.saveFile(fs.readFileSync(mixedAudioForOutput), dubbedAudioKey, "audio/mpeg");
       dubbedAudioUrl = await storage.getPublicUrl(dubbedAudioKey);
     } catch (mixUploadErr) {
       console.warn("Dubbed audio (mix) upload failed:", mixUploadErr.message);
@@ -797,17 +957,24 @@ exports.startDubbingJob = async (req, res) => {
     );
 
     // Persist final state to DB
-    const segmentsForDb = timeline.map((seg, i) => ({
-      segmentId: uuidv4(),
-      revision: 0,
-      start: seg.start,
-      end: seg.end,
-      speaker_id: seg.speaker_id,
-      originalText: translatedSegments[i].originalText,
-      translatedText: seg.translatedText,
-      timingStrategy: seg.strategy,
-      dubbedAudioKey: null,
-    }));
+    const segmentsForDb = translatedSegments.map((ts, i) => {
+      const subs = parentSubSegments.get(i) || [];
+      const solo = parentSolo.get(i);
+      return {
+        segmentId: uuidv4(),
+        revision: 0,
+        start: ts.start,
+        end: ts.end,
+        speaker_id: ts.speaker_id,
+        originalText: ts.originalText,
+        translatedText: ts.translatedText,
+        subSegments: subs.length ? subs : [],
+        timingStrategy: subs.length ? null : solo?.timingStrategy ?? null,
+        ttsWordTimestamps: subs.length ? undefined : solo?.ttsWordTimestamps,
+        voiceProfile: ts.voiceProfile,
+        dubbedAudioKey: null,
+      };
+    });
 
     const finalJob = await DubbingJob.findByIdAndUpdate(
       job._id,
@@ -1107,26 +1274,16 @@ exports.regenerateDubbingSegment = async (req, res, next) => {
       throw err;
     }
 
+    const maxAtempo = resolveMaxAtempo(job.targetLanguage);
+    const syncOpts = { maxAtempo };
+
     // Step 1: Generate raw TTS
-    let ttsPath;
-    if (provider === "openai") {
-      const out = await generateSpeechOpenAI(rawText, voiceKey);
-      ttsPath = out.audioPath;
-    } else if (provider === "inworld") {
-      const out = await synthesizeInworldTts(rawText, voiceKey);
-      ttsPath = out.audioPath;
-    } else if (provider === "smallest") {
-      const out = await synthesizeSmallestTts(rawText, voiceKey);
-      ttsPath = out.audioPath;
-    } else {
-      const out = await generateSpeech(rawText, voiceKey);
-      ttsPath = out.audioPath;
-    }
+    const { audioPath: ttsPath } = await synthesizeDubbingTts(provider, rawText, voiceKey, job.targetLanguage);
     tmpPaths.push(ttsPath);
 
     // Step 2: Sync timing to segment slot
     const originalDuration = (seg.end ?? 0) - (seg.start ?? 0);
-    const synced = await syncSegmentTiming(ttsPath, originalDuration);
+    const synced = await syncSegmentTiming(ttsPath, originalDuration, syncOpts);
     tmpPaths.push(synced.adjustedPath);
 
     // Step 3: Upload per-segment audio
@@ -1206,6 +1363,9 @@ exports.rebuildDubbingJob = async (req, res, next) => {
 
     const segmentAudioLocal = [];
     const allSegs = job.segments || [];
+    const maxAtempo = resolveMaxAtempo(job.targetLanguage);
+    const syncOpts = { maxAtempo };
+
     for (let i = 0; i < allSegs.length; i++) {
       const seg = allSegs[i];
       if (emit) {
@@ -1216,14 +1376,25 @@ exports.rebuildDubbingJob = async (req, res, next) => {
           segmentId: seg.segmentId,
         });
       }
-      let localMp3Path = null;
+
+      const pushSyncedClip = async (localMp3Path, rowStart, rowEnd) => {
+        const originalDuration = Math.max(0.05, (rowEnd ?? 0) - (rowStart ?? 0));
+        const synced = await syncSegmentTiming(localMp3Path, originalDuration, syncOpts);
+        tmpPaths.push(synced.adjustedPath);
+        segmentAudioLocal.push({
+          start: rowStart,
+          adjustedPath: synced.adjustedPath,
+          adjustedDuration: synced.adjustedDuration,
+        });
+      };
 
       if (seg.dubbedAudioKey) {
         const body = await storage.getFile(seg.dubbedAudioKey);
         const buf = await streamToBuffer(body);
-        localMp3Path = path.join(os.tmpdir(), `seg_${seg.segmentId}_${uuidv4()}.mp3`);
+        const localMp3Path = path.join(os.tmpdir(), `seg_${seg.segmentId}_${uuidv4()}.mp3`);
         fs.writeFileSync(localMp3Path, buf);
         tmpPaths.push(localMp3Path);
+        await pushSyncedClip(localMp3Path, seg.start, seg.end);
       } else {
         const voiceKey = speakerVoiceMap[seg.speaker_id];
         if (!voiceKey) {
@@ -1231,36 +1402,20 @@ exports.rebuildDubbingJob = async (req, res, next) => {
           err.statusCode = 422;
           throw err;
         }
-        const rawText = String(seg.translatedText || "").trim();
-        if (!rawText) continue;
+        const rows = flattenJobSegmentForTts(seg);
+        if (!rows.length) continue;
 
-        let ttsPath;
-        if (provider === "openai") {
-          const out = await generateSpeechOpenAI(rawText, voiceKey);
-          ttsPath = out.audioPath;
-        } else if (provider === "inworld") {
-          const out = await synthesizeInworldTts(rawText, voiceKey);
-          ttsPath = out.audioPath;
-        } else if (provider === "smallest") {
-          const out = await synthesizeSmallestTts(rawText, voiceKey);
-          ttsPath = out.audioPath;
-        } else {
-          const out = await generateSpeech(rawText, voiceKey);
-          ttsPath = out.audioPath;
+        for (const row of rows) {
+          const { audioPath: ttsPath } = await synthesizeDubbingTts(
+            provider,
+            row.text,
+            voiceKey,
+            job.targetLanguage
+          );
+          tmpPaths.push(ttsPath);
+          await pushSyncedClip(ttsPath, row.start, row.end);
         }
-        tmpPaths.push(ttsPath);
-        localMp3Path = ttsPath;
       }
-
-      const originalDuration = (seg.end ?? 0) - (seg.start ?? 0);
-      const synced = await syncSegmentTiming(localMp3Path, originalDuration);
-      tmpPaths.push(synced.adjustedPath);
-
-      segmentAudioLocal.push({
-        start: seg.start,
-        adjustedPath: synced.adjustedPath,
-        adjustedDuration: synced.adjustedDuration,
-      });
     }
 
     if (emit) emit({ stage: "merging", message: "Mixing dubbed speech over background…", progress: 75 });
@@ -1268,14 +1423,21 @@ exports.rebuildDubbingJob = async (req, res, next) => {
     tmpPaths.push(mixedAudioPath);
     await layerSpeechOverBackground(segmentAudioLocal, bgPath, mixedAudioPath, job.duration || 0);
 
-    // Upload mix
-    if (emit) emit({ stage: "merging", message: "Uploading rebuilt audio…" , progress: 85});
-    const dubbedAudioKey = `dubbing/${req.userId}/${uuidv4()}_dubbed_audio_rebuild.mp3`;
-    await storage.saveFile(fs.readFileSync(mixedAudioPath), dubbedAudioKey, "audio/mpeg");
-    const dubbedAudioUrl = await storage.getPublicUrl(dubbedAudioKey);
+    const rebuildMixTarget = Math.max(
+      job.duration || 0,
+      (await getFileDuration(bgPath).catch(() => 0)) || 0
+    );
+    const rebuildPaddedPath = path.join(os.tmpdir(), `dub_mix_pad_${uuidv4()}.mp3`);
+    let mixedForRebuild = (await ensureMinAudioDuration(mixedAudioPath, rebuildMixTarget, rebuildPaddedPath))
+      .path;
+    if (mixedForRebuild === rebuildPaddedPath) tmpPaths.push(rebuildPaddedPath);
 
+    let dubbedAudioKey = null;
+    let dubbedAudioUrl = null;
     let dubbedVideoUrl = job.dubbedVideoUrl;
     let dubbedVideoKey = job.dubbedVideoKey;
+
+    let mixedForUpload = mixedForRebuild;
 
     if (job.fileType === "video") {
       if (!job.originalVideoKey) {
@@ -1290,6 +1452,13 @@ exports.rebuildDubbingJob = async (req, res, next) => {
       fs.writeFileSync(vidPath, vidBuf);
       tmpPaths.push(vidPath);
 
+      const vidDur = (await getFileDuration(vidPath).catch(() => 0)) || 0;
+      const muxTarget = Math.max(rebuildMixTarget, vidDur);
+      const rebuildMuxPadPath = path.join(os.tmpdir(), `dub_mix_muxpad_${uuidv4()}.mp3`);
+      const muxMix = (await ensureMinAudioDuration(mixedForRebuild, muxTarget, rebuildMuxPadPath)).path;
+      if (muxMix === rebuildMuxPadPath) tmpPaths.push(rebuildMuxPadPath);
+      mixedForUpload = muxMix;
+
       const outVideoPath = path.join(os.tmpdir(), `dub_final_${uuidv4()}.mp4`);
       tmpPaths.push(outVideoPath);
 
@@ -1298,7 +1467,7 @@ exports.rebuildDubbingJob = async (req, res, next) => {
       try {
         lipsyncedPath = await lipSyncVideo({
           inputVideoPath: vidPath,
-          inputAudioPath: mixedAudioPath,
+          inputAudioPath: mixedForUpload,
           outputVideoPath: outVideoPath,
         });
       } catch (lipErr) {
@@ -1306,7 +1475,7 @@ exports.rebuildDubbingJob = async (req, res, next) => {
         if (strict) throw lipErr;
       }
       if (!lipsyncedPath) {
-        await muxWithVideo(vidPath, mixedAudioPath, outVideoPath);
+        await muxWithVideo(vidPath, mixedForUpload, outVideoPath);
       }
 
       const key = `dubbing/${req.userId}/${uuidv4()}_dubbed_rebuild.mp4`;
@@ -1314,6 +1483,11 @@ exports.rebuildDubbingJob = async (req, res, next) => {
       dubbedVideoKey = key;
       dubbedVideoUrl = await storage.getPublicUrl(key);
     }
+
+    if (emit) emit({ stage: "merging", message: "Uploading rebuilt audio…", progress: 85 });
+    dubbedAudioKey = `dubbing/${req.userId}/${uuidv4()}_dubbed_audio_rebuild.mp3`;
+    await storage.saveFile(fs.readFileSync(mixedForUpload), dubbedAudioKey, "audio/mpeg");
+    dubbedAudioUrl = await storage.getPublicUrl(dubbedAudioKey);
 
     const updated = await DubbingJob.findByIdAndUpdate(
       job._id,

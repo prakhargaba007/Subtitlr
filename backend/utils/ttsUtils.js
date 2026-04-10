@@ -93,12 +93,20 @@ const fetchAvailableVoices = async () => {
  *
  * @param {string} voiceDescription
  * @param {Array} availableVoices
+ * @param {{ excludeVoiceIds?: string[] }} [options]
  * @returns {Promise<string>} ElevenLabs voiceId
  */
-const selectBestVoice = async (voiceDescription, availableVoices) => {
+const selectBestVoice = async (voiceDescription, availableVoices, options = {}) => {
   if (!availableVoices.length) return FALLBACK_VOICE_ID;
 
-  const voiceSummaries = availableVoices.map((v) => ({
+  const excludeSet = new Set((options.excludeVoiceIds || []).map(String));
+  let pool = availableVoices.filter((v) => !excludeSet.has(v.voiceId));
+  if (!pool.length) {
+    console.warn("[ttsUtils] ElevenLabs: all account voices already assigned; reusing pool.");
+    pool = availableVoices;
+  }
+
+  const voiceSummaries = pool.map((v) => ({
     voiceId: v.voiceId,
     name: v.name,
     gender: v.labels?.gender || "",
@@ -118,7 +126,7 @@ const selectBestVoice = async (voiceDescription, availableVoices) => {
           role: "system",
           content:
             "You are a voice casting assistant. Given a speaker description and a list of available voices, " +
-            "pick the single best matching voice. " +
+            "pick the single best matching voice. Do NOT pick any voiceId in alreadyAssignedVoiceIds. " +
             "Prioritise: gender match first, then age range, then accent/tone similarity. " +
             'Return ONLY valid JSON: { "voiceId": "<the matching voiceId>", "reason": "<one sentence why>" }',
         },
@@ -127,13 +135,14 @@ const selectBestVoice = async (voiceDescription, availableVoices) => {
           content: JSON.stringify({
             speakerDescription: voiceDescription,
             availableVoices: voiceSummaries,
+            alreadyAssignedVoiceIds: [...excludeSet],
           }),
         },
       ],
     });
 
     const parsed = JSON.parse(response.choices[0].message.content);
-    const matched = availableVoices.find((v) => v.voiceId === parsed.voiceId);
+    const matched = pool.find((v) => v.voiceId === parsed.voiceId && !excludeSet.has(v.voiceId));
 
     if (matched) {
       console.log(`[ttsUtils] Voice match: "${matched.name}" — ${parsed.reason}`);
@@ -143,16 +152,26 @@ const selectBestVoice = async (voiceDescription, availableVoices) => {
     console.warn("[ttsUtils] Voice matching failed, using fallback:", err.message);
   }
 
-  return FALLBACK_VOICE_ID;
+  const firstUnused = availableVoices.find((v) => !excludeSet.has(v.voiceId));
+  return firstUnused ? firstUnused.voiceId : FALLBACK_VOICE_ID;
 };
 
 /**
  * Pick an OpenAI TTS preset voice from the speaker description.
  *
  * @param {string} voiceDescription
+ * @param {{ excludeVoiceIds?: string[] }} [options] — excludeVoiceIds are voice names (e.g. nova)
  * @returns {Promise<string>} One of alloy, echo, fable, onyx, nova, shimmer
  */
-const selectBestOpenAIVoice = async (voiceDescription) => {
+const selectBestOpenAIVoice = async (voiceDescription, options = {}) => {
+  const excludeSet = new Set((options.excludeVoiceIds || []).map((x) => String(x).toLowerCase()));
+  let pool = OPENAI_TTS_VOICES.filter((v) => !excludeSet.has(v.voice));
+  if (!pool.length) {
+    console.warn("[ttsUtils] OpenAI: all 6 preset voices already assigned; reusing presets.");
+    pool = OPENAI_TTS_VOICES;
+  }
+  const names = pool.map((v) => v.voice);
+
   try {
     const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
@@ -163,15 +182,16 @@ const selectBestOpenAIVoice = async (voiceDescription) => {
           role: "system",
           content:
             "You are a voice casting assistant. Given a speaker description, pick exactly one OpenAI TTS voice " +
-            "from the allowed list. Return ONLY valid JSON: " +
+            "from the allowed list. Do not pick a voice already in alreadyAssignedVoices. Return ONLY valid JSON: " +
             '{ "voice": "<name>", "reason": "<one sentence>" }. ' +
-            `Allowed voices: ${OPENAI_TTS_VOICE_NAMES.join(", ")}.`,
+            `Allowed voices: ${names.join(", ")}.`,
         },
         {
           role: "user",
           content: JSON.stringify({
             speakerDescription: voiceDescription,
-            voiceOptions: OPENAI_TTS_VOICES,
+            voiceOptions: pool,
+            alreadyAssignedVoices: [...excludeSet],
           }),
         },
       ],
@@ -179,7 +199,7 @@ const selectBestOpenAIVoice = async (voiceDescription) => {
 
     const parsed = JSON.parse(response.choices[0].message.content);
     const v = String(parsed.voice || "").toLowerCase();
-    if (OPENAI_TTS_VOICE_NAMES.includes(v)) {
+    if (names.includes(v) && !excludeSet.has(v)) {
       console.log(`[ttsUtils] OpenAI voice match: ${v} — ${parsed.reason}`);
       return v;
     }
@@ -187,7 +207,8 @@ const selectBestOpenAIVoice = async (voiceDescription) => {
     console.warn("[ttsUtils] OpenAI voice matching failed, using default:", err.message);
   }
 
-  return DEFAULT_OPENAI_TTS_VOICE;
+  const firstFree = OPENAI_TTS_VOICE_NAMES.find((n) => !excludeSet.has(n));
+  return firstFree || DEFAULT_OPENAI_TTS_VOICE;
 };
 
 /**
