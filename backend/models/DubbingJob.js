@@ -15,7 +15,7 @@ const subSegmentSchema = new mongoose.Schema(
     translatedText: { type: String, default: "" },
     timingStrategy: {
       type: String,
-      enum: ["padded", "stretched", "stretched_capped"],
+      enum: ["padded", "stretched", "stretched_slow", "stretched_capped"],
       default: null,
     },
     ttsWordTimestamps: {
@@ -46,7 +46,7 @@ const segmentSchema = new mongoose.Schema(
     dubbedAudioKey: { type: String, default: null },
     timingStrategy: {
       type: String,
-      enum: ["padded", "stretched", "stretched_capped"],
+      enum: ["padded", "stretched", "stretched_slow", "stretched_capped"],
       default: null,
     },
     /** Optional split of one source timing window into multiple TTS lines (e.g. Hindi → English). */

@@ -11,8 +11,28 @@ const { getFileDuration } = require("./audioUtils");
 ffmpeg.setFfmpegPath(ffmpegStatic);
 ffmpeg.setFfprobePath(ffprobeStatic.path);
 
-// Minimum duration ratio below which we pad with silence rather than slow down
+// When speeding up (TTS longer than slot), do not use atempo below this (avoids marginal tweaks)
 const MIN_ATEMPO = 0.85;
+
+/**
+ * Build an ffmpeg atempo chain whose factors multiply to `ratio`.
+ * Output duration ≈ input_duration / ratio (ffmpeg: length scales as 1/product(atempo)).
+ * @param {number} ratio - actualDuration / targetDuration
+ */
+const buildAtempoFilterChain = (ratio) => {
+  const filters = [];
+  let remaining = ratio;
+  while (remaining > 2.0) {
+    filters.push("atempo=2.0");
+    remaining /= 2.0;
+  }
+  while (remaining < 0.5) {
+    filters.push("atempo=0.5");
+    remaining /= 0.5;
+  }
+  filters.push(`atempo=${Math.max(0.5, Math.min(2.0, remaining)).toFixed(4)}`);
+  return filters.join(",");
+};
 
 /**
  * @param {number} maxAtempo - Upper bound for speed-up (e.g. 1.5 or 1.0)
@@ -26,20 +46,23 @@ const atempoStretch = (inputPath, targetDuration, outputPath, maxAtempo = getDub
       const ratio = actualDuration / targetDuration;
       const clampedRatio = Math.min(cap, Math.max(MIN_ATEMPO, ratio));
 
-      const filters = [];
-      let remaining = clampedRatio;
-      while (remaining > 2.0) {
-        filters.push("atempo=2.0");
-        remaining /= 2.0;
-      }
-      while (remaining < 0.5) {
-        filters.push("atempo=0.5");
-        remaining /= 0.5;
-      }
-      filters.push(`atempo=${remaining.toFixed(4)}`);
-
       ffmpeg(inputPath)
-        .audioFilters(filters.join(","))
+        .audioFilters(buildAtempoFilterChain(clampedRatio))
+        .output(outputPath)
+        .on("end", resolve)
+        .on("error", reject)
+        .run();
+    });
+  });
+
+/** Slow down audio so its duration matches target (TTS shorter than segment). */
+const atempoSlowToTarget = (inputPath, targetDuration, outputPath) =>
+  new Promise((resolve, reject) => {
+    getFileDuration(inputPath).then((actualDuration) => {
+      if (actualDuration <= 0) return reject(new Error("Cannot get audio duration"));
+      const ratio = actualDuration / targetDuration;
+      ffmpeg(inputPath)
+        .audioFilters(buildAtempoFilterChain(ratio))
         .output(outputPath)
         .on("end", resolve)
         .on("error", reject)
@@ -78,8 +101,8 @@ const syncSegmentTiming = async (audioPath, originalDuration, opts = {}) => {
   let strategy;
 
   if (actualDuration <= originalDuration) {
-    await padWithSilence(audioPath, originalDuration, outputPath);
-    strategy = "padded";
+    await atempoSlowToTarget(audioPath, originalDuration, outputPath);
+    strategy = "stretched_slow";
   } else {
     const requiredRatio = actualDuration / originalDuration;
 
@@ -120,5 +143,7 @@ module.exports = {
   syncSegmentTiming,
   buildTimeline,
   atempoStretch,
+  atempoSlowToTarget,
   padWithSilence,
+  buildAtempoFilterChain,
 };
