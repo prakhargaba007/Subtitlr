@@ -10,6 +10,43 @@ const { getFileDuration } = require("./audioUtils");
  * `fetchInworldVoiceCatalog()` → GET https://api.inworld.ai/tts/v1/voices
  */
 const INWORLD_PRESET_VOICES = require("./data/inworldVoices.json");
+const { getInworldApplyTextNormalization } = require("./dubbingConfig");
+
+/**
+ * Optional curated list from repo (merged into catalog by voiceId).
+ */
+const loadLocalVoicesFile = () => {
+  const candidates = [path.join(__dirname, "..", "voices", "inworld_voices_last.json")];
+  for (const p of candidates) {
+    try {
+      if (!fs.existsSync(p)) continue;
+      const j = JSON.parse(fs.readFileSync(p, "utf8"));
+      const voices = j.voices || [];
+      return voices.map((v) => ({
+        voiceId: v.voiceId,
+        blurb:
+          [v.displayName, v.description, Array.isArray(v.tags) ? v.tags.join(", ") : ""]
+            .filter(Boolean)
+            .join(" · ") || String(v.voiceId),
+      }));
+    } catch (err) {
+      console.warn("[inworldTts] local voices JSON:", err.message);
+    }
+  }
+  return [];
+};
+
+const mergeVoiceCatalogs = (primary, extras) => {
+  const seen = new Set((primary || []).map((v) => v.voiceId));
+  const out = [...(primary || [])];
+  for (const v of extras || []) {
+    if (v.voiceId && !seen.has(v.voiceId)) {
+      seen.add(v.voiceId);
+      out.push(v);
+    }
+  }
+  return out;
+};
 
 /**
  * Inworld API credentials — NEVER commit real values; use .env only.
@@ -57,7 +94,7 @@ const getForcedInworldVoiceId = () => String(process.env.INWORLD_FORCE_VOICE_ID 
  * - INWORLD_VOICES_FILTER — default language=en; set INWORLD_VOICES_NO_FILTER=1 to omit filter (all languages)
  */
 const fetchInworldVoiceCatalog = async () => {
-  const clonePresets = () => INWORLD_PRESET_VOICES.map((v) => ({ ...v }));
+  const clonePresets = () => mergeVoiceCatalogs(INWORLD_PRESET_VOICES.map((v) => ({ ...v })), loadLocalVoicesFile());
 
   const auth = buildInworldAuthorizationHeader();
   if (!auth) return clonePresets();
@@ -91,15 +128,16 @@ const fetchInworldVoiceCatalog = async () => {
       return clonePresets();
     }
     const voices = body.voices || [];
-    if (!voices.length) return clonePresets();
+    if (!voices.length) return mergeVoiceCatalogs(clonePresets(), loadLocalVoicesFile());
 
-    return voices.map((v) => ({
+    const mapped = voices.map((v) => ({
       voiceId: v.voiceId,
       blurb:
         [v.description, Array.isArray(v.tags) ? v.tags.join(", ") : ""].filter(Boolean).join(" · ") ||
         v.displayName ||
         String(v.voiceId),
     }));
+    return mergeVoiceCatalogs(mapped, loadLocalVoicesFile());
   } catch (err) {
     console.warn("[inworldTts] List voices request failed:", err.message);
     return clonePresets();
@@ -111,15 +149,31 @@ const fetchInworldVoiceCatalog = async () => {
  *
  * @param {string} voiceDescription
  * @param {Array<{voiceId:string, blurb:string}>} [catalog] — from fetchInworldVoiceCatalog(); defaults to preset JSON
+ * @param {{ excludeVoiceIds?: string[], speakerCount?: number }} [options] — excludeVoiceIds = already-assigned voiceIds (distinct speakers)
  * @returns {Promise<string>} voiceId for Inworld TTS
  */
-const selectBestInworldVoice = async (voiceDescription, catalog = null) => {
+const selectBestInworldVoice = async (voiceDescription, catalog = null, options = {}) => {
+  const excludeSet = new Set((options.excludeVoiceIds || []).map(String));
+  const speakerCount = options.speakerCount ?? 1;
   const forced = getForcedInworldVoiceId();
-  if (forced) return forced;
+  if (forced && speakerCount <= 1 && !excludeSet.has(forced)) {
+    return forced;
+  }
+  if (forced && speakerCount > 1) {
+    console.warn(
+      "[inworldTts] INWORLD_FORCE_VOICE_ID ignored for multi-speaker dubbing (each speaker gets a distinct voice when possible)."
+    );
+  }
 
   const presets =
     catalog && Array.isArray(catalog) && catalog.length ? catalog : INWORLD_PRESET_VOICES;
-  const voiceIds = presets.map((v) => v.voiceId);
+  let pool = presets.filter((p) => !excludeSet.has(p.voiceId));
+  if (!pool.length) {
+    console.warn("[inworldTts] All catalog voices already assigned; reusing catalog for an extra speaker.");
+    pool = presets;
+  }
+
+  const voiceIds = pool.map((v) => v.voiceId);
   const fallback = getDefaultInworldVoice();
 
   try {
@@ -132,7 +186,8 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null) => {
           role: "system",
           content:
             "You are a voice casting assistant. Given a speaker description, pick exactly one Inworld TTS voice " +
-            "from the allowed list. Return ONLY valid JSON: " +
+            "from the allowed list. Each speaker in a dub MUST use a different voiceId than any already assigned — " +
+            "the allowed list excludes voices already taken. Return ONLY valid JSON: " +
             '{ "voiceId": "<name>", "reason": "<one sentence>" }. ' +
             `Allowed voiceIds: ${voiceIds.join(", ")}.`,
         },
@@ -140,7 +195,8 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null) => {
           role: "user",
           content: JSON.stringify({
             speakerDescription: voiceDescription,
-            voiceOptions: presets,
+            voiceOptions: pool,
+            alreadyAssignedVoiceIds: [...excludeSet],
           }),
         },
       ],
@@ -148,7 +204,7 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null) => {
 
     const parsed = JSON.parse(response.choices[0].message.content);
     const id = String(parsed.voiceId || "").trim();
-    if (voiceIds.includes(id)) {
+    if (voiceIds.includes(id) && !excludeSet.has(id)) {
       console.log(`[inworldTts] Voice match: ${id} — ${parsed.reason}`);
       return id;
     }
@@ -156,7 +212,30 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null) => {
     console.warn("[inworldTts] Voice matching failed, using default:", err.message);
   }
 
-  return voiceIds.includes(fallback) ? fallback : presets[0].voiceId;
+  const firstUnused = presets.find((p) => !excludeSet.has(p.voiceId));
+  if (firstUnused) return firstUnused.voiceId;
+  if (voiceIds.includes(fallback) && !excludeSet.has(fallback)) return fallback;
+  return pool[0]?.voiceId || presets[0].voiceId;
+};
+
+const normalizeWordTimestamps = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((w) => ({
+      word: String(w.word ?? w.text ?? "").trim(),
+      startTimeMs: Number(w.startTimeMs ?? w.start_time_ms ?? w.startMs ?? 0) || 0,
+      endTimeMs: Number(w.endTimeMs ?? w.end_time_ms ?? w.endMs ?? 0) || 0,
+    }))
+    .filter((x) => x.word);
+};
+
+const extractWordTimestampsFromBody = (body) => {
+  let raw = body?.wordTimestamps || body?.word_timestamps;
+  if (Array.isArray(raw)) return normalizeWordTimestamps(raw);
+  raw = body?.timestamps?.words || body?.timestamp?.words;
+  if (Array.isArray(raw)) return normalizeWordTimestamps(raw);
+  if (Array.isArray(body?.words)) return normalizeWordTimestamps(body.words);
+  return [];
 };
 
 /**
@@ -164,7 +243,7 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null) => {
  *
  * @param {string} text
  * @param {string} voiceId - Preset name or cloned voice id
- * @returns {Promise<{ audioPath: string, durationSeconds: number }>}
+ * @returns {Promise<{ audioPath: string, durationSeconds: number, wordTimestamps?: Array<{word:string,startTimeMs:number,endTimeMs:number}> }>}
  */
 const synthesizeInworldTts = async (text, voiceId) => {
   const auth = buildInworldAuthorizationHeader();
@@ -193,6 +272,11 @@ const synthesizeInworldTts = async (text, voiceId) => {
     },
     temperature: Number.isFinite(temperature) ? temperature : 1,
   };
+
+  const normOpt = getInworldApplyTextNormalization();
+  if (normOpt === "ON" || normOpt === "OFF") {
+    payload.applyTextNormalization = normOpt;
+  }
 
   const res = await fetch(INWORLD_TTS_URL, {
     method: "POST",
@@ -234,7 +318,8 @@ const synthesizeInworldTts = async (text, voiceId) => {
   fs.writeFileSync(outputPath, buf);
 
   const durationSeconds = await getFileDuration(outputPath);
-  return { audioPath: outputPath, durationSeconds };
+  const wordTimestamps = extractWordTimestampsFromBody(body);
+  return { audioPath: outputPath, durationSeconds, wordTimestamps };
 };
 
 module.exports = {

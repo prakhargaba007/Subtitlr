@@ -25,13 +25,21 @@ const {
 const {
   LANGUAGE_LIST,
   resolveLanguage,
-  transcribeFileWithWhisper,
+  transcribeSpeechClip,
   shiftSegments,
   transliterateToHinglish,
   generateSRT,
   generateVTT,
   generateASS,
 } = require("../utils/subtitleUtils");
+
+const {
+  isSubtitleSileroVadEnabled,
+  getSubtitleVadTranscribeMode,
+  detectSileroVadTimeline,
+  transcribeWithVadPipeline,
+  refineSegmentsWithVadTimeline,
+} = require("../utils/sileroVadUtils");
 
 // Whisper hard limit is 25 MB — keep chunks safely below it
 const WHISPER_MAX_BYTES = 24 * 1024 * 1024;
@@ -108,41 +116,91 @@ exports.generateSubtitles = async (req, res, next) => {
 
     const audioSize = fs.statSync(audioPath).size;
     let allSegments = [];
+    let vadUsed = false;
 
-    if (audioSize > WHISPER_MAX_BYTES) {
-      const bytesPerSecond = audioSize / duration;
-      const chunkSeconds = Math.floor((20 * 1024 * 1024) / bytesPerSecond);
+    const runLegacyWhisper = async () => {
+      const segs = [];
+      if (audioSize > WHISPER_MAX_BYTES) {
+        const bytesPerSecond = audioSize / duration;
+        const chunkSeconds = Math.floor((20 * 1024 * 1024) / bytesPerSecond);
 
-      const chunkDir = path.join(os.tmpdir(), `sub_chunks_${uuidv4()}`);
-      fs.mkdirSync(chunkDir, { recursive: true });
-      tmpPaths.push(chunkDir);
+        const chunkDir = path.join(os.tmpdir(), `sub_chunks_${uuidv4()}`);
+        fs.mkdirSync(chunkDir, { recursive: true });
+        tmpPaths.push(chunkDir);
 
-      emit({ stage: "transcribing", message: "Splitting audio into chunks…" });
-      const chunkFiles = await splitAudioIntoChunks(audioPath, chunkDir, chunkSeconds);
-      const totalChunks = chunkFiles.length;
+        emit({ stage: "transcribing", message: "Splitting audio into chunks…" });
+        const chunkFiles = await splitAudioIntoChunks(audioPath, chunkDir, chunkSeconds);
+        const totalChunks = chunkFiles.length;
 
-      let timeOffset = 0;
-      for (let i = 0; i < chunkFiles.length; i++) {
-        emit({
-          stage: "transcribing",
-          message: `Transcribing part ${i + 1} of ${totalChunks}…`,
-          progress: Math.round(((i) / totalChunks) * 100),
-          chunk: i + 1,
-          totalChunks,
-        });
-        const result = await transcribeFileWithWhisper(chunkFiles[i], isoCode);
-        allSegments.push(...shiftSegments(result.segments || [], timeOffset));
-        const chunkDur = await getFileDuration(chunkFiles[i]);
-        timeOffset += chunkDur;
+        let timeOffset = 0;
+        for (let i = 0; i < chunkFiles.length; i++) {
+          emit({
+            stage: "transcribing",
+            message: `Transcribing part ${i + 1} of ${totalChunks}…`,
+            progress: Math.round((i / totalChunks) * 100),
+            chunk: i + 1,
+            totalChunks,
+          });
+          const result = await transcribeSpeechClip(chunkFiles[i], isoCode);
+          segs.push(...shiftSegments(result.segments || [], timeOffset));
+          const chunkDur = await getFileDuration(chunkFiles[i]);
+          timeOffset += chunkDur;
+        }
+      } else {
+        emit({ stage: "transcribing", message: "Transcribing audio…", progress: 0 });
+        const result = await transcribeSpeechClip(audioPath, isoCode);
+        for (const s of result.segments || []) {
+          segs.push({
+            start: s.start,
+            end: s.end,
+            text: s.text.trim(),
+          });
+        }
       }
-    } else {
-      emit({ stage: "transcribing", message: "Transcribing audio…", progress: 0 });
-      const result = await transcribeFileWithWhisper(audioPath, isoCode);
-      allSegments = (result.segments || []).map((s) => ({
-        start: s.start,
-        end: s.end,
-        text: s.text.trim(),
-      }));
+      return segs;
+    };
+
+    if (isSubtitleSileroVadEnabled()) {
+      try {
+        emit({ stage: "vad", message: "Detecting speech and silence…" });
+        const mode = getSubtitleVadTranscribeMode();
+
+        if (mode === "clips") {
+          const vadSegments = await transcribeWithVadPipeline({
+            audioPath,
+            duration,
+            audioSize,
+            transcribeClip: (clipPath) => transcribeSpeechClip(clipPath, isoCode),
+            registerTmp: (p) => tmpPaths.push(p),
+            onClipProgress: (i, n) => {
+              emit({
+                stage: "transcribing",
+                message: `Transcribing speech ${i} of ${n}…`,
+                progress: Math.round(((i - 1) / Math.max(n, 1)) * 100),
+                chunk: i,
+                totalChunks: n,
+              });
+            },
+          });
+          if (vadSegments && vadSegments.length > 0) {
+            allSegments = vadSegments;
+            vadUsed = true;
+          }
+        } else {
+          const vadTmp = path.join(os.tmpdir(), `sub_vad_tl_${uuidv4()}`);
+          tmpPaths.push(vadTmp);
+          const timeline = await detectSileroVadTimeline(audioPath, vadTmp);
+          allSegments = await runLegacyWhisper();
+          allSegments = refineSegmentsWithVadTimeline(allSegments, timeline.intervals);
+          vadUsed = true;
+        }
+      } catch (vadErr) {
+        console.warn("[subtitles] Silero VAD pipeline failed, using legacy path:", vadErr.message);
+      }
+    }
+
+    if (!vadUsed) {
+      allSegments = await runLegacyWhisper();
     }
 
     if (langLabel === "hinglish") {

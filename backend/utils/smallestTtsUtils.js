@@ -93,15 +93,31 @@ const fetchSmallestVoiceCatalog = async () => {
 /**
  * @param {string} voiceDescription
  * @param {Array<{voiceId:string, blurb:string}>} [catalog]
+ * @param {{ excludeVoiceIds?: string[], speakerCount?: number }} [options]
  * @returns {Promise<string>}
  */
-const selectBestSmallestVoice = async (voiceDescription, catalog = null) => {
+const selectBestSmallestVoice = async (voiceDescription, catalog = null, options = {}) => {
+  const excludeSet = new Set((options.excludeVoiceIds || []).map(String));
+  const speakerCount = options.speakerCount ?? 1;
   const forced = getForcedSmallestVoiceId();
-  if (forced) return forced;
+  if (forced && speakerCount <= 1 && !excludeSet.has(forced)) {
+    return forced;
+  }
+  if (forced && speakerCount > 1) {
+    console.warn(
+      "[smallestTts] SMALLEST_FORCE_VOICE_ID ignored for multi-speaker dubbing (distinct voices when possible)."
+    );
+  }
 
   const presets =
     catalog && Array.isArray(catalog) && catalog.length ? catalog : SMALLEST_PRESET_VOICES;
-  const voiceIds = presets.map((v) => v.voiceId);
+  let pool = presets.filter((p) => !excludeSet.has(p.voiceId));
+  if (!pool.length) {
+    console.warn("[smallestTts] All catalog voices assigned; reusing for an extra speaker.");
+    pool = presets;
+  }
+
+  const voiceIds = pool.map((v) => v.voiceId);
   const fallback = getDefaultSmallestVoice();
 
   try {
@@ -114,7 +130,8 @@ const selectBestSmallestVoice = async (voiceDescription, catalog = null) => {
           role: "system",
           content:
             "You are a voice casting assistant. Given a speaker description, pick exactly one Smallest.ai Waves voice_id " +
-            "from the allowed list. Return ONLY valid JSON: " +
+            "from the allowed list. Each dub speaker must use a different voice than alreadyAssignedVoiceIds. " +
+            "Return ONLY valid JSON: " +
             '{ "voiceId": "<id>", "reason": "<one sentence>" }. ' +
             `Allowed voiceIds: ${voiceIds.join(", ")}.`,
         },
@@ -122,7 +139,8 @@ const selectBestSmallestVoice = async (voiceDescription, catalog = null) => {
           role: "user",
           content: JSON.stringify({
             speakerDescription: voiceDescription,
-            voiceOptions: presets,
+            voiceOptions: pool,
+            alreadyAssignedVoiceIds: [...excludeSet],
           }),
         },
       ],
@@ -130,7 +148,7 @@ const selectBestSmallestVoice = async (voiceDescription, catalog = null) => {
 
     const parsed = JSON.parse(response.choices[0].message.content);
     const id = String(parsed.voiceId || "").trim();
-    if (voiceIds.includes(id)) {
+    if (voiceIds.includes(id) && !excludeSet.has(id)) {
       console.log(`[smallestTts] Voice match: ${id} — ${parsed.reason}`);
       return id;
     }
@@ -138,7 +156,9 @@ const selectBestSmallestVoice = async (voiceDescription, catalog = null) => {
     console.warn("[smallestTts] Voice matching failed, using default:", err.message);
   }
 
-  return voiceIds.includes(fallback) ? fallback : presets[0].voiceId;
+  const firstUnused = presets.find((p) => !excludeSet.has(p.voiceId));
+  if (firstUnused) return firstUnused.voiceId;
+  return voiceIds.includes(fallback) && !excludeSet.has(fallback) ? fallback : pool[0]?.voiceId || presets[0].voiceId;
 };
 
 /**

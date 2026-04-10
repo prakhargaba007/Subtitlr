@@ -1,10 +1,32 @@
 const fs = require("fs");
 const OpenAI = require("openai");
+const { GoogleGenAI } = require("@google/genai");
 
 let _openai = null;
 const getOpenAI = () => {
   if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return _openai;
+};
+
+let _gemini = null;
+const getGemini = () => {
+  const key = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  if (!_gemini) _gemini = new GoogleGenAI({ apiKey: key });
+  return _gemini;
+};
+
+const parseGeminiJsonResponse = (response) => {
+  let text = "";
+  if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+    text = response.candidates[0].content.parts[0].text;
+  } else if (typeof response.text === "string") {
+    text = response.text;
+  } else {
+    throw new Error("Unexpected Gemini response format");
+  }
+  const clean = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  return JSON.parse(clean);
 };
 
 // ─── Language Map ─────────────────────────────────────────────────────────────
@@ -216,6 +238,17 @@ const transcribeFileWithWhisper = async (filePath, languageCode) => {
   return getOpenAI().audio.transcriptions.create(params);
 };
 
+/** ASR for a single extracted clip (VAD pipeline). Extend when adding non-Whisper providers. */
+const transcribeSpeechClip = async (filePath, languageCode) => {
+  const p = (process.env.SUBTITLE_ASR_PROVIDER || "whisper").toLowerCase().trim();
+  if (p === "whisper" || p === "") {
+    return transcribeFileWithWhisper(filePath, languageCode);
+  }
+  throw new Error(
+    `SUBTITLE_ASR_PROVIDER="${p}" is not supported yet. Use whisper or omit.`
+  );
+};
+
 /** Shift all segment timestamps by offsetSeconds (for merging chunked results). */
 const shiftSegments = (segments, offsetSeconds) =>
   segments.map((s) => ({
@@ -228,35 +261,48 @@ const shiftSegments = (segments, offsetSeconds) =>
  * Post-process: transliterate Devanagari segments to Roman Hinglish via GPT.
  * Sends all segment texts in one request for efficiency.
  */
+const HINGLISH_SYSTEM_PROMPT =
+  "You are a Devanagari-to-Hinglish transliterator. " +
+  "Convert each Hindi text from Devanagari script to Roman script (how it sounds phonetically). " +
+  "Rules: " +
+  "1. Transliterate pronunciation — do NOT translate the meaning. " +
+  "2. Keep English words exactly as-is. " +
+  "3. Keep brand names, proper nouns, and URLs as-is (e.g. 'AI' stays 'AI', 'gharwale.AI' stays 'gharwale.AI'). " +
+  "4. Return ONLY a JSON object: { \"results\": [\"...\", \"...\"] } with one entry per input.";
+
 const transliterateToHinglish = async (segments) => {
   if (!segments.length) return segments;
 
   const texts = segments.map((s) => s.text);
+  const userPayload = JSON.stringify({ texts });
 
-  const response = await getOpenAI().chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a Devanagari-to-Hinglish transliterator. " +
-          "Convert each Hindi text from Devanagari script to Roman script (how it sounds phonetically). " +
-          "Rules: " +
-          "1. Transliterate pronunciation — do NOT translate the meaning. " +
-          "2. Keep English words exactly as-is. " +
-          "3. Keep brand names, proper nouns, and URLs as-is (e.g. 'AI' stays 'AI', 'gharwale.AI' stays 'gharwale.AI'). " +
-          "4. Return ONLY a JSON object: { \"results\": [\"...\", \"...\"] } with one entry per input.",
+  let parsed;
+  const gemini = getGemini();
+  if (gemini) {
+    const model =
+      process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview";
+    const response = await gemini.models.generateContent({
+      model,
+      contents: `${HINGLISH_SYSTEM_PROMPT}\n\n${userPayload}`,
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: "application/json",
       },
-      {
-        role: "user",
-        content: JSON.stringify({ texts }),
-      },
-    ],
-  });
+    });
+    parsed = parseGeminiJsonResponse(response);
+  } else {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: HINGLISH_SYSTEM_PROMPT },
+        { role: "user", content: userPayload },
+      ],
+    });
+    parsed = JSON.parse(response.choices[0].message.content);
+  }
 
-  const parsed = JSON.parse(response.choices[0].message.content);
   const results = parsed.results || [];
 
   return segments.map((s, i) => ({
@@ -343,6 +389,7 @@ module.exports = {
   LANGUAGE_LIST,
   resolveLanguage,
   transcribeFileWithWhisper,
+  transcribeSpeechClip,
   shiftSegments,
   transliterateToHinglish,
   generateSRT,

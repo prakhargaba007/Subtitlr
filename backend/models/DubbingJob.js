@@ -1,5 +1,37 @@
 const mongoose = require("mongoose");
 
+const classLabelSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "" },
+    confidence: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const subSegmentSchema = new mongoose.Schema(
+  {
+    relStart: { type: Number, default: 0 },
+    relEnd: { type: Number, default: 1 },
+    translatedText: { type: String, default: "" },
+    timingStrategy: {
+      type: String,
+      enum: ["padded", "stretched", "stretched_capped"],
+      default: null,
+    },
+    ttsWordTimestamps: {
+      type: [
+        {
+          word: { type: String, default: "" },
+          startTimeMs: { type: Number, default: 0 },
+          endTimeMs: { type: Number, default: 0 },
+        },
+      ],
+      default: undefined,
+    },
+  },
+  { _id: false }
+);
+
 const segmentSchema = new mongoose.Schema(
   {
     // Stable id used by editor UI for updates/regenerations
@@ -16,6 +48,28 @@ const segmentSchema = new mongoose.Schema(
       type: String,
       enum: ["padded", "stretched", "stretched_capped"],
       default: null,
+    },
+    /** Optional split of one source timing window into multiple TTS lines (e.g. Hindi → English). */
+    subSegments: { type: [subSegmentSchema], default: [] },
+    /** Inworld STT voice profile (or similar) for this segment time range. */
+    voiceProfile: {
+      age: { type: [classLabelSchema], default: undefined },
+      emotion: { type: [classLabelSchema], default: undefined },
+      pitch: { type: [classLabelSchema], default: undefined },
+      vocalStyle: { type: [classLabelSchema], default: undefined },
+      accent: { type: [classLabelSchema], default: undefined },
+      source: { type: String, default: null },
+    },
+    /** Word-level timings from last Inworld TTS (whole-segment synthesis). */
+    ttsWordTimestamps: {
+      type: [
+        {
+          word: { type: String, default: "" },
+          startTimeMs: { type: Number, default: 0 },
+          endTimeMs: { type: Number, default: 0 },
+        },
+      ],
+      default: undefined,
     },
   },
   { _id: false }
