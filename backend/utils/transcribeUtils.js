@@ -2,159 +2,549 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { v4: uuidv4 } = require("uuid");
-const OpenAI = require("openai");
+const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
+const { GoogleAIFileManager, FileState } = require("@google/generative-ai/server");
 const {
   getFileDuration,
   splitAudioIntoChunks,
   cleanupPath,
-  extractAudioWindow,
   detectLeadingSpeechOnsetSec,
 } = require("./audioUtils");
 const {
-  isTriStemTranscribeEnabled,
   isDubbingTimelineCalibrateEnabled,
   getDubbingTimelineSilenceNoiseDb,
   getDubbingTimelineSilenceMinSec,
-  isDubbingSileroVadEnabled,
+  isDubbingSileroRefineAfterGeminiEnabled,
   getDubbingVadMinSpeechOverlap,
 } = require("./dubbingConfig");
 const { detectSileroVadTimeline, refineSegmentsWithVadTimeline } = require("./sileroVadUtils");
 
-let _openai = null;
-const getOpenAI = () => {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return _openai;
-};
-
-const TRANSCRIPTION_MODEL = "gpt-4o-audio-preview";
-const GPT_AUDIO_MAX_BYTES = 19 * 1024 * 1024;
+/** Gemini inline audio limit is ~20 MB; stay under to avoid forced upload. */
+const INLINE_AUDIO_MAX_BYTES = 18 * 1024 * 1024;
 const CHUNK_OVERLAP_SECONDS = 30;
+/** Target max bytes per vocals chunk when splitting long files (below inline cap). */
+const CHUNK_TARGET_BYTES = 15 * 1024 * 1024;
 
-const buildVocalsOnlyMessages = (audioBase64, sourceLanguage, isFirstChunk, chunkIndex) => {
-  const langHint = sourceLanguage
-    ? `The audio is in ${sourceLanguage}.`
-    : "Detect the language automatically.";
+// ---------------------------------------------------------------------------
+// Language map — key → ISO 639-1, or null for special modes (e.g. hinglish)
+// ---------------------------------------------------------------------------
+const LANGUAGE_MAP = {
+  afrikaans: "af",
+  af: "af",
+  albanian: "sq",
+  sq: "sq",
+  amharic: "am",
+  am: "am",
+  arabic: "ar",
+  ar: "ar",
+  armenian: "hy",
+  hy: "hy",
+  azerbaijani: "az",
+  az: "az",
+  bashkir: "ba",
+  ba: "ba",
+  basque: "eu",
+  eu: "eu",
+  belarusian: "be",
+  be: "be",
+  bengali: "bn",
+  bangla: "bn",
+  bn: "bn",
+  bosnian: "bs",
+  bs: "bs",
+  breton: "br",
+  br: "br",
+  bulgarian: "bg",
+  bg: "bg",
+  burmese: "my",
+  myanmar: "my",
+  my: "my",
+  catalan: "ca",
+  ca: "ca",
+  chinese: "zh",
+  mandarin: "zh",
+  zh: "zh",
+  croatian: "hr",
+  hr: "hr",
+  czech: "cs",
+  cs: "cs",
+  danish: "da",
+  da: "da",
+  dutch: "nl",
+  nl: "nl",
+  english: "en",
+  en: "en",
+  estonian: "et",
+  et: "et",
+  faroese: "fo",
+  fo: "fo",
+  finnish: "fi",
+  fi: "fi",
+  french: "fr",
+  français: "fr",
+  francais: "fr",
+  fr: "fr",
+  galician: "gl",
+  gl: "gl",
+  georgian: "ka",
+  ka: "ka",
+  german: "de",
+  deutsch: "de",
+  de: "de",
+  greek: "el",
+  el: "el",
+  gujarati: "gu",
+  gu: "gu",
+  haitian: "ht",
+  ht: "ht",
+  hausa: "ha",
+  ha: "ha",
+  hawaiian: "haw",
+  haw: "haw",
+  hebrew: "he",
+  he: "he",
+  hindi: "hi",
+  hi: "hi",
+  hinglish: null,
+  hungarian: "hu",
+  hu: "hu",
+  icelandic: "is",
+  is: "is",
+  indonesian: "id",
+  id: "id",
+  italian: "it",
+  italiano: "it",
+  it: "it",
+  japanese: "ja",
+  ja: "ja",
+  javanese: "jw",
+  jw: "jw",
+  kannada: "kn",
+  kn: "kn",
+  kazakh: "kk",
+  kk: "kk",
+  khmer: "km",
+  km: "km",
+  korean: "ko",
+  ko: "ko",
+  lao: "lo",
+  lo: "lo",
+  latin: "la",
+  la: "la",
+  latvian: "lv",
+  lv: "lv",
+  lingala: "ln",
+  ln: "ln",
+  lithuanian: "lt",
+  lt: "lt",
+  luxembourgish: "lb",
+  lb: "lb",
+  macedonian: "mk",
+  mk: "mk",
+  malagasy: "mg",
+  mg: "mg",
+  malay: "ms",
+  ms: "ms",
+  malayalam: "ml",
+  ml: "ml",
+  maltese: "mt",
+  mt: "mt",
+  maori: "mi",
+  mi: "mi",
+  marathi: "mr",
+  mr: "mr",
+  mongolian: "mn",
+  mn: "mn",
+  nepali: "ne",
+  ne: "ne",
+  norwegian: "no",
+  no: "no",
+  occitan: "oc",
+  oc: "oc",
+  odia: "or",
+  oriya: "or",
+  or: "or",
+  pashto: "ps",
+  ps: "ps",
+  persian: "fa",
+  farsi: "fa",
+  fa: "fa",
+  polish: "pl",
+  pl: "pl",
+  portuguese: "pt",
+  português: "pt",
+  portugues: "pt",
+  pt: "pt",
+  punjabi: "pa",
+  pa: "pa",
+  romanian: "ro",
+  ro: "ro",
+  russian: "ru",
+  ru: "ru",
+  sanskrit: "sa",
+  sa: "sa",
+  serbian: "sr",
+  sr: "sr",
+  shona: "sn",
+  sn: "sn",
+  sindhi: "sd",
+  sd: "sd",
+  sinhala: "si",
+  si: "si",
+  slovak: "sk",
+  sk: "sk",
+  slovenian: "sl",
+  sl: "sl",
+  somali: "so",
+  so: "so",
+  spanish: "es",
+  español: "es",
+  espanol: "es",
+  es: "es",
+  sundanese: "su",
+  su: "su",
+  swahili: "sw",
+  sw: "sw",
+  swedish: "sv",
+  sv: "sv",
+  tagalog: "tl",
+  filipino: "tl",
+  tl: "tl",
+  tajik: "tg",
+  tg: "tg",
+  tamil: "ta",
+  ta: "ta",
+  tatar: "tt",
+  tt: "tt",
+  telugu: "te",
+  te: "te",
+  thai: "th",
+  th: "th",
+  tibetan: "bo",
+  bo: "bo",
+  turkish: "tr",
+  tr: "tr",
+  turkmen: "tk",
+  tk: "tk",
+  ukrainian: "uk",
+  uk: "uk",
+  urdu: "ur",
+  ur: "ur",
+  uzbek: "uz",
+  uz: "uz",
+  vietnamese: "vi",
+  vi: "vi",
+  welsh: "cy",
+  cy: "cy",
+  yiddish: "yi",
+  yi: "yi",
+  yoruba: "yo",
+  yo: "yo",
+  zulu: "zu",
+  zu: "zu",
+};
 
-  const speakerNote = isFirstChunk
-    ? "Identify and label each speaker as Speaker_1, Speaker_2, etc., starting from Speaker_1."
-    : `Continue speaker labels from previous chunks (Speaker_1, Speaker_2, etc., chunk index ${chunkIndex}).`;
+const NATIVE_SCRIPT_LANGS = new Set([
+  "ar",
+  "am",
+  "hy",
+  "az",
+  "be",
+  "bn",
+  "bg",
+  "my",
+  "zh",
+  "ka",
+  "el",
+  "gu",
+  "he",
+  "hi",
+  "ja",
+  "kn",
+  "kk",
+  "km",
+  "ko",
+  "lo",
+  "mk",
+  "ml",
+  "mn",
+  "mr",
+  "ne",
+  "or",
+  "pa",
+  "fa",
+  "ps",
+  "ru",
+  "sa",
+  "sr",
+  "sd",
+  "si",
+  "ta",
+  "te",
+  "th",
+  "bo",
+  "uk",
+  "ur",
+  "uz",
+  "yi",
+]);
 
-  return [
-    {
-      role: "system",
-      content: `You are a professional transcription and speaker diarization assistant. ${langHint}
+const ARABIC_SCRIPT_LANGS = new Set(["ar", "fa", "ps", "ur", "sd"]);
+const DEVANAGARI_LANGS = new Set(["hi", "mr", "ne", "sa"]);
+const CYRILLIC_LANGS = new Set(["ru", "uk", "be", "bg", "mk", "sr", "kk", "mn"]);
 
-Your tasks:
-1. Transcribe every spoken word accurately.
-2. ${speakerNote}
-3. Provide start/end timestamps in seconds (as decimals) for every segment. **0.0s is the very first instant of this audio file** — count silence, intro music, and non-speech exactly as they occur. If the first spoken words begin after a gap, the first segment's "start" must be that real time (e.g. 4.8), not 0.0.
-4. For EACH unique speaker, write a detailed voice profile (only once, in "speaker_profiles").
+function resolveDubbingTranscribeLanguage(raw) {
+  if (raw == null || String(raw).trim() === "" || String(raw).trim().toLowerCase() === "auto") {
+    return { langKey: "auto", isoCode: null, isAuto: true };
+  }
+  const key = String(raw).trim().toLowerCase();
+  if (!(key in LANGUAGE_MAP)) {
+    throw new Error(
+      `Unknown source language "${raw}" for dubbing transcription. ` +
+        `Use a supported language name, ISO code, or "auto".`,
+    );
+  }
+  return { langKey: key, isoCode: LANGUAGE_MAP[key], isAuto: false };
+}
 
-Voice profile must include: gender, estimated age range, tone (warm/cold/neutral), pace (slow/fast/moderate), accent or regional variety, emotional quality (energetic/calm/authoritative/friendly), and any distinctive vocal characteristics (deep, breathy, nasal, etc.).
+/**
+ * Shared segment rules — same wording as the standalone Gemini transcribe script.
+ * (For chunked dubbing, chunkHint clarifies that times are relative to the current clip.)
+ */
+const segmentRulesReference = `Segments:
+- Many SHORT lines (about 2–6 seconds of speech each). Split at natural pauses, breaths, or speaker turns — NOT one long block for the whole utterance.
+- start_us / end_us: microseconds from the start of this audio file (numeric). Estimate as well as you can; they will be approximate.
+- If there is silence at the start of the audio, do not include this as a segment; the first segment's start_us and end_us should reflect when someone actually starts speaking.
+- Do NOT omit the opening dialogue: the first transcript row must start at the first spoken words (after any leading silence), with captions for that speech — not a later fragment and not an impossibly short clip.
+- Each segment time span must be long enough to contain the captions (avoid start_us almost equal to end_us unless the line is a single short word).
 
-Return ONLY valid JSON with this exact structure — no markdown, no extra text:
-{
-  "segments": [
-    { "start": 2.1, "end": 5.6, "speaker_id": "Speaker_1", "text": "Hello, welcome to the show.", "delivery_notes": "" }
-  ],
-  "speaker_profiles": [
-    {
-      "speaker_id": "Speaker_1",
-      "voice_description": "Male, late 30s, warm baritone, moderate pace, American accent with slight Southern drawl, authoritative yet friendly tone."
+JSON schema:
+- transcript: array in time order
+- each: start_us, end_us, speaker ("Speaker A" / "Speaker B" if multiple), captions (exact wording as spoken)`;
+
+/**
+ * Core prompt for a known language — matches standalone script categories:
+ * 1) hinglish (isoCode === null)  2) native script  3) Latin default
+ */
+function buildPromptReferenceCore(langKey, isoCode) {
+  if (isoCode === null) {
+    return `Listen to this audio carefully. Transcribe all speech.
+
+Script (mandatory):
+- Write Hindi/Urdu in ROMAN / LATIN script only (Hinglish), how people type on phones: e.g. "arey main bol raha hoon", "kya hua yaar".
+- Do NOT use Devanagari (नागरी) or any other non-Latin script.
+- English words (CNG, EV, battery, etc.) stay in normal English spelling.
+- Mixed sentences are fine: preserve the exact code-switching as spoken.
+
+${segmentRulesReference}`;
+  }
+
+  if (NATIVE_SCRIPT_LANGS.has(isoCode)) {
+    let scriptNote;
+    if (ARABIC_SCRIPT_LANGS.has(isoCode)) {
+      scriptNote = `- Use the correct Arabic script. Do NOT romanize or transliterate.
+- Loanwords widely written in Latin (e.g. "WiFi", "OK") may remain in Latin.`;
+    } else if (DEVANAGARI_LANGS.has(isoCode)) {
+      scriptNote = `- Use Devanagari script. Do NOT romanize.
+- English loanwords (mobile, OK, percent, etc.) may remain in Latin as commonly written.`;
+    } else if (CYRILLIC_LANGS.has(isoCode)) {
+      scriptNote = `- Use Cyrillic script. Do NOT romanize.
+- English/international loanwords may remain in Latin as commonly written.`;
+    } else {
+      scriptNote = `- Use the language's native script. Do NOT romanize or transliterate.
+- English/international loanwords may remain in Latin as commonly written.`;
     }
-  ]
+    return `Listen to this audio carefully. Transcribe all speech in ${langKey} (ISO 639-1: ${isoCode}).
+
+Script (mandatory):
+${scriptNote}
+- Transcribe exactly as spoken; do not paraphrase or translate.
+
+${segmentRulesReference}`;
+  }
+
+  return `Listen to this audio carefully. Transcribe all speech in ${langKey} (ISO 639-1: ${isoCode}).
+
+Script (mandatory):
+- Transcribe exactly as spoken in ${langKey} using standard orthography.
+- Keep proper nouns, brand names, and foreign loanwords as normally written in this language.
+- Do not translate, paraphrase, or switch to another language.
+
+${segmentRulesReference}`;
 }
 
-Rules:
-- Output ONLY the JSON object. Do NOT wrap it in markdown code fences.
-- Timestamps must be accurate to within 0.5 seconds.
-- If speech overlaps, split at the natural boundary and assign to the dominant speaker.
-- Preserve filler words (um, uh, like) as they affect voice authenticity.
-- delivery_notes: optional short phrase for non-verbal delivery (laugh, whisper, sigh) inferred from audio — empty string if none.`,
-    },
-    {
-      role: "user",
-      content: [
-        {
-          type: "text",
-          text: "Please transcribe this audio with speaker diarization and voice profiles:",
-        },
-        {
-          type: "input_audio",
-          input_audio: {
-            data: audioBase64,
-            format: "mp3",
-          },
-        },
-      ],
-    },
-  ];
-};
+/** Same text the standalone transcribe script sends to Gemini (no dubbing-only JSON extras). */
+function buildDubbingPrompt(langKey, isoCode, isAuto, chunkHint) {
+  let core;
+  if (isAuto) {
+    core = `Listen to this audio carefully. Transcribe all speech.
+Detect the language automatically. Use the appropriate script and orthography for what is spoken.
+Do not translate or paraphrase.
+Transcribe exactly as spoken.
 
-const buildTriStemMessages = (b64Full, b64Vocals, b64Bg, sourceLanguage, isFirstChunk, chunkIndex) => {
-  const langHint = sourceLanguage
-    ? `The audio is in ${sourceLanguage}.`
-    : "Detect the language automatically.";
+Script (mandatory):
+- Use the correct writing system for the detected language(s).
+- English/international loanwords may remain in Latin when commonly written that way.
+- Mixed code-switching: preserve as spoken.
 
-  const speakerNote = isFirstChunk
-    ? "Identify and label each speaker as Speaker_1, Speaker_2, etc., starting from Speaker_1."
-    : `Continue speaker labels from previous chunks (Speaker_1, Speaker_2, etc., chunk index ${chunkIndex}).`;
+${segmentRulesReference}`;
+  } else {
+    core = buildPromptReferenceCore(langKey, isoCode);
+  }
 
-  return [
-    {
-      role: "system",
-      content: `You are a professional transcription and speaker diarization assistant. ${langHint}
-
-You will receive THREE audio clips of the SAME time range in order:
-(1) FULL MIX — dialogue plus music and sound effects as the listener hears it.
-(2) ISOLATED VOCALS — speech stem with background reduced.
-(3) BACKGROUND STEM — music/SFX and residual; use this to avoid tagging crowd noise or music hits as spoken dialogue.
-
-Tasks:
-1. Transcribe spoken words primarily from ISOLATED VOCALS (clip 2). Use FULL MIX (clip 1) to judge laughs, breaths, emotion, and non-verbals. Use BACKGROUND (clip 3) only to disambiguate: do NOT invent dialogue from music alone.
-2. ${speakerNote}
-3. Timestamps in seconds from the **start of these clips** (0 = first sample of this chunk). Include leading silence or music-only time: if speech begins later in the chunk, first segment "start" must match that moment, not 0.
-4. speaker_profiles once per speaker as before.
-
-Return ONLY valid JSON — no markdown:
-{
-  "segments": [
-    { "start": 1.2, "end": 3.8, "speaker_id": "Speaker_1", "text": "Hello.", "delivery_notes": "light chuckle after hello" }
-  ],
-  "speaker_profiles": [ { "speaker_id": "Speaker_1", "voice_description": "..." } ]
+  let out = core;
+  if (chunkHint) {
+    out += `\n\n${chunkHint}`;
+  }
+  return out;
 }
 
-Rules:
-- delivery_notes: optional; short hints for TTS (laugh, whisper, breath) when supported by comparing full mix vs vocals. Empty string if none.
-- Timestamps within 0.5s. Preserve fillers. No markdown fences.`,
+/** Matches standalone script: transcript only (no speaker_profiles — those are synthesized for dubbing). */
+const transcriptItemSchema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    start_us: {
+      type: SchemaType.NUMBER,
+      description: "Segment start time in microseconds from the beginning of the audio",
     },
-    {
-      role: "user",
-      content: [
-        {
-          type: "text",
-          text: "Three aligned audio clips follow in order: (1) full mix (2) isolated vocals (3) background.",
-        },
-        { type: "input_audio", input_audio: { data: b64Full, format: "mp3" } },
-        { type: "input_audio", input_audio: { data: b64Vocals, format: "mp3" } },
-        { type: "input_audio", input_audio: { data: b64Bg, format: "mp3" } },
-      ],
+    end_us: {
+      type: SchemaType.NUMBER,
+      description: "Segment end time in microseconds from the beginning of the audio",
     },
-  ];
+    speaker: { type: SchemaType.STRING },
+    captions: { type: SchemaType.STRING },
+  },
+  required: ["start_us", "end_us", "speaker", "captions"],
 };
 
-const parseGptResponse = (content) => {
-  let text = content.trim();
-  text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-  return JSON.parse(text);
+const transcriptResponseSchema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    transcript: {
+      type: SchemaType.ARRAY,
+      items: transcriptItemSchema,
+    },
+  },
+  required: ["transcript"],
 };
+
+function getGeminiApiKey() {
+  const k = String(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim();
+  return k || null;
+}
+
+async function waitForFileActive(fileManager, fileName) {
+  let file = await fileManager.getFile(fileName);
+  while (file.state === FileState.PROCESSING) {
+    await new Promise((r) => setTimeout(r, 2000));
+    file = await fileManager.getFile(fileName);
+  }
+  if (file.state !== FileState.ACTIVE) {
+    throw new Error(`Uploaded file is not usable (state: ${file.state})`);
+  }
+  return file;
+}
+
+function parseJsonFromModelText(text) {
+  const trimmed = text.trim();
+  const fence = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  const jsonStr = fence ? fence[1] : trimmed;
+  return JSON.parse(jsonStr);
+}
+
+async function buildGeminiMediaPart(fileManager, audioPath, mimeType) {
+  const stat = fs.statSync(audioPath);
+  if (stat.size <= INLINE_AUDIO_MAX_BYTES) {
+    const base64Audio = fs.readFileSync(audioPath).toString("base64");
+    return {
+      mediaPart: { inlineData: { mimeType, data: base64Audio } },
+      uploadName: null,
+    };
+  }
+  const upload = await fileManager.uploadFile(audioPath, {
+    mimeType,
+    displayName: path.basename(audioPath),
+  });
+  const uploadName = upload.file.name;
+  const file = await waitForFileActive(fileManager, uploadName);
+  return {
+    mediaPart: {
+      fileData: { mimeType: file.mimeType, fileUri: file.uri },
+    },
+    uploadName,
+  };
+}
+
+async function deleteUploadedFile(fileManager, uploadName) {
+  if (!uploadName) return;
+  try {
+    await fileManager.deleteFile(uploadName);
+  } catch {
+    /* ignore */
+  }
+}
+
+function normalizeSpeakerId(raw) {
+  const s = String(raw || "").trim();
+  const undersc = s.match(/^Speaker_(\d+)$/i);
+  if (undersc) return `Speaker_${undersc[1]}`;
+  const letter = s.match(/^Speaker\s+([A-Za-z])\b/);
+  if (letter) {
+    const n = letter[1].toUpperCase().charCodeAt(0) - 64;
+    if (n >= 1 && n <= 26) return `Speaker_${n}`;
+  }
+  const digit = s.match(/(\d+)/);
+  if (digit) return `Speaker_${digit[1]}`;
+  return "Speaker_1";
+}
+
+function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
+  if (!Array.isArray(transcript)) return [];
+  const off = Number(timeOffsetSec) || 0;
+  return transcript.map((row) => {
+    const start_us = Number(row.start_us);
+    const end_us = Number(row.end_us);
+    const start = parseFloat(
+      ((Number.isFinite(start_us) ? start_us : 0) / 1e6 + off).toFixed(3),
+    );
+    const end = parseFloat(((Number.isFinite(end_us) ? end_us : 0) / 1e6 + off).toFixed(3));
+    const text = String(row.captions ?? row.text ?? "").trim();
+    return {
+      start,
+      end,
+      speaker_id: normalizeSpeakerId(row.speaker ?? row.speaker_id),
+      text,
+      voice_profile_hint: "",
+    };
+  });
+}
+
+/** Dubbing still needs speaker_profiles; Gemini returns transcript-only like the standalone script. */
+function buildSyntheticSpeakerProfiles(segments) {
+  const seen = new Map();
+  for (const s of segments) {
+    const id = s.speaker_id;
+    if (!seen.has(id)) {
+      seen.set(id, {
+        speaker_id: id,
+        voice_description:
+          "Speaker from audio transcription; neutral delivery — refine with voice picker or Inworld profile if needed.",
+      });
+    }
+  }
+  return Array.from(seen.values());
+}
 
 const mergeSpeakerProfiles = (profileArrays) => {
   const seen = new Map();
   for (const profiles of profileArrays) {
     for (const p of profiles) {
-      if (!seen.has(p.speaker_id)) {
-        seen.set(p.speaker_id, p);
+      const id = normalizeSpeakerId(p.speaker_id ?? p.speaker);
+      if (!seen.has(id)) {
+        seen.set(id, {
+          speaker_id: id,
+          voice_description: String(p.voice_description || "").trim() || "Unknown speaker; neutral delivery.",
+        });
       }
     }
   }
@@ -168,30 +558,13 @@ const deduplicateSegments = (segments) => {
       (existing) =>
         Math.abs(existing.start - seg.start) < 1.0 &&
         existing.speaker_id === seg.speaker_id &&
-        existing.text.trim() === seg.text.trim()
+        existing.text.trim() === seg.text.trim(),
     );
     if (!isDuplicate) result.push(seg);
   }
   return result.sort((a, b) => a.start - b.start);
 };
 
-const mapSegments = (parsed, timeOffset) =>
-  (parsed.segments || []).map((s) => {
-    const notes = String(s.delivery_notes || s.deliveryNotes || "").trim();
-    const hint = notes ? `delivery:${notes}` : "";
-    return {
-      start: parseFloat((Number(s.start) + timeOffset).toFixed(3)),
-      end: parseFloat((Number(s.end) + timeOffset).toFixed(3)),
-      speaker_id: s.speaker_id || "Speaker_1",
-      text: (s.text || "").trim(),
-      voice_profile_hint: hint,
-    };
-  });
-
-/**
- * GPT-audio often puts the first line at ~0s even when the file has intro silence/music.
- * If silencedetect on the vocals stem finds speech starting later, shift all segments.
- */
 const calibrateSegmentTimestampsWithVocals = (segments, vocalsPath) => {
   if (!isDubbingTimelineCalibrateEnabled() || !segments.length || !fs.existsSync(vocalsPath)) {
     return segments;
@@ -213,13 +586,13 @@ const calibrateSegmentTimestampsWithVocals = (segments, vocalsPath) => {
   const MAX_SHIFT = 45;
   if (!(onset >= MIN_ONSET && drift >= MIN_DRIFT)) {
     console.log(
-      `[transcribe] Timeline calibration skipped: vocalsOnset=${onset.toFixed(2)}s modelFirstStart=${firstStart.toFixed(2)}s drift=${drift.toFixed(2)}s (silence noise=${noiseDb}dB d=${minSilenceSec}s)`
+      `[transcribe] Timeline calibration skipped: vocalsOnset=${onset.toFixed(2)}s modelFirstStart=${firstStart.toFixed(2)}s drift=${drift.toFixed(2)}s (silence noise=${noiseDb}dB d=${minSilenceSec}s)`,
     );
     return segments;
   }
   const shift = Math.min(drift, MAX_SHIFT);
   console.log(
-    `[transcribe] Timeline calibration applied: shift +${shift.toFixed(2)}s for ${segments.length} segments (silencedetect onset ${onset.toFixed(2)}s vs model ${firstStart.toFixed(2)}s)`
+    `[transcribe] Timeline calibration applied: shift +${shift.toFixed(2)}s for ${segments.length} segments (silencedetect onset ${onset.toFixed(2)}s vs model ${firstStart.toFixed(2)}s)`,
   );
   return segments.map((s) => ({
     ...s,
@@ -229,7 +602,7 @@ const calibrateSegmentTimestampsWithVocals = (segments, vocalsPath) => {
 };
 
 const resolveDubbingVadIntervals = async (vocalsPath) => {
-  if (!isDubbingSileroVadEnabled()) return null;
+  if (!isDubbingSileroRefineAfterGeminiEnabled()) return null;
   const tmp = path.join(os.tmpdir(), `dub_vad_${uuidv4()}`);
   fs.mkdirSync(tmp, { recursive: true });
   try {
@@ -249,7 +622,7 @@ const finalizeTranscription = (segmentList, profileArrays, vocalsPath, opts = {}
   if (segs.length) {
     const a = segs[0];
     console.log(
-      `[transcribe] Segments after dedupe: count=${segs.length} first=${a.start}s–${a.end}s (${String(a.text).slice(0, 48)}…)`
+      `[transcribe] Segments after dedupe: count=${segs.length} first=${a.start}s–${a.end}s (${String(a.text).slice(0, 48)}…)`,
     );
   }
   segs = calibrateSegmentTimestampsWithVocals(segs, vocalsPath);
@@ -266,199 +639,149 @@ const finalizeTranscription = (segmentList, profileArrays, vocalsPath, opts = {}
       preserveSegmentFields: true,
     });
     console.log(
-      `[transcribe] Silero VAD refine: ${before} → ${segs.length} segments (dubbing overlap ≥ ${getDubbingVadMinSpeechOverlap()})`
+      `[transcribe] Silero VAD refine: ${before} → ${segs.length} segments (dubbing overlap ≥ ${getDubbingVadMinSpeechOverlap()})`,
     );
   }
 
   return { segments: segs, speaker_profiles: profiles };
 };
 
-const callTranscription = async (messages) => {
-  const response = await getOpenAI().chat.completions.create({
-    model: TRANSCRIPTION_MODEL,
-    temperature: 0,
-    modalities: ["text"],
-    messages,
+async function transcribeGeminiChunk(audioPath, langKey, isoCode, isAuto, isFirstChunk, chunkIndex, timeOffsetSec) {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    throw new Error("Set GOOGLE_API_KEY (or GEMINI_API_KEY) for dubbing transcription.");
+  }
+
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: "application/json",
+      responseSchema: transcriptResponseSchema,
+    },
   });
-  return parseGptResponse(response.choices[0].message.content);
-};
 
-const transcribeChunkVocalsOnly = async (chunkPath, sourceLanguage, isFirstChunk, chunkIndex, timeOffset) => {
-  const audioBuffer = fs.readFileSync(chunkPath);
-  const messages = buildVocalsOnlyMessages(
-    audioBuffer.toString("base64"),
-    sourceLanguage,
-    isFirstChunk,
-    chunkIndex
-  );
-  const parsed = await callTranscription(messages);
-  return {
-    segments: mapSegments(parsed, timeOffset),
-    speaker_profiles: parsed.speaker_profiles || [],
-  };
-};
+  const mimeType = "audio/mpeg";
+  let chunkHint = "";
+  if (!isFirstChunk) {
+    chunkHint =
+      `This is continuation chunk index ${chunkIndex} of a longer recording. ` +
+      `start_us/end_us are relative to THIS clip only (0 = first sample of this file). ` +
+      `Keep the same speaker labels (e.g. Speaker A / Speaker B, or Speaker_1 / Speaker_2) for the same people as in earlier chunks.`;
+  }
 
-const transcribeChunkTriStem = async (
-  fullSlicePath,
-  vocalsSlicePath,
-  bgSlicePath,
-  sourceLanguage,
-  isFirstChunk,
-  chunkIndex,
-  timeOffset
-) => {
-  const b64Full = fs.readFileSync(fullSlicePath).toString("base64");
-  const b64Vocals = fs.readFileSync(vocalsSlicePath).toString("base64");
-  const b64Bg = fs.readFileSync(bgSlicePath).toString("base64");
-  const messages = buildTriStemMessages(
-    b64Full,
-    b64Vocals,
-    b64Bg,
-    sourceLanguage,
-    isFirstChunk,
-    chunkIndex
-  );
-  const parsed = await callTranscription(messages);
-  return {
-    segments: mapSegments(parsed, timeOffset),
-    speaker_profiles: parsed.speaker_profiles || [],
-  };
-};
+  const prompt = buildDubbingPrompt(langKey, isoCode, isAuto, chunkHint);
+  const fileManager = new GoogleAIFileManager(apiKey);
+  let uploadName = null;
+
+  try {
+    const stat = fs.statSync(audioPath);
+    if (stat.size <= INLINE_AUDIO_MAX_BYTES) {
+      console.log(`[transcribe] Sending audio inline to ${modelName} (${(stat.size / 1e6).toFixed(2)} MB)…`);
+    } else {
+      console.log(`[transcribe] Uploading audio for ${modelName} (${(stat.size / 1e6).toFixed(2)} MB)…`);
+    }
+
+    const { mediaPart, uploadName: up } = await buildGeminiMediaPart(fileManager, audioPath, mimeType);
+    uploadName = up;
+
+    console.log("[transcribe] Gemini transcribing…");
+    const result = await model.generateContent([mediaPart, { text: prompt }]);
+    const text = result.response.text();
+    const parsed = parseJsonFromModelText(text);
+    if (!Array.isArray(parsed.transcript)) {
+      throw new Error("Gemini response missing transcript array");
+    }
+    const segments = mapGeminiTranscriptToSegments(parsed.transcript, timeOffsetSec);
+    const speaker_profiles = buildSyntheticSpeakerProfiles(segments);
+    return { segments, speaker_profiles };
+  } finally {
+    await deleteUploadedFile(fileManager, uploadName);
+  }
+}
 
 const fileSize = (p) => fs.statSync(p).size;
 
 /**
  * @param {string} vocalsPath
- * @param {string} [sourceLanguage]
- * @param {{ fullMixPath?: string, backgroundPath?: string } | null} stemPaths - aligned timeline mp3s
+ * @param {string|null|undefined} sourceLanguage
+ * @param {{ fullMixPath?: string, backgroundPath?: string } | null} _stemPaths ignored (vocals-only ASR)
  */
-const transcribeWithSpeakers = async (vocalsPath, sourceLanguage, stemPaths = null) => {
-  const vadIntervals = await resolveDubbingVadIntervals(vocalsPath);
+const writeTranscriptionOutputJson = (payload) => {
+  const outputPath = path.resolve(process.cwd(), "output.json");
+  try {
+    fs.writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+    console.log(`[transcribe] Wrote ${outputPath}`);
+  } catch (e) {
+    console.warn("[transcribe] Could not write output.json:", e.message);
+  }
+};
 
-  const useTriStem =
-    stemPaths &&
-    stemPaths.fullMixPath &&
-    stemPaths.backgroundPath &&
-    isTriStemTranscribeEnabled() &&
-    fs.existsSync(stemPaths.fullMixPath) &&
-    fs.existsSync(stemPaths.backgroundPath);
+const transcribeWithSpeakers = async (vocalsPath, sourceLanguage, _stemPaths = null) => {
+  const vadIntervals = await resolveDubbingVadIntervals(vocalsPath);
+  const { langKey, isoCode, isAuto } = resolveDubbingTranscribeLanguage(sourceLanguage);
 
   const vocalsSize = fileSize(vocalsPath);
   const duration = await getFileDuration(vocalsPath);
 
-  const runSingleShot = async () => {
-    if (useTriStem) {
-      const total =
-        fileSize(stemPaths.fullMixPath) + vocalsSize + fileSize(stemPaths.backgroundPath);
-      if (total <= GPT_AUDIO_MAX_BYTES) {
-        try {
-          return await transcribeChunkTriStem(
-            stemPaths.fullMixPath,
-            vocalsPath,
-            stemPaths.backgroundPath,
-            sourceLanguage,
-            true,
-            0,
-            0
-          );
-        } catch (e) {
-          console.warn(
-            "[transcribe] Tri-stem single-shot failed, falling back to vocals:",
-            e.message || e
-          );
-        }
-      }
-    }
-    return transcribeChunkVocalsOnly(vocalsPath, sourceLanguage, true, 0, 0);
-  };
+  const runSingleShot = async () =>
+    transcribeGeminiChunk(vocalsPath, langKey, isoCode, isAuto, true, 0, 0);
 
-  if (vocalsSize <= GPT_AUDIO_MAX_BYTES && !(useTriStem && fileSize(stemPaths.fullMixPath) + vocalsSize + fileSize(stemPaths.backgroundPath) > GPT_AUDIO_MAX_BYTES)) {
+  let finalized;
+  if (vocalsSize <= INLINE_AUDIO_MAX_BYTES) {
     const r = await runSingleShot();
-    return finalizeTranscription(r.segments, [r.speaker_profiles], vocalsPath, { vadIntervals });
-  }
+    finalized = finalizeTranscription(r.segments, [r.speaker_profiles], vocalsPath, { vadIntervals });
+  } else {
+    const bytesPerSecond = vocalsSize / duration;
+    const chunkSeconds = Math.max(30, Math.floor(CHUNK_TARGET_BYTES / bytesPerSecond));
 
-  const bytesPerSecond = vocalsSize / duration;
-  const targetChunkBytes = useTriStem ? Math.floor(GPT_AUDIO_MAX_BYTES / 3.2) : 15 * 1024 * 1024;
-  const chunkSeconds = Math.max(30, Math.floor(targetChunkBytes / bytesPerSecond));
+    const chunkDir = path.join(os.tmpdir(), `dub_transcribe_${uuidv4()}`);
+    fs.mkdirSync(chunkDir, { recursive: true });
 
-  const chunkDir = path.join(os.tmpdir(), `dub_transcribe_${uuidv4()}`);
-  fs.mkdirSync(chunkDir, { recursive: true });
+    let chunkFiles;
+    try {
+      chunkFiles = await splitAudioIntoChunks(vocalsPath, chunkDir, chunkSeconds);
+    } catch (err) {
+      cleanupPath(chunkDir);
+      throw err;
+    }
 
-  let chunkFiles;
-  try {
-    chunkFiles = await splitAudioIntoChunks(vocalsPath, chunkDir, chunkSeconds);
-  } catch (err) {
-    cleanupPath(chunkDir);
-    throw err;
-  }
+    const allSegments = [];
+    const allProfiles = [];
+    let timeOffset = 0;
 
-  const allSegments = [];
-  const allProfiles = [];
-  let timeOffset = 0;
-
-  for (let i = 0; i < chunkFiles.length; i++) {
-    const chunkDuration = await getFileDuration(chunkFiles[i]);
-    let result;
-
-    if (useTriStem) {
-      const fullSlice = path.join(chunkDir, `full_${i}.mp3`);
-      const bgSlice = path.join(chunkDir, `bg_${i}.mp3`);
-      try {
-        await extractAudioWindow(stemPaths.fullMixPath, fullSlice, timeOffset, chunkDuration);
-        await extractAudioWindow(stemPaths.backgroundPath, bgSlice, timeOffset, chunkDuration);
-        const triTotal = fileSize(fullSlice) + fileSize(chunkFiles[i]) + fileSize(bgSlice);
-        if (triTotal <= GPT_AUDIO_MAX_BYTES) {
-          result = await transcribeChunkTriStem(
-            fullSlice,
-            chunkFiles[i],
-            bgSlice,
-            sourceLanguage,
-            i === 0,
-            i,
-            timeOffset
-          );
-        } else {
-          result = await transcribeChunkVocalsOnly(
-            chunkFiles[i],
-            sourceLanguage,
-            i === 0,
-            i,
-            timeOffset
-          );
-        }
-        cleanupPath(fullSlice);
-        cleanupPath(bgSlice);
-      } catch (e) {
-        console.warn("[transcribe] Tri-stem chunk failed, vocals only:", e.message);
-        result = await transcribeChunkVocalsOnly(
-          chunkFiles[i],
-          sourceLanguage,
-          i === 0,
-          i,
-          timeOffset
-        );
-      }
-    } else {
-      result = await transcribeChunkVocalsOnly(
+    for (let i = 0; i < chunkFiles.length; i++) {
+      const chunkDuration = await getFileDuration(chunkFiles[i]);
+      const result = await transcribeGeminiChunk(
         chunkFiles[i],
-        sourceLanguage,
+        langKey,
+        isoCode,
+        isAuto,
         i === 0,
         i,
-        timeOffset
+        timeOffset,
       );
+      allSegments.push(...result.segments);
+      allProfiles.push(result.speaker_profiles);
+
+      if (i < chunkFiles.length - 1) {
+        timeOffset += Math.max(0, chunkDuration - CHUNK_OVERLAP_SECONDS);
+      }
     }
 
-    allSegments.push(...result.segments);
-    allProfiles.push(result.speaker_profiles);
+    cleanupPath(chunkDir);
 
-    if (i < chunkFiles.length - 1) {
-      timeOffset += Math.max(0, chunkDuration - CHUNK_OVERLAP_SECONDS);
-    }
+    finalized = finalizeTranscription(allSegments, allProfiles, vocalsPath, { vadIntervals });
   }
 
-  cleanupPath(chunkDir);
+  // writeTranscriptionOutputJson({
+  //   segments: finalized.segments,
+  //   speaker_profiles: finalized.speaker_profiles,
+  // });
 
-  return finalizeTranscription(allSegments, allProfiles, vocalsPath, { vadIntervals });
+  return finalized;
 };
 
 module.exports = { transcribeWithSpeakers };
