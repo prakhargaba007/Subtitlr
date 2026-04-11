@@ -1,0 +1,105 @@
+{
+  "segments": [
+    {
+      "start": 2.15,
+      "end": 2.55,
+      "speaker_id": "Speaker_1",
+      "text": "Juice piyoge?",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 4.25,
+      "end": 6.75,
+      "speaker_id": "Speaker_2",
+      "text": "Nahi, main anjaan logon ke haath ka kuch nahi khati.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 8.75,
+      "end": 10.75,
+      "speaker_id": "Speaker_2",
+      "text": "Saala shakal se hi chor dikh raha hai.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 16.5,
+      "end": 17.25,
+      "speaker_id": "Speaker_1",
+      "text": "Biscuit lenge?",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 20.75,
+      "end": 25.75,
+      "speaker_id": "Speaker_2",
+      "text": "Shakal se sharif lag raha hai, handsome bhi hai, he let me.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 43.25,
+      "end": 44.75,
+      "speaker_id": "Speaker_2",
+      "text": "Mera bag, mera bag kahan hai?",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 45.75,
+      "end": 4.65,
+      "speaker_id": "Speaker_2",
+      "text": "Bag.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 47.25,
+      "end": 47.75,
+      "speaker_id": "Speaker_1",
+      "text": "Kaunsa bag?",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 48.25,
+      "end": 4.9,
+      "speaker_id": "Speaker_2",
+      "text": "Mera bag tha.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 49.75,
+      "end": 51,
+      "speaker_id": "Speaker_1",
+      "text": "Mera ho gaya, tera bag kidhar hai?",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 51,
+      "end": 52.25,
+      "speaker_id": "Speaker_2",
+      "text": "Shakal se tu hi chor dikh raha hai.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 52.5,
+      "end": 58.5,
+      "speaker_id": "Speaker_1",
+      "text": "Saali chor bolegi na, daant tod dunga teri. Agar chor hota na toh tera bag leke chala gaya hota, na ki yahan baitha hota main, samjhi? Hat.",
+      "voice_profile_hint": ""
+    },
+    {
+      "start": 61.25,
+      "end": 62.25,
+      "speaker_id": "Speaker_2",
+      "text": "Ye cold drink?",
+      "voice_profile_hint": ""
+    }
+  ],
+  "speaker_profiles": [
+    {
+      "speaker_id": "Speaker_1",
+      "voice_description": "Speaker from audio transcription; neutral delivery — refine with voice picker or Inworld profile if needed."
+    },
+    {
+      "speaker_id": "Speaker_2",
+      "voice_description": "Speaker from audio transcription; neutral delivery — refine with voice picker or Inworld profile if needed."
+    }
+  ]
+}

@@ -34,15 +34,13 @@ const resolveMaxAtempo = (targetLanguage) => {
   return getDubbingMaxAtempo();
 };
 
-/** Pass full mix + vocals + background into gpt-4o-audio-preview when true. */
-const isTriStemTranscribeEnabled = () => !truthy(process.env.DUBBING_TRI_STEM_TRANSCRIBE_OFF);
-
 /**
- * When enabled (default), if the model places the first segment too early vs vocals energy
- * (leading silence / intro), shift all segment start/end times forward to align.
- * Set DUBBING_TIMELINE_CALIBRATE_OFF=1 to disable.
+ * When enabled, shift all segment times if ffmpeg silencedetect onset on the vocals stem
+ * disagrees with the model’s first segment (legacy GPT-audio workaround).
+ * Gemini timings match the standalone script better with this OFF (default).
+ * Set DUBBING_TIMELINE_CALIBRATE_ON=1 to enable.
  */
-const isDubbingTimelineCalibrateEnabled = () => !truthy(process.env.DUBBING_TIMELINE_CALIBRATE_OFF);
+const isDubbingTimelineCalibrateEnabled = () => truthy(process.env.DUBBING_TIMELINE_CALIBRATE_ON);
 
 /** silencedetect noise threshold (dB), default -35 */
 const getDubbingTimelineSilenceNoiseDb = () => {
@@ -59,10 +57,20 @@ const getDubbingTimelineSilenceMinSec = () => {
 };
 
 /**
- * Post-filter GPT dubbing segments with Silero VAD on the vocals stem (same stack as subtitles).
- * Requires SILERO_PYTHON / requirements-vad.txt when enabled.
+ * True when user wants Silero VAD at all (Python stack available).
+ * Refining Gemini transcripts with VAD often drops early/overlapping speech — see
+ * `isDubbingSileroRefineAfterGeminiEnabled` for the actual dubbing post-step.
  */
-const isDubbingSileroVadEnabled = () => truthy(process.env.DUBBING_USE_SILERO_VAD);
+const isDubbingSileroVadEnabled = () =>
+  truthy(process.env.VAD_ENABLE) || truthy(process.env.DUBBING_USE_SILERO_VAD);
+
+/**
+ * Actually run Silero timeline + refineSegmentsWithVadTimeline after Gemini dubbing ASR.
+ * Requires isDubbingSileroVadEnabled() AND this flag — avoids stripping the opening line
+ * when VAD speech windows don’t align with Gemini’s timestamps.
+ */
+const isDubbingSileroRefineAfterGeminiEnabled = () =>
+  isDubbingSileroVadEnabled() && truthy(process.env.DUBBING_SILERO_REFINE_AFTER_GEMINI);
 
 /** Min fraction of segment duration overlapping VAD speech; uses subtitle env as fallback. */
 const getDubbingVadMinSpeechOverlap = () => {
@@ -122,11 +130,11 @@ module.exports = {
   getDubbingMaxAtempoForHindiTargets,
   isHindiLikeTarget,
   resolveMaxAtempo,
-  isTriStemTranscribeEnabled,
   isDubbingTimelineCalibrateEnabled,
   getDubbingTimelineSilenceNoiseDb,
   getDubbingTimelineSilenceMinSec,
   isDubbingSileroVadEnabled,
+  isDubbingSileroRefineAfterGeminiEnabled,
   getDubbingVadMinSpeechOverlap,
   isInworldVoiceProfileEnabled,
   inworldVoiceProfileMaxSegments,

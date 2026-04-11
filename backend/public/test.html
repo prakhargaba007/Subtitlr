@@ -538,6 +538,7 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('subtitles', this)">📝 Subtitle Generator</button>
       <button class="tab-btn" onclick="switchTab('dubbing',   this)">🎬 AI Voice Dubbing</button>
+      <button class="tab-btn" onclick="switchTab('transcribe', this)">🎧 Transcribe (Gemini)</button>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
@@ -716,6 +717,66 @@
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         TAB 3: GEMINI TRANSCRIBE TEST (no dubbing / no credits debit)
+    ═══════════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-transcribe">
+      <div class="card">
+        <div class="credits-badge">⚡ <span id="trs-credits">—</span> credits · test endpoint does not deduct credits</div>
+
+        <form id="trsForm">
+          <div class="field">
+            <label>JWT Token</label>
+            <input type="password" id="trs-token" placeholder="Paste your Bearer token" oninput="syncToken('trs')" />
+          </div>
+
+          <div class="field">
+            <label>Source language</label>
+            <select id="trs-lang">
+              <option value="">Auto-detect</option>
+              <option value="english">English</option>
+              <option value="hindi">Hindi</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="spanish">Spanish</option>
+              <option value="french">French</option>
+              <option value="german">German</option>
+              <option value="arabic">Arabic</option>
+              <option value="chinese">Chinese</option>
+              <option value="japanese">Japanese</option>
+              <option value="portuguese">Portuguese</option>
+              <option value="russian">Russian</option>
+              <option value="korean">Korean</option>
+              <option value="italian">Italian</option>
+              <option value="turkish">Turkish</option>
+              <option value="dutch">Dutch</option>
+              <option value="urdu">Urdu</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Audio / Video</label>
+            <div class="file-drop" id="trs-drop">
+              <input type="file" id="trs-file" accept="audio/*,video/*" />
+              <div class="icon">🎙</div>
+              <div class="hint">Full mix is transcribed (no stem separation).<br><small>MP3, WAV, MP4, MOV …</small></div>
+              <div class="fname" id="trs-fname"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="trs-btn">Run Gemini transcription</button>
+        </form>
+
+        <div class="log-box" id="trs-status" style="display:none;margin-top:18px;">
+          <div class="log-header"><span class="pulse" id="trs-pulse"></span><span id="trs-status-text">Transcribing…</span></div>
+        </div>
+
+        <div class="result-panel" id="trs-result">
+          <div class="result-panel-header" id="trs-result-hdr"></div>
+          <pre id="trs-result-body"></pre>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /wrapper -->
 
   <script>
@@ -734,8 +795,11 @@
     // ── Token sync (keep both inputs in sync so user only types once) ─────────
     function syncToken(from) {
       const val = document.getElementById(from + '-token').value;
-      const other = from === 'sub' ? 'dub' : 'sub';
-      document.getElementById(other + '-token').value = val;
+      const others = from === 'sub' ? ['dub', 'trs'] : from === 'dub' ? ['sub', 'trs'] : ['sub', 'dub'];
+      others.forEach((prefix) => {
+        const el = document.getElementById(prefix + '-token');
+        if (el) el.value = val;
+      });
       debounceFetchCredits(val);
     }
 
@@ -755,6 +819,8 @@
         const val = res.ok ? data.credits : '—';
         document.getElementById('sub-credits').textContent = val;
         document.getElementById('dub-credits').textContent = val;
+        const trsCr = document.getElementById('trs-credits');
+        if (trsCr) trsCr.textContent = val;
       } catch (_) { }
     }
 
@@ -781,6 +847,7 @@
 
     initDrop('sub-drop', 'sub-file', 'sub-fname');
     initDrop('dub-drop', 'dub-file', 'dub-fname');
+    initDrop('trs-drop', 'trs-file', 'trs-fname');
 
     // ── Log helper ────────────────────────────────────────────────────────────
     function addLogEntry(entriesId, stage, message, extra) {
@@ -1079,6 +1146,60 @@
       };
       return map[stage] || stage;
     }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // TRANSCRIBE TEST — POST /api/transcribe/test
+    // ══════════════════════════════════════════════════════════════════════════
+    document.getElementById('trsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token = document.getElementById('trs-token').value.trim();
+      const lang = document.getElementById('trs-lang').value;
+      const file = document.getElementById('trs-file').files[0];
+
+      if (!token) return alert('Please enter your JWT token.');
+      if (!file) return alert('Please select a file.');
+
+      const btn = document.getElementById('trs-btn');
+      btn.disabled = true;
+      btn.textContent = 'Transcribing…';
+
+      document.getElementById('trs-result').style.display = 'none';
+      document.getElementById('trs-status').style.display = 'block';
+      document.getElementById('trs-status-text').textContent = 'Extracting audio & calling Gemini…';
+      document.getElementById('trs-pulse').style.animationPlayState = 'running';
+
+      const form = new FormData();
+      form.append('file', file);
+      if (lang) form.append('sourceLanguage', lang);
+
+      try {
+        const res = await fetch(`${BASE}/api/transcribe/test`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        document.getElementById('trs-pulse').style.animationPlayState = 'paused';
+        document.getElementById('trs-status').style.display = 'none';
+
+        if (!res.ok) {
+          showResult('trs-result', 'trs-result-hdr', 'trs-result-body', false, data);
+          return;
+        }
+
+        showResult('trs-result', 'trs-result-hdr', 'trs-result-body', true, data);
+      } catch (err) {
+        document.getElementById('trs-pulse').style.animationPlayState = 'paused';
+        document.getElementById('trs-status').style.display = 'none';
+        showResult('trs-result', 'trs-result-hdr', 'trs-result-body', false, { message: err.message });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Gemini transcription';
+      }
+    });
   </script>
 </body>
 

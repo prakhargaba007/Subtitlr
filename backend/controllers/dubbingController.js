@@ -196,8 +196,16 @@ exports.startDubbingJob = async (req, res) => {
       });
       return res.end();
     }
+    if (!String(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim()) {
+      emit({
+        stage: "error",
+        message: "GOOGLE_API_KEY (or GEMINI_API_KEY) is required for dubbing transcription.",
+        statusCode: 422,
+      });
+      return res.end();
+    }
     if (!String(process.env.OPENAI_API_KEY || "").trim()) {
-      emit({ stage: "error", message: "OPENAI_API_KEY is required for dubbing.", statusCode: 422 });
+      emit({ stage: "error", message: "OPENAI_API_KEY is required for dubbing (translation and voice selection).", statusCode: 422 });
       return res.end();
     }
     if (ttsProvider === "inworld" && !isInworldConfigured()) {
