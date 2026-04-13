@@ -12,6 +12,13 @@ const port = process.env.PORT || 8080;
 // Configure the CORS middleware
 app.use(cors());
 
+// Dodo webhooks need raw body for signature verification (must run before JSON parser)
+app.use(
+  "/api/webhooks/dodo",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  require("./routes/dodoWebhookRoutes")
+);
+
 // Increase body size limits to handle resume/PDF uploads
 app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
@@ -118,6 +125,10 @@ const blogRoutes = require("./routes/blogRoutes");
 const subtitleRoutes = require("./routes/subtitleRoutes");
 const dubbingRoutes = require("./routes/dubbingRoutes");
 const transcribeTestRoutes = require("./routes/transcribeTestRoutes");
+const planRoutes = require("./routes/planRoutes");
+const billingRoutes = require("./routes/billingRoutes");
+const adminBillingRoutes = require("./routes/adminBillingRoutes");
+const adminPlanRoutes = require("./routes/adminPlanRoutes");
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -132,6 +143,10 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/subtitles", subtitleRoutes);
 app.use("/api/dubbing", dubbingRoutes);
 app.use("/api/transcribe", transcribeTestRoutes);
+app.use("/api/plans", planRoutes);
+app.use("/api/billing", billingRoutes);
+app.use("/api/admin/billing", adminBillingRoutes);
+app.use("/api/admin/plans", adminPlanRoutes);
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.log(error);
@@ -143,7 +158,14 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(process.env.MONGO_ID)
-  .then((res) => {
+  .then(async () => {
+    try {
+      const { seedPlanCatalogFromEnv } = require("./utils/planCatalogSeed");
+      const out = await seedPlanCatalogFromEnv();
+      if (out.seeded) console.log(`[plan catalog] upserted ${out.seeded} row(s) from env`);
+    } catch (e) {
+      console.warn("[plan catalog seed]", e.message);
+    }
     app.listen(port);
     console.log(`App listening on port ${port}!`);
   })

@@ -1,0 +1,43 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.mobileHeader {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  padding: 0 16px;
+  background: white;
+  z-index: 200;
+  border-bottom: 1px solid #e9ecef;
+  /* display: flex;
+  align-items: center;
+  justify-content: space-between; */
+}
+
+.burger {
+  margin-top: 14px;
+}
+
+.main {
+  flex-grow: 1;
+  padding: 10px;
+  margin-left: 300px; /* Width of the navbar */
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .mobileHeader {
+    display: flex;
+    align-items: center;
+  }
+
+  .main {
+    margin-left: 0;
+    padding-top: 50px; /* Account for mobile header */
+  }
+} 

@@ -79,6 +79,17 @@ const UserSchema = new Schema(
       default: 0,
       min: 0,
     },
+    /** Reserved for future org / team billing (null = none). */
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      default: null,
+      index: true,
+    },
+    /** Manually flagged enterprise / custom billing (contact sales). */
+    enterpriseManual: {
+      type: Boolean,
+      default: false,
+    },
     preferences: {
       emailNotifications: {
         type: Boolean,

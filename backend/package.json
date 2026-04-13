@@ -24,6 +24,7 @@
     "bullmq": "^5.56.8",
     "canvas": "^3.2.0",
     "cors": "^2.8.5",
+    "dodopayments": "^2.27.0",
     "dotenv": "^16.4.5",
     "expo-server-sdk": "^3.15.0",
     "express": "^4.19.2",

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { v4: uuidv4 } = require("uuid");
-const OpenAI = require("openai");
+const { GoogleGenAI } = require("@google/genai");
 const { getFileDuration } = require("./audioUtils");
 
 /**
@@ -66,10 +66,25 @@ const buildInworldAuthorizationHeader = () => {
 
 const isInworldConfigured = () => Boolean(buildInworldAuthorizationHeader());
 
-let _openai = null;
-const getOpenAI = () => {
-  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return _openai;
+let _gemini = null;
+const getGemini = () => {
+  const key = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  if (!_gemini) _gemini = new GoogleGenAI({ apiKey: key });
+  return _gemini;
+};
+
+const parseGeminiJsonResponse = (response) => {
+  let text = "";
+  if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+    text = response.candidates[0].content.parts[0].text;
+  } else if (typeof response.text === "string") {
+    text = response.text;
+  } else {
+    throw new Error("Unexpected Gemini response format");
+  }
+  const clean = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  return JSON.parse(clean);
 };
 
 const INWORLD_TTS_URL = (process.env.INWORLD_TTS_URL || "https://api.inworld.ai/tts/v1/voice").trim();
@@ -81,7 +96,7 @@ const getDefaultInworldVoice = () =>
   String(process.env.INWORLD_DEFAULT_VOICE || "Jason").trim() || "Jason";
 
 /**
- * If set, every speaker uses this voiceId (e.g. a Voice Cloning API id). Skips GPT matching.
+ * If set, every speaker uses this voiceId (e.g. a Voice Cloning API id). Skips Gemini voice matching.
  */
 const getForcedInworldVoiceId = () => String(process.env.INWORLD_FORCE_VOICE_ID || "").trim();
 
@@ -145,7 +160,7 @@ const fetchInworldVoiceCatalog = async () => {
 };
 
 /**
- * Pick an Inworld voice from the catalog (GPT-4o-mini), or use forced/default.
+ * Pick an Inworld voice from the catalog (Gemini JSON), or use forced/default.
  *
  * @param {string} voiceDescription
  * @param {Array<{voiceId:string, blurb:string}>} [catalog] — from fetchInworldVoiceCatalog(); defaults to preset JSON
@@ -177,32 +192,32 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null, options 
   const fallback = getDefaultInworldVoice();
 
   try {
-    const response = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a voice casting assistant. Given a speaker description, pick exactly one Inworld TTS voice " +
-            "from the allowed list. Each speaker in a dub MUST use a different voiceId than any already assigned — " +
-            "the allowed list excludes voices already taken. Return ONLY valid JSON: " +
-            '{ "voiceId": "<name>", "reason": "<one sentence>" }. ' +
-            `Allowed voiceIds: ${voiceIds.join(", ")}.`,
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            speakerDescription: voiceDescription,
-            voiceOptions: pool,
-            alreadyAssignedVoiceIds: [...excludeSet],
-          }),
-        },
-      ],
+    const gemini = getGemini();
+    if (!gemini) {
+      throw new Error("GOOGLE_API_KEY or GEMINI_API_KEY not set");
+    }
+    const model = String(process.env.GEMINI_MODEL || "").trim() ||
+      "gemini-2.0-flash";
+    const systemPrompt =
+      "You are a voice casting assistant. Given a speaker description, pick exactly one Inworld TTS voice " +
+      "from the allowed list. Each speaker in a dub MUST use a different voiceId than any already assigned — " +
+      "the allowed list excludes voices already taken. Return ONLY valid JSON: " +
+      '{ "voiceId": "<name>", "reason": "<one sentence>" }. ' +
+      `Allowed voiceIds: ${voiceIds.join(", ")}.`;
+    const userPayload = JSON.stringify({
+      speakerDescription: voiceDescription,
+      voiceOptions: pool,
+      alreadyAssignedVoiceIds: [...excludeSet],
     });
-
-    const parsed = JSON.parse(response.choices[0].message.content);
+    const response = await gemini.models.generateContent({
+      model,
+      contents: `${systemPrompt}\n\n${userPayload}`,
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: "application/json",
+      },
+    });
+    const parsed = parseGeminiJsonResponse(response);
     const id = String(parsed.voiceId || "").trim();
     if (voiceIds.includes(id) && !excludeSet.has(id)) {
       console.log(`[inworldTts] Voice match: ${id} — ${parsed.reason}`);

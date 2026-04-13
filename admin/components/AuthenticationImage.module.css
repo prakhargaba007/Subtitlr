@@ -1,0 +1,44 @@
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.form {
+  flex: 1;
+  max-width: 450px;
+  padding: 80px 30px;
+  margin: 50px 40px;
+  background-color: light-dark(
+    var(--mantine-color-white),
+    var(--mantine-color-dark-7)
+  );
+
+  /* @media (max-width: $mantine-breakpoint-sm) {
+    max-width: 100%;
+  } */
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+   /* margin-bottom: 20px; */
+}
+
+.image {
+  flex: 1;
+  background-size: cover;
+  background-position: center;
+  background-image: url(../assets/coverImg.png);
+}
+
+.title {
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  font-family: Greycliff CF, var(--mantine-font-family);
+}
+
+.error {
+  color: var(--mantine-color-red-6);
+  font-size: 14px;
+  margin-top: 5px;
+}

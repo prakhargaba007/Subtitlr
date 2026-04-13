@@ -1,0 +1,22 @@
+.metallic {
+  background: linear-gradient(135deg, #fefce8 0%, #d4af37 50%, #fefce8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.goldGlow {
+  text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+.premiumBorder {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#141624, #141624) padding-box,
+    linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(99, 102, 241, 0.3)) border-box;
+  border-radius: 1rem;
+}
+
+.featureCard {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+}

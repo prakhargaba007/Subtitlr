@@ -8,7 +8,7 @@ const User = require("./models/User");
 // Admin user details - you can modify these as needed
 const adminUser = {
   name: "Admin User",
-  email: "admin@resumeos.com",
+  email: "admin@subtitle.com",
   userName: "admin",
   password: "1234567", // This will be hashed before saving
   role: "admin",

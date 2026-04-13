@@ -34,7 +34,16 @@ const CreditTransactionSchema = new Schema(
     /** Where the credit movement originated */
     source: {
       type: String,
-      enum: ["signup_bonus", "subtitle_job", "dubbing_job", "purchase", "refund", "admin_grant"],
+      enum: [
+        "signup_bonus",
+        "subtitle_job",
+        "dubbing_job",
+        "purchase",
+        "refund",
+        "admin_grant",
+        "subscription_initial",
+        "subscription_renewal",
+      ],
       required: true,
     },
     /** Human-readable label shown in the UI, e.g. "Transcribed video.mp4 (3 min)" */
@@ -51,6 +60,11 @@ const CreditTransactionSchema = new Schema(
   {
     timestamps: true,
   }
+);
+
+CreditTransactionSchema.index(
+  { "metadata.billingPeriodKey": 1 },
+  { unique: true, sparse: true }
 );
 
 module.exports = mongoose.model("CreditTransaction", CreditTransactionSchema);
