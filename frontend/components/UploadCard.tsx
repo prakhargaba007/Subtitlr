@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { Suspense, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   setPendingFile,
@@ -148,7 +148,16 @@ function LanguagePicker({
 
 // ── UploadCard ────────────────────────────────────────────────────────────────
 
-export default function UploadCard({ basePath = "" }: { basePath?: string }) {
+function UploadCardFallback() {
+  return (
+    <div className="relative" aria-hidden>
+      <div className="absolute -inset-1 bg-linear-to-r from-primary/10 to-secondary/10 rounded-4xl blur opacity-75" />
+      <div className="relative bg-white/80 backdrop-blur-sm border border-white/60 rounded-4xl overflow-hidden shadow-xl shadow-indigo-100/40 min-h-[320px] animate-pulse" />
+    </div>
+  );
+}
+
+function UploadCardInner({ basePath = "" }: { basePath?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -347,5 +356,13 @@ export default function UploadCard({ basePath = "" }: { basePath?: string }) {
         .upload-card-scrollbar::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
       `}</style>
     </>
+  );
+}
+
+export default function UploadCard(props: { basePath?: string }) {
+  return (
+    <Suspense fallback={<UploadCardFallback />}>
+      <UploadCardInner {...props} />
+    </Suspense>
   );
 }

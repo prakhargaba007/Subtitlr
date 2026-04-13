@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import axiosInstance, { s3Url } from "@/utils/axios";
@@ -8,7 +8,18 @@ import type { EditorJob } from "@/components/dubbingEditor/types";
 import { DubbingEditorProvider } from "@/components/dubbingEditor/DubbingEditorContext";
 import EditorShell from "@/components/dubbingEditor/EditorShell";
 
-export default function DubbingEditorPage() {
+function DubbingEditorLoading() {
+  return (
+    <div className="h-[100dvh] bg-[#12141a] flex items-center justify-center text-[#e8eaed]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-2 border-[#6b63ff]/30 border-t-[#6b63ff] rounded-full animate-spin" />
+        <p className="text-sm text-[#9aa3ad]">Loading editor…</p>
+      </div>
+    </div>
+  );
+}
+
+function DubbingEditorPageInner() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const inDashboard = pathname.startsWith("/dashboard");
@@ -43,14 +54,7 @@ export default function DubbingEditorPage() {
   }, [jobId, refresh]);
 
   if (loading) {
-    return (
-      <div className="h-[100dvh] bg-[#12141a] flex items-center justify-center text-[#e8eaed]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-[#6b63ff]/30 border-t-[#6b63ff] rounded-full animate-spin" />
-          <p className="text-sm text-[#9aa3ad]">Loading editor…</p>
-        </div>
-      </div>
-    );
+    return <DubbingEditorLoading />;
   }
 
   if (errorMsg || !job) {
@@ -82,5 +86,13 @@ export default function DubbingEditorPage() {
     >
       <EditorShell />
     </DubbingEditorProvider>
+  );
+}
+
+export default function DubbingEditorPage() {
+  return (
+    <Suspense fallback={<DubbingEditorLoading />}>
+      <DubbingEditorPageInner />
+    </Suspense>
   );
 }

@@ -208,6 +208,7 @@ export function DubbingEditorProvider({
       rebuildMsg,
       setRebuildMsg,
       mixAudioUrl: mixAudioUrlNoParams,
+      mixAudioUrlNoParams,
       videoUrl: videoUrlNoParams,
       timelineZoom,
       setTimelineZoom,
