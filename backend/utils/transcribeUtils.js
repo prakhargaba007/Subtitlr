@@ -320,7 +320,7 @@ const segmentRulesReference = `Segments:
 
 JSON schema:
 - transcript: array in time order
-- each: start_us, end_us, speaker ("Speaker A" / "Speaker B" if multiple), captions (exact wording as spoken)`;
+- each: start_us, end_us, speaker ("Speaker A" / "Speaker B" if multiple), captions (exact wording as spoken), speaker_gender ("male", "female", or "unknown" — infer from voice characteristics; be consistent for the same speaker), voice_description (a concise but rich 1-2 sentence description of THIS speaker's voice — include gender, approximate age range, tone (e.g. deep/bright/raspy/smooth), pitch (low/medium/high), pace (slow/moderate/fast), accent or regional quality if notable, and overall energy or emotion. Example: "Young adult male, mid-20s, with a deep warm baritone, moderate pace, slight American Southern drawl, and an energetic enthusiastic delivery." Be consistent for the same speaker across all segments; only update if the voice clearly changes.))`;
 
 /**
  * Core prompt for a known language — matches standalone script categories:
@@ -413,8 +413,17 @@ const transcriptItemSchema = {
     },
     speaker: { type: SchemaType.STRING },
     captions: { type: SchemaType.STRING },
+    speaker_gender: {
+      type: SchemaType.STRING,
+      description: "Perceived gender of the speaker: \"male\", \"female\", or \"unknown\"",
+    },
+    voice_description: {
+      type: SchemaType.STRING,
+      description:
+        "Rich 1-2 sentence description of this speaker's voice: gender, approximate age range, tone, pitch, pace, accent, and emotional energy. Be consistent for the same speaker.",
+    },
   },
-  required: ["start_us", "end_us", "speaker", "captions"],
+  required: ["start_us", "end_us", "speaker", "captions", "speaker_gender", "voice_description"],
 };
 
 const transcriptResponseSchema = {
@@ -498,10 +507,54 @@ function normalizeSpeakerId(raw) {
   return "Speaker_1";
 }
 
+/**
+ * Gemini sometimes returns start_us/end_us in seconds or milliseconds instead
+ * of microseconds.  Detect the unit by looking at the largest end_us value and
+ * scale everything to true microseconds before conversion.
+ *
+ * Heuristics (assumes audio is > ~0.5 s long and has at least one segment):
+ *   max_end >= 1 000 000  → already microseconds  (no change)
+ *   max_end >=     1 000  → milliseconds           (× 1 000)
+ *   max_end <      1 000  → seconds                (× 1 000 000)
+ */
+function normalizeRawTimestamps(transcript) {
+  if (!transcript.length) return transcript;
+
+  const maxEnd = Math.max(...transcript.map((r) => Number(r.end_us) || 0));
+
+  let scale = 1; // assume microseconds
+  let detectedUnit = "microseconds";
+
+  if (maxEnd < 1_000) {
+    // values look like plain seconds (e.g. 3.75 → should be 3,750,000 µs)
+    scale = 1_000_000;
+    detectedUnit = "seconds";
+  } else if (maxEnd < 1_000_000) {
+    // values look like milliseconds (e.g. 3750 → should be 3,750,000 µs)
+    scale = 1_000;
+    detectedUnit = "milliseconds";
+  }
+
+  if (scale !== 1) {
+    console.warn(
+      `[transcribe] ⚠️  Gemini returned timestamps in ${detectedUnit} (max end_us=${maxEnd}). ` +
+        `Auto-scaling ×${scale} to convert to microseconds.`,
+    );
+    return transcript.map((r) => ({
+      ...r,
+      start_us: (Number(r.start_us) || 0) * scale,
+      end_us: (Number(r.end_us) || 0) * scale,
+    }));
+  }
+
+  return transcript;
+}
+
 function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
   if (!Array.isArray(transcript)) return [];
+  const normalized = normalizeRawTimestamps(transcript);
   const off = Number(timeOffsetSec) || 0;
-  return transcript.map((row) => {
+  return normalized.map((row) => {
     const start_us = Number(row.start_us);
     const end_us = Number(row.end_us);
     const start = parseFloat(
@@ -509,11 +562,16 @@ function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
     );
     const end = parseFloat(((Number.isFinite(end_us) ? end_us : 0) / 1e6 + off).toFixed(3));
     const text = String(row.captions ?? row.text ?? "").trim();
+    const rawGender = String(row.speaker_gender ?? "").trim().toLowerCase();
+    const speaker_gender = ["male", "female"].includes(rawGender) ? rawGender : "unknown";
+    const voice_description = String(row.voice_description ?? "").trim();
     return {
       start,
       end,
       speaker_id: normalizeSpeakerId(row.speaker ?? row.speaker_id),
       text,
+      speaker_gender,
+      voice_description,
       voice_profile_hint: "",
     };
   });
@@ -521,18 +579,34 @@ function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
 
 /** Dubbing still needs speaker_profiles; Gemini returns transcript-only like the standalone script. */
 function buildSyntheticSpeakerProfiles(segments) {
+  // Collect per-speaker: use the first non-empty voice_description Gemini produced.
   const seen = new Map();
   for (const s of segments) {
     const id = s.speaker_id;
     if (!seen.has(id)) {
       seen.set(id, {
         speaker_id: id,
-        voice_description:
-          "Speaker from audio transcription; neutral delivery — refine with voice picker or Inworld profile if needed.",
+        speaker_gender: s.speaker_gender ?? "unknown",
+        voice_description: "",
       });
     }
+    // Fill in the first meaningful description we encounter for this speaker.
+    const entry = seen.get(id);
+    if (!entry.voice_description && s.voice_description) {
+      entry.voice_description = s.voice_description;
+    }
   }
-  return Array.from(seen.values());
+  // Build final profiles; fall back gracefully if Gemini gave nothing.
+  return Array.from(seen.values()).map((p) => ({
+    ...p,
+    voice_description:
+      p.voice_description ||
+      (p.speaker_gender === "male"
+        ? "Male speaker; natural conversational delivery."
+        : p.speaker_gender === "female"
+          ? "Female speaker; natural conversational delivery."
+          : "Speaker; neutral delivery."),
+  }));
 }
 
 const mergeSpeakerProfiles = (profileArrays) => {
@@ -543,6 +617,7 @@ const mergeSpeakerProfiles = (profileArrays) => {
       if (!seen.has(id)) {
         seen.set(id, {
           speaker_id: id,
+          speaker_gender: p.speaker_gender ?? "unknown",
           voice_description: String(p.voice_description || "").trim() || "Unknown speaker; neutral delivery.",
         });
       }
