@@ -28,12 +28,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body
         className={`${manrope.variable} ${inter.variable} bg-surface font-body text-on-surface antialiased`}
       >

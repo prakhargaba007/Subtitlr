@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
+@import "material-symbols/outlined.css";
 
 /* ── Tailwind v4 theme tokens ─────────────────────────────────────────────── */
 @theme {
