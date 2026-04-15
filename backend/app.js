@@ -129,6 +129,7 @@ const planRoutes = require("./routes/planRoutes");
 const billingRoutes = require("./routes/billingRoutes");
 const adminBillingRoutes = require("./routes/adminBillingRoutes");
 const adminPlanRoutes = require("./routes/adminPlanRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
@@ -147,6 +148,7 @@ app.use("/api/plans", planRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/admin/billing", adminBillingRoutes);
 app.use("/api/admin/plans", adminPlanRoutes);
+app.use("/api/feedback", feedbackRoutes);
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.log(error);
