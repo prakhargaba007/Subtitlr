@@ -71,18 +71,18 @@ Translation mode: ENGLISH → HINDI (proper Devanagari script)
 - Output MUST be written entirely in Devanagari script (हिन्दी). Do NOT use Roman/Latin letters for Hindi words.
 - Use natural, conversational spoken Hindi — not overly formal or Sanskritized unless the original register is formal.
 - English loanwords that Indians universally say in English (e.g. "mobile", "video", "OK", "doctor") may remain in Latin; everything else must be Devanagari.
-- Keep output SHORT and speakable within roughly the same wall-clock time as the English (duration_seconds).
+- **TIMING RULE:** Your goal is to EXACTLY MATCH the spoken length of the translation to the provided \`duration_seconds\`. If the duration is long, write a longer, more detailed sentence to fill the time. If the duration is short, make it concise.
+- **PUNCTUATION RULE:** If a sentence ends in Hindi or a regional language, use '।' (purna viram) instead of '.'. If it ends in English, use '.'. To create hesitation or breathing pauses, use '…' (ellipsis) or line breaks.
 - Preserve speaker register and tone as described in Speaker profiles.
-- You MAY compress phrasing for timing; keep meaning and names accurate.
 - Use *single asterisks* around words for emphasis where helpful for TTS.`;
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;
   } else if (mode === "hinglish_concise") {
     modeRules = `
 Translation mode: ENGLISH → HINGLISH / SPOKEN HINDI (concise dubbing)
-- Output should be SHORT and speakable in roughly the same wall-clock time as the English original (duration_seconds).
+- **TIMING RULE:** Your goal is to EXACTLY MATCH the spoken length of the translation to the provided \`duration_seconds\`. If the duration is long, write a longer, more detailed sentence to fill the time. If the duration is short, make it concise.
 - Prefer natural Hinglish: common English words where Indian speakers would mix them; Roman script for Hindi parts unless Devanagari is clearly better for TTS.
+- **PUNCTUATION RULE:** To create hesitation or breathing pauses, use '…' (ellipsis). Use '।' at the end of Devanagari sentences.
 - Avoid long formal Sanskritized Hindi if a shorter mixed or colloquial line carries the same meaning.
-- You MAY compress phrasing; keep meaning and names accurate.
 - Use *single asterisks* around words for emphasis where helpful for TTS.
 - Do NOT use Inworld bracket tags like [laugh] unless voice_profile_hint explicitly supports a non-verbal — for non-English output prefer "ha ha" or plain text.`;
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;
@@ -101,7 +101,8 @@ If sub_segments is omitted or empty, translated_text alone will be used as a sin
     modeRules = `
 Translation mode: DEFAULT
 - Translate for SPOKEN delivery. Match speaker register from profiles.
-- Respect duration_seconds approximately — avoid much longer spoken time than the source.
+- **TIMING RULE:** Your goal is to EXACTLY MATCH the spoken length of the translation to the provided \`duration_seconds\`. If the duration is long, write a correspondingly longer sentence (elaborate text). If short, make it concise.
+- Use '…' (ellipsis) to create a hesitation or trailing-off effect where natural.
 - Use *single asterisks* for emphasis where helpful for TTS.
 - For English target with voice_profile_hint suggesting laughing/whispering, you may prefix experimental Inworld bracket tags at the start of the line ONLY if hint mentions them (e.g. [laughing], [happy]) — keep minimal.`;
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;

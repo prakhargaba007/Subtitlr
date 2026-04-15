@@ -67,6 +67,12 @@ const {
   synthesizeInworldTts,
 } = require("../utils/inworldTtsUtils");
 const {
+  isSarvamConfigured,
+  selectBestSarvamVoice,
+  synthesizeSarvamTts,
+  BCP_47_MAP
+} = require("../utils/sarvamTtsUtils");
+const {
   isSmallestConfigured,
   fetchSmallestVoiceCatalog,
   selectBestSmallestVoice,
@@ -122,6 +128,10 @@ async function synthesizeDubbingTts(
   const iwText = textForInworldTts(text, targetLanguage);
   if (ttsProviderResolved === "openai") {
     const o = await generateSpeechOpenAI(plain, voiceKey);
+    return { audioPath: o.audioPath, wordTimestamps: [] };
+  }
+  if (ttsProviderResolved === "sarvam") {
+    const o = await synthesizeSarvamTts(plain, voiceKey, targetLanguage);
     return { audioPath: o.audioPath, wordTimestamps: [] };
   }
   if (ttsProviderResolved === "inworld") {
@@ -224,7 +234,13 @@ exports.startDubbingJob = async (req, res) => {
       return res.end();
     }
 
-    const ttsProvider = getTtsProvider();
+    let ttsProvider = getTtsProvider();
+
+    const sarvamSupportedLanguages = Object.keys(BCP_47_MAP);
+    if (sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase())) {
+      ttsProvider = "sarvam";
+    }
+
     if (
       ttsProvider === "elevenlabs" &&
       !String(process.env.ELEVENLABS_API_KEY || "").trim()
@@ -264,6 +280,15 @@ exports.startDubbingJob = async (req, res) => {
         stage: "error",
         message:
           "INWORLD_API_KEY is required when DUBBING_TTS_PROVIDER=inworld.",
+        statusCode: 422,
+      });
+      return res.end();
+    }
+    if (ttsProvider === "sarvam" && !isSarvamConfigured()) {
+      emit({
+        stage: "error",
+        message:
+          "SARVAM_API_KEY is required when DUBBING_TTS_PROVIDER=sarvam or for Indic languages.",
         statusCode: 422,
       });
       return res.end();
@@ -442,9 +467,11 @@ exports.startDubbingJob = async (req, res) => {
           ? "inworld"
           : ttsProvider === "smallest"
             ? "smallest"
-            : ttsProvider === "auto"
-              ? "openai"
-              : "elevenlabs";
+            : ttsProvider === "sarvam"
+              ? "sarvam"
+              : ttsProvider === "auto"
+                ? "openai"
+                : "elevenlabs";
     let voiceMap = {};
     let updatedProfiles = [];
 
@@ -547,6 +574,27 @@ exports.startDubbingJob = async (req, res) => {
       await DubbingJob.findByIdAndUpdate(job._id, {
         speakerProfiles: updatedProfiles,
         ttsProvider: "smallest",
+      });
+    } else if (ttsProvider === "sarvam") {
+      emit({ stage: "generating", message: "Selecting Sarvam TTS voices for speakers…" });
+      const assignedSarvamIds = [];
+      for (const profile of speaker_profiles) {
+        emit({ stage: "generating", message: `Selecting voice for ${profile.speaker_id}…` });
+        const v = await selectBestSarvamVoice(profile.voice_description, {
+          excludeVoiceIds: assignedSarvamIds,
+          speakerCount: dubbingSpeakerCount,
+        });
+        assignedSarvamIds.push(v);
+        voiceMap[profile.speaker_id] = v;
+        updatedProfiles.push({
+          speaker_id: profile.speaker_id,
+          voice_description: profile.voice_description,
+          elevenlabs_voice_id: v,
+        });
+      }
+      await DubbingJob.findByIdAndUpdate(job._id, {
+        speakerProfiles: updatedProfiles,
+        ttsProvider: "sarvam",
       });
     } else if (ttsProvider === "auto") {
       // Voice map + synthesis for auto: Inworld → Smallest → ElevenLabs → OpenAI (Step 6)
@@ -659,6 +707,28 @@ exports.startDubbingJob = async (req, res) => {
         });
         const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
           "smallest",
+          row.text,
+          voiceKey,
+          targetLanguage,
+        );
+        tmpPaths.push(audioPath);
+        rawDubbedPaths.push(audioPath);
+        wordTsForRows.push(wordTimestamps);
+      }
+    } else if (ttsProvider === "sarvam") {
+      for (let k = 0; k < totalTtsUnits; k++) {
+        const row = ttsRows[k];
+        const voiceKey = voiceMap[row.speaker_id];
+        if (!voiceKey) {
+          throw new Error(`No voice selected for speaker: ${row.speaker_id}`);
+        }
+        emit({
+          stage: "generating",
+          message: `Generating speech: clip ${k + 1}/${totalTtsUnits}…`,
+          progress: Math.round(((k + 1) / totalTtsUnits) * 100),
+        });
+        const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+          "sarvam",
           row.text,
           voiceKey,
           targetLanguage,
