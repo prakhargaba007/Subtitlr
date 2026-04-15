@@ -1026,6 +1026,35 @@ exports.startDubbingJob = async (req, res) => {
 
     emit({ stage: "syncing", message: "Timing sync complete." });
 
+    // ── Step 7b: Pre-generate segmentIds and upload per-segment synced audio to S3 ──
+    emit({ stage: "syncing", message: "Uploading per-segment audio clips…" });
+
+    const segmentIds = translatedSegments.map(() => uuidv4());
+    const segmentAudioKeys = new Map(); // parentIndex → S3 key
+
+    for (let k = 0; k < ttsRows.length; k++) {
+      const row = ttsRows[k];
+      // Only upload solo (non-split) segments; sub-segments are re-synthesised on rebuild
+      if (row.subIndex < 0) {
+        try {
+          const synced = syncedBuffers[k];
+          const segId = segmentIds[row.parentIndex];
+          const segKey = `dubbing/${req.userId}/${job._id.toString()}/segments/${segId}_r0.mp3`;
+          await storage.saveFile(
+            fs.readFileSync(synced.adjustedPath),
+            segKey,
+            "audio/mpeg",
+          );
+          segmentAudioKeys.set(row.parentIndex, segKey);
+        } catch (segUploadErr) {
+          console.warn(
+            `[dubbing] Segment ${row.parentIndex} audio upload failed:`,
+            segUploadErr.message,
+          );
+        }
+      }
+    }
+
     // ── Step 8: Merge speech over background + mux with video ─────────────────
     emit({
       stage: "merging",
@@ -1156,7 +1185,7 @@ exports.startDubbingJob = async (req, res) => {
       const subs = parentSubSegments.get(i) || [];
       const solo = parentSolo.get(i);
       return {
-        segmentId: uuidv4(),
+        segmentId: segmentIds[i],                          // use pre-generated ID
         revision: 0,
         start: ts.start,
         end: ts.end,
@@ -1167,7 +1196,8 @@ exports.startDubbingJob = async (req, res) => {
         timingStrategy: subs.length ? null : (solo?.timingStrategy ?? null),
         ttsWordTimestamps: subs.length ? undefined : solo?.ttsWordTimestamps,
         voiceProfile: ts.voiceProfile,
-        dubbedAudioKey: null,
+        // Solo segments get their own S3 key; sub-segment parents stay null (rebuilt on demand)
+        dubbedAudioKey: subs.length ? null : (segmentAudioKeys.get(i) ?? null),
       };
     });
 
@@ -1525,6 +1555,105 @@ exports.regenerateDubbingSegment = async (req, res, next) => {
         strategy: synced.strategy,
         adjustedDuration: synced.adjustedDuration,
       },
+    });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  } finally {
+    tmpPaths.forEach(cleanupPath);
+  }
+};
+
+/**
+ * POST /api/dubbing/:id/segments
+ * Adds a brand-new segment (with TTS audio) to an existing completed job.
+ */
+exports.addDubbingSegment = async (req, res, next) => {
+  const tmpPaths = [];
+  try {
+    const job = await ensureJobEditable(req, req.params.id);
+    const { start, end, speaker_id, translatedText } = req.body || {};
+
+    // ── Validate inputs ────────────────────────────────────────────────────────
+    if (typeof start !== "number" || typeof end !== "number" || end <= start) {
+      const err = new Error("Valid start and end seconds are required (end > start).");
+      err.statusCode = 422;
+      throw err;
+    }
+    if (!String(speaker_id || "").trim()) {
+      const err = new Error("speaker_id is required.");
+      err.statusCode = 422;
+      throw err;
+    }
+    const rawText = String(translatedText || "").trim();
+    if (!rawText) {
+      const err = new Error("translatedText is required.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    // ── Resolve voice ──────────────────────────────────────────────────────────
+    const speakerProfile = (job.speakerProfiles || []).find(
+      (p) => p.speaker_id === speaker_id,
+    );
+    const voiceKey = speakerProfile?.elevenlabs_voice_id;
+    if (!voiceKey) {
+      const err = new Error(`No voice configured for speaker: ${speaker_id}`);
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const provider = job.ttsProvider || getTtsProvider();
+    const maxAtempo = resolveMaxAtempo(job.targetLanguage);
+    const syncOpts = { maxAtempo };
+
+    // ── Generate TTS ───────────────────────────────────────────────────────────
+    const { audioPath: ttsPath } = await synthesizeDubbingTts(
+      provider,
+      rawText,
+      voiceKey,
+      job.targetLanguage,
+    );
+    tmpPaths.push(ttsPath);
+
+    // ── Sync to slot duration ──────────────────────────────────────────────────
+    const originalDuration = Math.max(0.05, end - start);
+    const synced = await syncSegmentTiming(ttsPath, originalDuration, syncOpts);
+    tmpPaths.push(synced.adjustedPath);
+
+    // ── Upload to S3 ───────────────────────────────────────────────────────────
+    const segmentId = uuidv4();
+    const key = `dubbing/${req.userId}/${job._id.toString()}/segments/${segmentId}_r0.mp3`;
+    await storage.saveFile(
+      fs.readFileSync(synced.adjustedPath),
+      key,
+      "audio/mpeg",
+    );
+    const url = await storage.getPublicUrl(key);
+
+    // ── Persist new segment ────────────────────────────────────────────────────
+    const newSegment = {
+      segmentId,
+      revision: 0,
+      start,
+      end,
+      speaker_id,
+      originalText: "",
+      translatedText: rawText,
+      dubbedAudioKey: key,
+      timingStrategy: synced.strategy,
+      subSegments: [],
+      voiceProfile: { source: null },
+    };
+
+    job.segments.push(newSegment);
+    // Keep segments sorted by start time for timeline consistency
+    job.segments.sort((a, b) => a.start - b.start);
+    await job.save();
+
+    res.status(201).json({
+      segment: newSegment,
+      audio: { key, url, strategy: synced.strategy, adjustedDuration: synced.adjustedDuration },
     });
   } catch (err) {
     if (!err.statusCode) err.statusCode = 500;

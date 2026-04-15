@@ -11,6 +11,7 @@ const {
   patchDubbingSegment,
   improveDubbingSegment,
   regenerateDubbingSegment,
+  addDubbingSegment,
   rebuildDubbingJob,
   listLocalInworldVoices,
 } = require("../controllers/dubbingController");
@@ -76,6 +77,9 @@ router.get("/:id/editor", isAuth, getDubbingEditor);
 
 // PATCH /api/dubbing/:id/segments/:segmentId — edit text/timing/strategy
 router.patch("/:id/segments/:segmentId", isAuth, patchDubbingSegment);
+
+// POST /api/dubbing/:id/segments — add a brand-new segment with TTS audio
+router.post("/:id/segments", isAuth, addDubbingSegment);
 
 // POST /api/dubbing/:id/segments/:segmentId/improve — AI rewrite (duration-aware)
 router.post("/:id/segments/:segmentId/improve", isAuth, improveDubbingSegment);

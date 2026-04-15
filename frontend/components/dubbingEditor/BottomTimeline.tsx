@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 import { useDubbingEditor } from "./DubbingEditorContext";
@@ -16,6 +16,7 @@ import {
 } from "./videoTransport";
 
 const SNAP_SEC = 0.05;
+const SPEED_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
 function snap(t: number) {
   return Math.round(t / SNAP_SEC) * SNAP_SEC;
@@ -56,7 +57,18 @@ export default function BottomTimeline() {
     scrubbingRef,
     pushUndo,
   } = useDubbingEditor();
+
+  const [playbackRate, setPlaybackRate] = useState<(typeof SPEED_STEPS)[number]>(1);
   // console.log("mixAudioUrl", mixAudioUrl);
+
+  // Sync playback speed to WaveSurfer + video/audio element whenever it changes
+  useEffect(() => {
+    const ws = wsRef.current;
+    const { player: p, audio: a } = getMedia();
+    try { ws?.setPlaybackRate(playbackRate, true); } catch { /* ignore */ }
+    if (p) p.playbackRate = playbackRate;
+    if (a) a.playbackRate = playbackRate;
+  }, [playbackRate, getMedia]);
 
   const seekMedia = useCallback(
     (t: number) => {
@@ -338,6 +350,27 @@ export default function BottomTimeline() {
             Loop selection
           </label>
         </div>
+
+        {/* Speed control */}
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#9aa3ad] mr-1">Speed</span>
+          {SPEED_STEPS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setPlaybackRate(s)}
+              className={[
+                "px-2 py-0.5 rounded text-[11px] font-mono font-semibold transition-colors",
+                playbackRate === s
+                  ? "bg-[#6b63ff] text-white"
+                  : "bg-white/5 text-[#9aa3ad] hover:bg-white/10 hover:text-white",
+              ].join(" ")}
+            >
+              {s}×
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-2 flex-1 min-w-[140px] max-w-xs">
           <span className="material-symbols-outlined text-[#9aa3ad] text-lg">zoom_out</span>
           <input

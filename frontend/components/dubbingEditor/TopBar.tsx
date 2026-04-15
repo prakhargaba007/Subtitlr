@@ -144,6 +144,18 @@ export default function TopBar() {
           {rebuildMsg}
         </span>
       )}
+      {(job.dubbedVideoUrl ?? job.dubbedAudioUrl) && (
+        <a
+          href={job.dubbedVideoUrl ?? job.dubbedAudioUrl ?? "#"}
+          download
+          rel="noopener noreferrer"
+          title="Download dubbed output"
+          className="h-9 px-3 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/15 transition-colors flex items-center gap-1.5"
+        >
+          <span className="material-symbols-outlined text-base leading-none">download</span>
+          <span className="hidden sm:inline">Download</span>
+        </a>
+      )}
       <button
         type="button"
         onClick={() => void rebuild()}
