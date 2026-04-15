@@ -11,7 +11,7 @@ const norm = (s) => String(s || "").toLowerCase().trim();
 
 /**
  * Infer dubbing translation mode from source/target language labels.
- * @returns {'default'|'hinglish_concise'|'split_for_timing'}
+ * @returns {'default'|'hindi_devanagari'|'hinglish_concise'|'split_for_timing'}
  */
 const inferTranslationMode = (sourceLanguage, targetLanguage) => {
   const src = norm(sourceLanguage);
@@ -20,9 +20,14 @@ const inferTranslationMode = (sourceLanguage, targetLanguage) => {
   const englishSource = src === "english" || src === "en" || src === "" || src === "auto";
   const hindiSource = src === "hindi" || src === "hi" || src.includes("hindi");
   const englishTarget = tgt === "english" || tgt === "en";
-  const hindiTarget = isHindiLikeTarget(targetLanguage);
 
-  if (hindiTarget && englishSource) return "hinglish_concise";
+  // Proper Hindi (Devanagari) — distinct from Hinglish
+  const properHindiTarget = tgt === "hindi" || tgt === "hi";
+  // Hinglish = Roman-script mixed Hindi (kept separate)
+  const hinglishTarget = tgt === "hinglish";
+
+  if (properHindiTarget && englishSource) return "hindi_devanagari";
+  if (hinglishTarget && englishSource) return "hinglish_concise";
   if (englishTarget && hindiSource) return "split_for_timing";
   return "default";
 };
@@ -60,7 +65,18 @@ const translateToSpeechReady = async (segments, targetLanguage, speakerProfiles 
   let modeRules = "";
   let jsonShape = "";
 
-  if (mode === "hinglish_concise") {
+  if (mode === "hindi_devanagari") {
+    modeRules = `
+Translation mode: ENGLISH → HINDI (proper Devanagari script)
+- Output MUST be written entirely in Devanagari script (हिन्दी). Do NOT use Roman/Latin letters for Hindi words.
+- Use natural, conversational spoken Hindi — not overly formal or Sanskritized unless the original register is formal.
+- English loanwords that Indians universally say in English (e.g. "mobile", "video", "OK", "doctor") may remain in Latin; everything else must be Devanagari.
+- Keep output SHORT and speakable within roughly the same wall-clock time as the English (duration_seconds).
+- Preserve speaker register and tone as described in Speaker profiles.
+- You MAY compress phrasing for timing; keep meaning and names accurate.
+- Use *single asterisks* around words for emphasis where helpful for TTS.`;
+    jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;
+  } else if (mode === "hinglish_concise") {
     modeRules = `
 Translation mode: ENGLISH → HINGLISH / SPOKEN HINDI (concise dubbing)
 - Output should be SHORT and speakable in roughly the same wall-clock time as the English original (duration_seconds).

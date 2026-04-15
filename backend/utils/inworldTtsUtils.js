@@ -13,26 +13,196 @@ const INWORLD_PRESET_VOICES = require("./data/inworldVoices.json");
 const { getInworldApplyTextNormalization } = require("./dubbingConfig");
 
 /**
+ * Maps language strings to Inworld langCode values used in inworld_voices_last.json.
+ *
+ * Covers three input formats that can arrive as `targetLanguage`:
+ *  1. Full English names from LANGUAGE_LIST/LANGUAGE_MAP  (e.g. "hindi", "german")
+ *  2. ISO 639-1 / BCP-47 short codes                     (e.g. "hi", "de", "hi-IN")
+ *  3. Native-script aliases used in LANGUAGE_MAP          (e.g. "deutsch", "español")
+ *
+ * Only languages present in the Inworld voice catalog are listed here.
+ * Unsupported languages resolve to null → full catalog fallback.
+ */
+const LANG_CODE_MAP = {
+  // ── Hindi ──────────────────────────────────────────────────────────────────
+  hindi: "HI_IN",
+  hi: "HI_IN",
+  "hi-in": "HI_IN",
+
+  // ── English ────────────────────────────────────────────────────────────────
+  english: "EN_US",
+  en: "EN_US",
+  "en-us": "EN_US",
+  "en-gb": "EN_US", // Inworld catalog uses EN_US for all English variants
+
+  // ── German ─────────────────────────────────────────────────────────────────
+  german: "DE_DE",
+  deutsch: "DE_DE",
+  de: "DE_DE",
+  "de-de": "DE_DE",
+
+  // ── Spanish ────────────────────────────────────────────────────────────────
+  spanish: "ES_ES",
+  español: "ES_ES",
+  espanol: "ES_ES",
+  es: "ES_ES",
+  "es-es": "ES_ES",
+  "es-mx": "ES_ES",
+
+  // ── French ─────────────────────────────────────────────────────────────────
+  french: "FR_FR",
+  français: "FR_FR",
+  francais: "FR_FR",
+  fr: "FR_FR",
+  "fr-fr": "FR_FR",
+
+  // ── Italian ────────────────────────────────────────────────────────────────
+  italian: "IT_IT",
+  italiano: "IT_IT",
+  it: "IT_IT",
+  "it-it": "IT_IT",
+
+  // ── Japanese ───────────────────────────────────────────────────────────────
+  japanese: "JA_JP",
+  ja: "JA_JP",
+  "ja-jp": "JA_JP",
+
+  // ── Korean ─────────────────────────────────────────────────────────────────
+  korean: "KO_KR",
+  ko: "KO_KR",
+  "ko-kr": "KO_KR",
+
+  // ── Portuguese ─────────────────────────────────────────────────────────────
+  portuguese: "PT_BR",
+  português: "PT_BR",
+  portugues: "PT_BR",
+  pt: "PT_BR",
+  "pt-br": "PT_BR",
+
+  // ── Russian ────────────────────────────────────────────────────────────────
+  russian: "RU_RU",
+  ru: "RU_RU",
+  "ru-ru": "RU_RU",
+
+  // ── Chinese ────────────────────────────────────────────────────────────────
+  chinese: "ZH_CN",
+  mandarin: "ZH_CN",
+  zh: "ZH_CN",
+  "zh-cn": "ZH_CN",
+
+  // ── Arabic ─────────────────────────────────────────────────────────────────
+  arabic: "AR_SA",
+  ar: "AR_SA",
+  "ar-sa": "AR_SA",
+
+  // ── Dutch ──────────────────────────────────────────────────────────────────
+  dutch: "NL_NL",
+  nl: "NL_NL",
+  "nl-nl": "NL_NL",
+
+  // ── Polish ─────────────────────────────────────────────────────────────────
+  polish: "PL_PL",
+  pl: "PL_PL",
+  "pl-pl": "PL_PL",
+
+  // ── Hebrew ─────────────────────────────────────────────────────────────────
+  hebrew: "HE_IL",
+  he: "HE_IL",
+  "he-il": "HE_IL",
+};
+
+/**
+ * Resolves a human-readable / BCP-47 language string to the Inworld
+ * catalog langCode (e.g. "hindi" → "HI_IN", "de" → "DE_DE").
+ * Returns null when the language cannot be resolved.
+ *
+ * @param {string|null|undefined} lang
+ * @returns {string|null}
+ */
+const resolveInworldLangCode = (lang) => {
+  if (!lang) return null;
+  const key = String(lang).toLowerCase().trim();
+  // Direct map hit
+  if (LANG_CODE_MAP[key]) return LANG_CODE_MAP[key];
+  // Try just the primary subtag ("hi" from "hi-IN")
+  const primary = key.split(/[-_]/)[0];
+  return LANG_CODE_MAP[primary] || null;
+};
+
+/**
  * Optional curated list from repo (merged into catalog by voiceId).
  */
-const loadLocalVoicesFile = () => {
-  const candidates = [path.join(__dirname, "..", "voices", "inworld_voices_last.json")];
+/**
+ * @param {string|null} [targetLangCode] — Inworld langCode to filter by (e.g. "HI_IN").
+ *   When null/undefined all voices are returned.
+ */
+const loadLocalVoicesFile = (targetLangCode = null) => {
+  console.log(
+    `[inworldTts] loadLocalVoicesFile called — targetLangCode=${targetLangCode ?? "null (all voices)"}`,
+  );
+  const candidates = [
+    path.join(__dirname, "..", "voices", "inworld_voices_last.json"),
+  ];
   for (const p of candidates) {
     try {
-      if (!fs.existsSync(p)) continue;
+      if (!fs.existsSync(p)) {
+        console.warn(`[inworldTts] Voice file not found, skipping: ${p}`);
+        continue;
+      }
+      console.log(`[inworldTts] Reading voice file: ${p}`);
       const j = JSON.parse(fs.readFileSync(p, "utf8"));
-      const voices = j.voices || [];
-      return voices.map((v) => ({
+      let voices = j.voices || [];
+      console.log(`[inworldTts] Total voices in file: ${voices.length}`);
+
+      if (targetLangCode) {
+        const filtered = voices.filter(
+          (v) =>
+            String(v.langCode || "").toUpperCase() ===
+            targetLangCode.toUpperCase(),
+        );
+        // Only apply the filter when it actually narrows the list down;
+        // if no voice matches (e.g. language not in catalog) fall back to all.
+        if (filtered.length > 0) {
+          voices = filtered;
+          console.log(
+            `[inworldTts] Filtered to ${filtered.length} voice(s) for langCode=${targetLangCode}`,
+          );
+          console.log(
+            `[inworldTts] Matched voiceIds: ${filtered.map((v) => v.voiceId).join(", ")}`,
+          );
+        } else {
+          console.warn(
+            `[inworldTts] No voices found for langCode=${targetLangCode}; using full catalog of ${voices.length} voices as fallback`,
+          );
+        }
+      } else {
+        console.log(
+          `[inworldTts] No lang filter — returning all ${voices.length} voice(s)`,
+        );
+      }
+
+      const result = voices.map((v) => ({
         voiceId: v.voiceId,
         blurb:
-          [v.displayName, v.description, Array.isArray(v.tags) ? v.tags.join(", ") : ""]
+          [
+            v.displayName,
+            v.description,
+            Array.isArray(v.tags) ? v.tags.join(", ") : "",
+          ]
             .filter(Boolean)
             .join(" · ") || String(v.voiceId),
       }));
+      console.log(
+        `[inworldTts] Returning ${result.length} voice(s) to catalog: [${result.map((v) => v.voiceId).join(", ")}]`,
+      );
+      return result;
     } catch (err) {
       console.warn("[inworldTts] local voices JSON:", err.message);
     }
   }
+  console.warn(
+    "[inworldTts] loadLocalVoicesFile: no valid voice file found, returning []",
+  );
   return [];
 };
 
@@ -83,11 +253,16 @@ const parseGeminiJsonResponse = (response) => {
   } else {
     throw new Error("Unexpected Gemini response format");
   }
-  const clean = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  const clean = text
+    .replace(/^```(?:json)?\n?/i, "")
+    .replace(/\n?```$/i, "")
+    .trim();
   return JSON.parse(clean);
 };
 
-const INWORLD_TTS_URL = (process.env.INWORLD_TTS_URL || "https://api.inworld.ai/tts/v1/voice").trim();
+const INWORLD_TTS_URL = (
+  process.env.INWORLD_TTS_URL || "https://api.inworld.ai/tts/v1/voice"
+).trim();
 const INWORLD_INPUT_MAX = 4096;
 
 const INWORLD_VOICE_IDS = INWORLD_PRESET_VOICES.map((v) => v.voiceId);
@@ -98,7 +273,8 @@ const getDefaultInworldVoice = () =>
 /**
  * If set, every speaker uses this voiceId (e.g. a Voice Cloning API id). Skips Gemini voice matching.
  */
-const getForcedInworldVoiceId = () => String(process.env.INWORLD_FORCE_VOICE_ID || "").trim();
+const getForcedInworldVoiceId = () =>
+  String(process.env.INWORLD_FORCE_VOICE_ID || "").trim();
 
 /**
  * Fetches all built-in TTS voices from Inworld (same auth as synthesize).
@@ -108,19 +284,46 @@ const getForcedInworldVoiceId = () => String(process.env.INWORLD_FORCE_VOICE_ID 
  * - INWORLD_VOICES_LIST_URL — default https://api.inworld.ai/tts/v1/voices
  * - INWORLD_VOICES_FILTER — default language=en; set INWORLD_VOICES_NO_FILTER=1 to omit filter (all languages)
  */
-const fetchInworldVoiceCatalog = async () => {
-  const clonePresets = () => mergeVoiceCatalogs(INWORLD_PRESET_VOICES.map((v) => ({ ...v })), loadLocalVoicesFile());
+/**
+ * Fetches all built-in TTS voices from Inworld (same auth as synthesize).
+ * Falls back to {@link INWORLD_PRESET_VOICES} on error or missing key.
+ *
+ * @param {string|null} [targetLanguage] — BCP-47 / ISO 639-1 language code of the
+ *   dubbing target (e.g. "hi", "de", "hi-IN"). When provided only voices matching
+ *   that language are included in the returned catalog so Gemini always picks a
+ *   voice that can actually speak the target language.
+ *
+ * Env:
+ * - INWORLD_VOICES_LIST_URL — default https://api.inworld.ai/tts/v1/voices
+ * - INWORLD_VOICES_FILTER — default language=en; set INWORLD_VOICES_NO_FILTER=1 to omit filter (all languages)
+ */
+const fetchInworldVoiceCatalog = async (targetLanguage = null) => {
+  console.log("targetLanguage", targetLanguage);
+  const targetLangCode = resolveInworldLangCode(targetLanguage);
+  console.log("targetLangCode", targetLangCode);
+  if (targetLangCode) {
+    console.log(
+      `[inworldTts] Voice catalog: filtering for language="${targetLanguage}" → langCode=${targetLangCode}`,
+    );
+  }
+  const clonePresets = () =>
+    mergeVoiceCatalogs(loadLocalVoicesFile(targetLangCode));
 
   const auth = buildInworldAuthorizationHeader();
-  if (!auth) return clonePresets();
+  // if (!auth) return clonePresets();
+  if (true) return clonePresets();
 
   const base = String(
-    process.env.INWORLD_VOICES_LIST_URL || "https://api.inworld.ai/tts/v1/voices"
+    process.env.INWORLD_VOICES_LIST_URL ||
+      "https://api.inworld.ai/tts/v1/voices",
   )
     .trim()
     .replace(/\/$/, "");
-  const noFilter = String(process.env.INWORLD_VOICES_NO_FILTER || "").trim() === "1";
-  const filter = String(process.env.INWORLD_VOICES_FILTER || "language=en").trim();
+  const noFilter =
+    String(process.env.INWORLD_VOICES_NO_FILTER || "").trim() === "1";
+  const filter = String(
+    process.env.INWORLD_VOICES_FILTER || "language=en",
+  ).trim();
   const url =
     noFilter || !filter ? base : `${base}?filter=${encodeURIComponent(filter)}`;
 
@@ -138,17 +341,20 @@ const fetchInworldVoiceCatalog = async () => {
       console.warn(
         "[inworldTts] List voices failed:",
         res.status,
-        body?.message || rawText.slice(0, 200)
+        body?.message || rawText.slice(0, 200),
       );
       return clonePresets();
     }
     const voices = body.voices || [];
-    if (!voices.length) return mergeVoiceCatalogs(clonePresets(), loadLocalVoicesFile());
+    if (!voices.length)
+      return mergeVoiceCatalogs(clonePresets(), loadLocalVoicesFile());
 
     const mapped = voices.map((v) => ({
       voiceId: v.voiceId,
       blurb:
-        [v.description, Array.isArray(v.tags) ? v.tags.join(", ") : ""].filter(Boolean).join(" · ") ||
+        [v.description, Array.isArray(v.tags) ? v.tags.join(", ") : ""]
+          .filter(Boolean)
+          .join(" · ") ||
         v.displayName ||
         String(v.voiceId),
     }));
@@ -167,7 +373,11 @@ const fetchInworldVoiceCatalog = async () => {
  * @param {{ excludeVoiceIds?: string[], speakerCount?: number }} [options] — excludeVoiceIds = already-assigned voiceIds (distinct speakers)
  * @returns {Promise<string>} voiceId for Inworld TTS
  */
-const selectBestInworldVoice = async (voiceDescription, catalog = null, options = {}) => {
+const selectBestInworldVoice = async (
+  voiceDescription,
+  catalog = null,
+  options = {},
+) => {
   const excludeSet = new Set((options.excludeVoiceIds || []).map(String));
   const speakerCount = options.speakerCount ?? 1;
   const forced = getForcedInworldVoiceId();
@@ -176,15 +386,19 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null, options 
   }
   if (forced && speakerCount > 1) {
     console.warn(
-      "[inworldTts] INWORLD_FORCE_VOICE_ID ignored for multi-speaker dubbing (each speaker gets a distinct voice when possible)."
+      "[inworldTts] INWORLD_FORCE_VOICE_ID ignored for multi-speaker dubbing (each speaker gets a distinct voice when possible).",
     );
   }
 
   const presets =
-    catalog && Array.isArray(catalog) && catalog.length ? catalog : INWORLD_PRESET_VOICES;
+    catalog && Array.isArray(catalog) && catalog.length
+      ? catalog
+      : INWORLD_PRESET_VOICES;
   let pool = presets.filter((p) => !excludeSet.has(p.voiceId));
   if (!pool.length) {
-    console.warn("[inworldTts] All catalog voices already assigned; reusing catalog for an extra speaker.");
+    console.warn(
+      "[inworldTts] All catalog voices already assigned; reusing catalog for an extra speaker.",
+    );
     pool = presets;
   }
 
@@ -196,8 +410,8 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null, options 
     if (!gemini) {
       throw new Error("GOOGLE_API_KEY or GEMINI_API_KEY not set");
     }
-    const model = String(process.env.GEMINI_MODEL || "").trim() ||
-      "gemini-2.0-flash";
+    const model =
+      String(process.env.GEMINI_MODEL || "").trim() || "gemini-2.0-flash";
     const systemPrompt =
       "You are a voice casting assistant. Given a speaker description, pick exactly one Inworld TTS voice " +
       "from the allowed list. Each speaker in a dub MUST use a different voiceId than any already assigned — " +
@@ -224,7 +438,10 @@ const selectBestInworldVoice = async (voiceDescription, catalog = null, options 
       return id;
     }
   } catch (err) {
-    console.warn("[inworldTts] Voice matching failed, using default:", err.message);
+    console.warn(
+      "[inworldTts] Voice matching failed, using default:",
+      err.message,
+    );
   }
 
   const firstUnused = presets.find((p) => !excludeSet.has(p.voiceId));
@@ -238,7 +455,8 @@ const normalizeWordTimestamps = (raw) => {
   return raw
     .map((w) => ({
       word: String(w.word ?? w.text ?? "").trim(),
-      startTimeMs: Number(w.startTimeMs ?? w.start_time_ms ?? w.startMs ?? 0) || 0,
+      startTimeMs:
+        Number(w.startTimeMs ?? w.start_time_ms ?? w.startMs ?? 0) || 0,
       endTimeMs: Number(w.endTimeMs ?? w.end_time_ms ?? w.endMs ?? 0) || 0,
     }))
     .filter((x) => x.word);
@@ -266,14 +484,19 @@ const synthesizeInworldTts = async (text, voiceId) => {
     throw new Error("INWORLD_API_KEY is not set");
   }
 
-  const modelId = String(process.env.INWORLD_TTS_MODEL || "inworld-tts-1.5-max").trim();
+  const modelId = String(
+    process.env.INWORLD_TTS_MODEL || "inworld-tts-1.5-max",
+  ).trim();
   const speakingRate = Number(process.env.INWORLD_SPEAKING_RATE ?? 1);
   const temperature = Number(process.env.INWORLD_TEMPERATURE ?? 1);
-  const timestampType = String(process.env.INWORLD_TIMESTAMP_TYPE || "WORD").trim() || "WORD";
+  const timestampType =
+    String(process.env.INWORLD_TIMESTAMP_TYPE || "WORD").trim() || "WORD";
 
   let input = text;
   if (input.length > INWORLD_INPUT_MAX) {
-    console.warn(`[inworldTts] Segment truncated from ${input.length} to ${INWORLD_INPUT_MAX} chars`);
+    console.warn(
+      `[inworldTts] Segment truncated from ${input.length} to ${INWORLD_INPUT_MAX} chars`,
+    );
     input = input.slice(0, INWORLD_INPUT_MAX);
   }
 
@@ -343,6 +566,7 @@ module.exports = {
   fetchInworldVoiceCatalog,
   selectBestInworldVoice,
   synthesizeInworldTts,
+  resolveInworldLangCode,
   INWORLD_PRESET_VOICES,
   INWORLD_VOICE_IDS,
 };
