@@ -157,7 +157,7 @@ function UploadCardFallback() {
   );
 }
 
-function UploadCardInner({ basePath = "" }: { basePath?: string }) {
+function UploadCardInner({ basePath = "", onModeChange }: { basePath?: string; onModeChange?: (mode: "subtitles" | "dubbing") => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -168,13 +168,18 @@ function UploadCardInner({ basePath = "" }: { basePath?: string }) {
   const [language, setLanguage] = useState("");
   const [languages, setLanguages] = useState<ApiLanguage[]>([AUTO_DETECT]);
 
-  const mode = (searchParams.get("mode") || "dubbing").toLowerCase() === "subtitles" ? "subtitles" : "dubbing";
+  const urlMode = (searchParams.get("mode") || "dubbing").toLowerCase();
+  const [mode, setMode] = useState<"subtitles" | "dubbing">(urlMode === "subtitles" ? "subtitles" : "dubbing");
+
+  useEffect(() => {
+    if (onModeChange) onModeChange(mode);
+  }, [mode, onModeChange]);
 
   useEffect(() => {
     axiosInstance
       .get<{ languages: ApiLanguage[] }>("/api/subtitles/languages")
       .then((res) => setLanguages([AUTO_DETECT, ...res.data.languages]))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleFile = useCallback((file: File | undefined | null) => {
@@ -303,6 +308,23 @@ function UploadCardInner({ basePath = "" }: { basePath?: string }) {
 
             {/* ── Right: language + action ── */}
             <div className="flex flex-col gap-4 p-6 bg-surface-container-lowest/50">
+              <div className="flex bg-surface-container-low rounded-xl p-1 w-full mb-2">
+                <button
+                  type="button"
+                  onClick={() => setMode("subtitles")}
+                  className={`flex-1 px-4 py-1.5 text-sm font-headline font-semibold rounded-lg transition-colors ${mode === "subtitles" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
+                >
+                  Subtitles
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("dubbing")}
+                  className={`flex-1 px-4 py-1.5 text-sm font-headline font-semibold rounded-lg transition-colors ${mode === "dubbing" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
+                >
+                  Dubbing
+                </button>
+              </div>
+
               <div>
                 <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
                   {mode === "dubbing" ? "Dubbing Language (Target)" : "Subtitle Language"}
@@ -359,7 +381,7 @@ function UploadCardInner({ basePath = "" }: { basePath?: string }) {
   );
 }
 
-export default function UploadCard(props: { basePath?: string }) {
+export default function UploadCard(props: { basePath?: string; onModeChange?: (mode: "subtitles" | "dubbing") => void }) {
   return (
     <Suspense fallback={<UploadCardFallback />}>
       <UploadCardInner {...props} />

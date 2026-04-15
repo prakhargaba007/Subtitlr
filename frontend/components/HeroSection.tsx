@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import FadingCircle from "@/components/FadingCircle";
 import LogoLoop from "./reactBit/LogoLoop";
 import UploadCard from "@/components/UploadCard";
 
 export default function HeroSection() {
+  const [mode, setMode] = useState<"subtitles" | "dubbing">("dubbing");
+
   return (
     <section className="max-w-9xl mx-auto px-8 mb-40 text-center relative z-10 overflow-x-clip">
       <div aria-hidden className="pointer-events-none absolute left-40 top-0 -translate-x-1/2 -translate-y-[15%] -z-10">
@@ -19,24 +22,32 @@ export default function HeroSection() {
         <span className="text-xs font-headline font-bold uppercase tracking-widest text-primary">v2.0 Now Live</span>
       </div>
 
-      <h1 className="font-headline text-h1 md:text-display leading-[1.1] font-bold text-on-surface mb-8 tracking-tight max-w-4xl mx-auto">
+      <h1 className="font-headline text-h1 md:text-display leading-[1.1] font-bold text-on-surface mb-8 tracking-tight max-w-4xl mx-auto transition-all duration-300">
         Turn Video &amp; Audio into{" "}
-        <span className="text-primary bg-clip-text bg-linear-to-r from-primary to-secondary">Subtitles</span>{" "}
+        <span className="text-primary bg-clip-text bg-linear-to-r from-primary to-secondary">
+          {mode === "dubbing" ? "Dubs" : "Subtitles"}
+        </span>{" "}
         in Seconds
       </h1>
 
-      <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-        The intelligent canvas for creators. High-precision transcription meets editorial elegance. No friction,
-        just pure content flow.
+      <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+        Upload a video, get accurate SRT/VTT captions in 60+ languages in under a minute.
       </p>
 
-      <div className="max-w-3xl mx-auto mb-16">
-        <UploadCard />
+      <div className="max-w-3xl mx-auto mb-4">
+        <UploadCard onModeChange={setMode} />
+      </div>
+
+      <div className="flex justify-center mb-16">
+        <button className="text-sm font-headline font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm">play_circle</span>
+          No video? Try a sample file
+        </button>
       </div>
 
       <div className="mt-8 pt-8 border-t border-slate-200/50 max-w-3xl mx-auto opacity-60">
         <p className="text-xs font-headline font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-6">
-          Trusted by Creators &amp; Teams
+          Built for creators on YouTube, TikTok, and Reels
         </p>
         <div className="max-w-xl mx-auto flex justify-center items-center">
           <LogoLoop

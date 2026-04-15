@@ -76,7 +76,7 @@ export default function DashboardSidebar() {
       {/* Logo – wide */}
       <div className="mb-10 px-4 hidden lg:block">
         <h1 className="font-headline text-xl font-extrabold text-primary tracking-tight">
-          Subtitlr
+          Dubbing Studio
         </h1>
         <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
           Workspace
@@ -176,8 +176,8 @@ export default function DashboardSidebar() {
         {menuOpen && (
           <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-outline-variant/20 rounded-2xl shadow-xl overflow-hidden z-50">
             {[
-              { icon: "settings", label: "Settings", action: () => {} },
-              { icon: "toll", label: "Credit History", action: () => {} },
+              { icon: "settings", label: "Settings", action: () => { } },
+              { icon: "toll", label: "Credit History", action: () => { } },
               { icon: "logout", label: "Log Out", action: handleLogout, danger: true },
             ].map(({ icon, label, action, danger }) => (
               <button

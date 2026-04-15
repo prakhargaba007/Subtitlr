@@ -16,7 +16,10 @@ function parseFirstNumber(s: string): number | null {
 }
 
 /** Original list price is higher than sale price (both parse as numbers). */
-export function hasStrikeThroughSale(originalRaw: string, saleRaw: string): boolean {
+export function hasStrikeThroughSale(
+  originalRaw: string,
+  saleRaw: string,
+): boolean {
   const o = parseFirstNumber(originalRaw);
   const s = parseFirstNumber(saleRaw);
   return o != null && s != null && o > s;
@@ -107,7 +110,10 @@ export function getPriceBlock(
   const suffixBilling: BillingMode = showMonthlyOnly ? "monthly" : billing;
 
   if (free) {
-    const line = withBillingSuffix(normalizeMoney(priceDisplay || "$0"), suffixBilling);
+    const line = withBillingSuffix(
+      normalizeMoney(priceDisplay || "$0"),
+      suffixBilling,
+    );
     return { type: "single", text: line };
   }
 
@@ -120,8 +126,14 @@ export function getPriceBlock(
       const saleN = originalN * (1 - pct / 100);
       return {
         type: "sale",
-        original: withBillingSuffix(formatMoneyNumber(originalN / divisor), suffixBilling),
-        sale: withBillingSuffix(formatMoneyNumber(saleN / divisor), suffixBilling),
+        original: withBillingSuffix(
+          formatMoneyNumber(originalN / divisor),
+          suffixBilling,
+        ),
+        sale: withBillingSuffix(
+          formatMoneyNumber(saleN / divisor),
+          suffixBilling,
+        ),
         percent: Math.round(pct),
       };
     }
@@ -129,13 +141,20 @@ export function getPriceBlock(
 
   // Explicit original vs sale numbers mode:
   // priceDisplay = sale, discountDisplay = original (higher)
-  if (priceDisplay && discountDisplay && hasStrikeThroughSale(discountDisplay, priceDisplay)) {
+  if (
+    priceDisplay &&
+    discountDisplay &&
+    hasStrikeThroughSale(discountDisplay, priceDisplay)
+  ) {
     const o = parseFirstNumber(discountDisplay)!;
     const s = parseFirstNumber(priceDisplay)!;
     const percent = Math.round((1 - s / o) * 100);
     return {
       type: "sale",
-      original: withBillingSuffix(formatMoneyNumber(o / divisor), suffixBilling),
+      original: withBillingSuffix(
+        formatMoneyNumber(o / divisor),
+        suffixBilling,
+      ),
       sale: withBillingSuffix(formatMoneyNumber(s / divisor), suffixBilling),
       percent: Math.max(0, percent),
     };
@@ -144,10 +163,15 @@ export function getPriceBlock(
   if (priceDisplay) {
     const n = parseFirstNumber(priceDisplay);
     if (n != null) {
-      return { type: "single", text: withBillingSuffix(formatMoneyNumber(n / divisor), suffixBilling) };
+      return {
+        type: "single",
+        text: withBillingSuffix(formatMoneyNumber(n / divisor), suffixBilling),
+      };
     }
   }
-  const single = priceDisplay ? withBillingSuffix(normalizeMoney(priceDisplay), suffixBilling) : "—";
+  const single = priceDisplay
+    ? withBillingSuffix(normalizeMoney(priceDisplay), suffixBilling)
+    : "—";
   return { type: "single", text: single };
 }
 
@@ -155,7 +179,10 @@ export function getPriceBlock(
  * Short marketing line under the title (e.g. "20% off", "Spring sale").
  * Do not show bare numbers here — those belong in strike-through pricing; otherwise you get a stray "20" above $250.
  */
-export function promoBadge(plan: PublicPlan, priceBlock: PriceBlock): string | null {
+export function promoBadge(
+  plan: PublicPlan,
+  priceBlock: PriceBlock,
+): string | null {
   const disc = plan.discountDisplay?.trim();
   if (!disc) return null;
   if (priceBlock.type === "sale") return null;
@@ -171,10 +198,15 @@ export function promoBadge(plan: PublicPlan, priceBlock: PriceBlock): string | n
   return disc;
 }
 
-export function filterPlans(plans: PublicPlan[], mode: BillingMode): PublicPlan[] {
+export function filterPlans(
+  plans: PublicPlan[],
+  mode: BillingMode,
+): PublicPlan[] {
   const free = (p: PublicPlan) => isFreePlan(p);
   if (mode === "monthly") {
-    return plans.filter((p) => p.interval === "monthly" || p.interval === "one_time" || free(p));
+    return plans.filter(
+      (p) => p.interval === "monthly" || p.interval === "one_time" || free(p),
+    );
   }
   return plans.filter((p) => p.interval === "annual" || free(p));
 }
@@ -195,11 +227,18 @@ export function featureBullets(plan: PublicPlan): string[] {
   const out: string[] = [];
   if (plan.creditsPerPeriod > 0) {
     out.push(`${plan.creditsPerPeriod} credits per billing period`);
+    out.push("1 credit = 1 minute of dubbing processing");
   } else {
     out.push("Starter credits included");
+    out.push("1 credit = 1 minute of dubbing processing");
   }
   if (typeof f.maxInputMinutes === "number") {
-    out.push(`Up to ${f.maxInputMinutes} min per file`);
+    if (isFreePlan(plan) && f.maxInputMinutes < 10) {
+      // out.push(`Up to 10 min per video`);
+      out.push(`Get 30 credits free`);
+    } else {
+      out.push(`Up to ${f.maxInputMinutes} min per file`);
+    }
   }
   if (f.lipSync === true) {
     out.push("Lip-sync dubbing");
@@ -210,5 +249,5 @@ export function featureBullets(plan: PublicPlan): string[] {
   if (typeof f.maxConcurrentJobs === "number") {
     out.push(`${f.maxConcurrentJobs} concurrent job(s)`);
   }
-  return out.slice(0, 5);
+  return out.slice(0, 6);
 }

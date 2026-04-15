@@ -13,7 +13,7 @@ import styles from "./BillingSuccess.module.css";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Upgrade Successful | Subtitlr Premium",
+  title: "Upgrade Successful | Dubbing Studio Premium",
   description: "Your plan is active. Premium transcription and dubbing tools are unlocked.",
 };
 

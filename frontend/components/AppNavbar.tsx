@@ -18,8 +18,8 @@ interface AppNavbarProps {
 
 const DEFAULT_LINKS = [
   { label: "Projects", href: "#" },
-  { label: "Library",  href: "#" },
-  { label: "Team",     href: "#" },
+  { label: "Library", href: "#" },
+  { label: "Team", href: "#" },
 ];
 
 export default function AppNavbar({
@@ -36,7 +36,7 @@ export default function AppNavbar({
         {/* Left — logo + optional app links */}
         <div className="flex items-center gap-8">
           <Link href="/" className="text-2xl font-bold tracking-tighter text-primary font-headline">
-            Subtitlr
+            Dubbing Studio
           </Link>
 
           {links.length > 0 && !subtitle && (

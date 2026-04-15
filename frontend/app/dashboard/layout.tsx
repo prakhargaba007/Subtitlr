@@ -5,7 +5,7 @@ import DashboardInit from "@/components/dashboard/DashboardInit";
 import UploadFAB from "@/components/dashboard/UploadFAB";
 
 export const metadata: Metadata = {
-  title: "Launchpad | Subtitlr",
+  title: "Launchpad | Dubbing Studio",
   description: "Your transcription workspace.",
 };
 

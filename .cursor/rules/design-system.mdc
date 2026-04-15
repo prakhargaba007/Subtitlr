@@ -1,14 +1,15 @@
 ---
-description: Subtitlr design system – typography scale, color tokens, and Button usage for consistent UI
+description: Dubbing Studio design system – typography scale, color tokens, and Button usage for consistent UI
 globs: frontend/**/*.{tsx,css}
 alwaysApply: false
 ---
 
-# Subtitlr Design System
+# Dubbing Studio Design System
 
 ## Type Scale
 
 Font sizes are defined in **two places that must stay in sync**:
+
 - `frontend/tailwind.config.ts` → `theme.extend.fontSize` — generates the Tailwind utility classes and all responsive variants (`md:text-display`, etc.)
 - `frontend/app/globals.css` → `@theme` — exposes the values as CSS custom properties (`var(--font-size-h1)`) for use in custom CSS
 
@@ -16,19 +17,20 @@ Font sizes are defined in **two places that must stay in sync**:
 
 **Never use hardcoded `text-[Xrem]` or raw Tailwind size steps** – use the named tokens instead.
 
-| Token         | Value     | Tailwind class   | When to use                          |
-|---------------|-----------|------------------|--------------------------------------|
-| `display`     | 5 rem     | `text-display`   | Hero h1 – desktop                    |
-| `h1`          | 3.5 rem   | `text-h1`        | Hero h1 – mobile / page titles       |
-| `h2`          | 3 rem     | `text-h2`        | Section headings – desktop           |
-| `h3`          | 2.25 rem  | `text-h3`        | Section headings – mobile / card H1  |
-| `h4`          | 1.5 rem   | `text-h4`        | Sub-headings / card titles           |
-| `body-lg`     | 1.125 rem | `text-body-lg`   | Lead paragraphs / large body copy    |
-| `body`        | 1 rem     | `text-body`      | Default body text                    |
-| `sm`          | 0.875 rem | `text-sm`        | Secondary text, labels               |
-| `xs`          | 0.75 rem  | `text-xs`        | Captions, badges, footnotes          |
+| Token     | Value     | Tailwind class | When to use                         |
+| --------- | --------- | -------------- | ----------------------------------- |
+| `display` | 5 rem     | `text-display` | Hero h1 – desktop                   |
+| `h1`      | 3.5 rem   | `text-h1`      | Hero h1 – mobile / page titles      |
+| `h2`      | 3 rem     | `text-h2`      | Section headings – desktop          |
+| `h3`      | 2.25 rem  | `text-h3`      | Section headings – mobile / card H1 |
+| `h4`      | 1.5 rem   | `text-h4`      | Sub-headings / card titles          |
+| `body-lg` | 1.125 rem | `text-body-lg` | Lead paragraphs / large body copy   |
+| `body`    | 1 rem     | `text-body`    | Default body text                   |
+| `sm`      | 0.875 rem | `text-sm`      | Secondary text, labels              |
+| `xs`      | 0.75 rem  | `text-xs`      | Captions, badges, footnotes         |
 
 **Responsive pattern:**
+
 ```tsx
 // ✅ correct — mobile-first, scale up on md
 <h1 className="text-h1 md:text-display">…</h1>
@@ -46,15 +48,15 @@ To change the global type scale: **edit the CSS variables in `globals.css`**, no
 
 All colors use the Material You palette from `globals.css`. Use the semantic aliases:
 
-| Tailwind class              | Use                                         |
-|-----------------------------|---------------------------------------------|
-| `text-on-surface`           | Primary body text                           |
-| `text-on-surface-variant`   | Secondary / muted text                      |
-| `text-primary`              | Brand-colored text and icons                |
-| `text-on-primary`           | Text on primary-colored backgrounds         |
-| `bg-surface-container-lowest` | Card / form backgrounds                   |
-| `bg-primary`                | Primary solid backgrounds                   |
-| `border-outline-variant`    | Subtle borders                              |
+| Tailwind class                | Use                                 |
+| ----------------------------- | ----------------------------------- |
+| `text-on-surface`             | Primary body text                   |
+| `text-on-surface-variant`     | Secondary / muted text              |
+| `text-primary`                | Brand-colored text and icons        |
+| `text-on-primary`             | Text on primary-colored backgrounds |
+| `bg-surface-container-lowest` | Card / form backgrounds             |
+| `bg-primary`                  | Primary solid backgrounds           |
+| `border-outline-variant`      | Subtle borders                      |
 
 **Never use raw hex colors or Tailwind's default palette** (e.g. `text-slate-600`, `bg-indigo-700`) in new components – map to a semantic token.
 
@@ -66,21 +68,21 @@ All clickable actions must use `<Button>` from `@/components/ui/Button`.
 
 ### Variants
 
-| Variant          | When to use                                   |
-|------------------|-----------------------------------------------|
-| `primary`        | Primary CTA (default). Gradient fill.         |
-| `outline`        | Secondary action, ghost with border.          |
-| `surface`        | CTA on dark/gradient backgrounds (white bg).  |
-| `ghost-inverse`  | On primary-gradient backgrounds, no fill.     |
+| Variant         | When to use                                  |
+| --------------- | -------------------------------------------- |
+| `primary`       | Primary CTA (default). Gradient fill.        |
+| `outline`       | Secondary action, ghost with border.         |
+| `surface`       | CTA on dark/gradient backgrounds (white bg). |
+| `ghost-inverse` | On primary-gradient backgrounds, no fill.    |
 
 ### Sizes
 
-| Size | Padding / text      | When to use                        |
-|------|---------------------|------------------------------------|
-| `sm` | px-6 py-2.5 / sm    | Navbar, compact areas              |
-| `md` | px-6 py-3.5 / sm    | Forms, card actions (default)      |
-| `lg` | px-10 py-4 / base   | Section CTAs                       |
-| `xl` | px-10 py-5 / lg     | Hero actions                       |
+| Size | Padding / text    | When to use                   |
+| ---- | ----------------- | ----------------------------- |
+| `sm` | px-6 py-2.5 / sm  | Navbar, compact areas         |
+| `md` | px-6 py-3.5 / sm  | Forms, card actions (default) |
+| `lg` | px-10 py-4 / base | Section CTAs                  |
+| `xl` | px-10 py-5 / lg   | Hero actions                  |
 
 ### Props
 

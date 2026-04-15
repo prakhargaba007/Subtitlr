@@ -54,21 +54,21 @@ export default function Navbar() {
               : "text-2xl font-bold tracking-tighter text-indigo-700 font-headline"
           }
         >
-          Subtitlr
+          Dubbing Studio
         </Link>
 
         <div className="hidden md:flex items-center space-x-10 font-headline font-medium text-sm tracking-tight">
           <Link href="/" className={navLinkClass}>
-            Platform
-          </Link>
-          <Link href="/" className={navLinkClass}>
-            Features
+            Product
           </Link>
           <Link href="/pricing" className={navLinkClass}>
             Pricing
           </Link>
           <a href="#" className={navLinkClass}>
-            Documentation
+            Use Cases
+          </a>
+          <a href="#" className={navLinkClass}>
+            Docs
           </a>
         </div>
 

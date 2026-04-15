@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import ProcessingView from "@/app/processing/ProcessingView";
 
 export const metadata = {
-  title: "Processing | Subtitlr",
+  title: "Processing | Dubbing Studio",
   description: "Your file is being transcribed.",
 };
 

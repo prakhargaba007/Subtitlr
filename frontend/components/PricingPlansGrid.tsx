@@ -142,7 +142,6 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
             const free = isFreePlan(plan);
             const popular = index === popularIndex;
             const price = getPriceBlock(plan, billing, free);
-            const badge = promoBadge(plan, price);
             const bullets = featureBullets(plan);
             const bill = billingSubtext(plan, billing, free);
 
@@ -163,12 +162,6 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
 
                 <h3 className="font-headline text-h4 font-bold mb-2">{plan.displayName}</h3>
 
-                {badge ? (
-                  <p className="text-xs font-headline font-bold uppercase tracking-wide text-secondary mb-2">
-                    {badge}
-                  </p>
-                ) : null}
-
                 <div className="mb-6 min-h-10">
                   {price.type === "sale" ? (
                     <div className="space-y-1">
@@ -182,10 +175,6 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
                     <p className="font-bold text-h3">{price.text}</p>
                   )}
                   <div className="flex items-center gap-1 mt-2">
-                    {price.type === "sale" && price.percent > 0 ? (
-                      <p className="text-xs font-headline font-semibold text-secondary">Save {price.percent}%</p>
-                    ) : null}
-                    {price.type === "sale" && price.percent > 0 ? <p className="text-on-surface-variant text-xl font-bold mb-1">·</p> : null}
                     {bill ? (
                       <div className="text-xs text-on-surface-variant">
                         <div className="font-headline font-semibold">{bill.line1}</div>
@@ -230,6 +219,35 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
               </article>
             );
           })}
+
+          {/* <article className="bg-surface-container-lowest p-10 rounded-4xl border relative flex flex-col border-outline-variant/10 hover:shadow-xl transition-all">
+            <h3 className="font-headline text-h4 font-bold mb-2">Enterprise</h3>
+            <div className="mb-6 min-h-10">
+              <p className="font-bold text-h3">Custom</p>
+              <div className="flex items-center gap-1 mt-2">
+                <div className="text-xs text-on-surface-variant">
+                  <div className="font-headline font-semibold">Volume-based pricing</div>
+                </div>
+              </div>
+            </div>
+
+            <ul className="space-y-4 mb-10 text-on-surface-variant text-sm flex-1">
+              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Volume-based pricing</li>
+              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Team Sync workspaces</li>
+              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Service level agreements</li>
+              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Dedicated account manager</li>
+            </ul>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              className="w-full rounded-xl"
+              onClick={() => router.push("/feedback")}
+            >
+              Contact sales
+            </Button>
+          </article> */}
         </div>
       )}
     </>

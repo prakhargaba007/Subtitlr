@@ -35,9 +35,9 @@ export default function FeaturesSection() {
 
         <div className="bg-surface-container-low p-10 rounded-[2rem] flex flex-col justify-between border border-outline-variant/20">
           <div className="flex -space-x-3 mb-6">
-            <div className="w-10 h-10 rounded-full border-2 border-surface bg-slate-200" />
-            <div className="w-10 h-10 rounded-full border-2 border-surface bg-slate-300" />
-            <div className="w-10 h-10 rounded-full border-2 border-surface bg-slate-400" />
+            <div className="w-10 h-10 rounded-full border-2 border-surface bg-blue-100 flex items-center justify-center text-blue-600"><span className="material-symbols-outlined text-sm">person</span></div>
+            <div className="w-10 h-10 rounded-full border-2 border-surface bg-green-100 flex items-center justify-center text-green-600"><span className="material-symbols-outlined text-sm">person</span></div>
+            <div className="w-10 h-10 rounded-full border-2 border-surface bg-purple-100 flex items-center justify-center text-purple-600"><span className="material-symbols-outlined text-sm">person</span></div>
           </div>
           <div>
             <h3 className="font-headline text-2xl font-bold mb-2">Team Sync</h3>
@@ -47,29 +47,25 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        <div className="md:col-span-2 bg-surface-container-lowest p-10 rounded-[2rem] editorial-glow border border-outline-variant/10 flex flex-col md:flex-row items-center gap-10">
-          <div className="flex-1">
-            <h3 className="font-headline text-3xl font-bold mb-4">API First</h3>
+        <div className="md:col-span-2 bg-surface-container-lowest p-10 rounded-[2rem] editorial-glow border border-outline-variant/10 flex flex-col md:flex-row items-center gap-10 relative overflow-hidden">
+          <div className="flex-1 relative z-10">
+            <h3 className="font-headline text-3xl font-bold mb-4">Reels &amp; TikTok Ready</h3>
             <p className="text-on-surface-variant mb-6">
-              Integrate Subtitlr directly into your workflow with our developer-friendly SDK.
+              Stand out with word-level caption styling, active word highlighting, and dynamic presets built for the feed.
             </p>
             <button className="text-primary font-bold flex items-center space-x-2 group">
-              <span>Read Documentation</span>
+              <span>View Presets</span>
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
-                arrow_forward
+                edit
               </span>
             </button>
           </div>
-          <div className="flex-1 w-full bg-on-background/5 rounded-xl p-4 font-mono text-xs text-on-surface-variant border border-outline-variant/10">
-            <div className="flex space-x-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-red-400" />
-              <div className="w-2 h-2 rounded-full bg-amber-400" />
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+          <div className="flex-1 w-full bg-surface-container-low rounded-xl p-8 border border-outline-variant/10 flex items-center justify-center relative z-10 shadow-inner">
+            <div className="text-center font-headline font-bold text-2xl sm:text-3xl tracking-wide">
+              <span className="text-on-surface-variant/40">This is </span>
+              <span className="text-primary bg-primary/10 px-3 py-1 rounded-xl shadow-sm border border-primary/20">dynamic</span>
+              <span className="text-on-surface-variant/40"> styling</span>
             </div>
-            <code>
-              curl -X POST https://api.subtitlr.ai/v1/jobs \<br />
-              {` -H "Authorization: Bearer $API_KEY"`}
-            </code>
           </div>
         </div>
 

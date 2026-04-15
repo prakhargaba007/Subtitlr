@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import ExportView from "./ExportView";
 
 export const metadata = {
-  title: "Export Ready | Subtitlr",
+  title: "Export Ready | Dubbing Studio",
   description: "Your subtitles are ready. Preview, edit, and download.",
 };
 
