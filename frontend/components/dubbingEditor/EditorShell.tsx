@@ -9,7 +9,7 @@ import RightInspector from "./RightInspector";
 
 export default function EditorShell() {
   return (
-    <div className="dubbing-editor-root h-[100dvh] flex flex-col bg-[#12141a] text-[#e8eaed] overflow-hidden">
+    <div className="dubbing-editor-root h-dvh flex flex-col bg-[#12141a] text-[#e8eaed] overflow-hidden">
       <TopBar />
       <div className="flex flex-1 min-h-0 min-w-0">
         <LeftPanel />

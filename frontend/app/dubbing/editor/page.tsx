@@ -10,7 +10,7 @@ import EditorShell from "@/components/dubbingEditor/EditorShell";
 
 function DubbingEditorLoading() {
   return (
-    <div className="h-[100dvh] bg-[#12141a] flex items-center justify-center text-[#e8eaed]">
+    <div className="h-dvh bg-[#12141a] flex items-center justify-center text-[#e8eaed]">
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 border-2 border-[#6b63ff]/30 border-t-[#6b63ff] rounded-full animate-spin" />
         <p className="text-sm text-[#9aa3ad]">Loading editor…</p>
@@ -21,10 +21,20 @@ function DubbingEditorLoading() {
 
 function DubbingEditorPageInner() {
   const searchParams = useSearchParams();
+  console.log("searchParams", searchParams);
+
   const pathname = usePathname();
+  console.log("pathname", pathname);
   const inDashboard = pathname.startsWith("/dashboard");
 
-  const jobId = searchParams.get("jobId");
+  let jobId = searchParams.get("jobId");
+  const jobid = searchParams.get("jobid");
+  console.log("jobId", jobId);
+
+  if (!jobId) {
+    jobId = jobid;
+  }
+
   const [job, setJob] = useState<EditorJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -39,6 +49,10 @@ function DubbingEditorPageInner() {
   }, [jobId]);
 
   useEffect(() => {
+
+    if (!jobId) {
+      jobId = jobid;
+    }
     if (!jobId) {
       setErrorMsg("Missing jobId.");
       setLoading(false);
@@ -59,7 +73,7 @@ function DubbingEditorPageInner() {
 
   if (errorMsg || !job) {
     return (
-      <div className="h-[100dvh] bg-[#12141a] flex items-center justify-center text-[#e8eaed] px-6">
+      <div className="h-dvh bg-[#12141a] flex items-center justify-center text-[#e8eaed] px-6">
         <div className="text-center space-y-4 max-w-md">
           <span className="material-symbols-outlined text-5xl text-red-400/80">error</span>
           <h2 className="text-lg font-bold">Editor failed to load</h2>

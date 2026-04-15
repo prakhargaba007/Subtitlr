@@ -15,6 +15,16 @@ interface SubtitleJob {
   createdAt: string;
 }
 
+interface DubbingJob {
+  _id: string;
+  originalFileName: string;
+  fileType: "audio" | "video";
+  duration: number;
+  targetLanguage: string;
+  status: string;
+  createdAt: string;
+}
+
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -31,6 +41,9 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+const DUBBING_STATUSES = new Set(["completed", "done"]);
+const SUBTITLE_COMPLETED = new Set(["completed"]);
+
 export default function ProjectList() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -38,18 +51,48 @@ export default function ProjectList() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    axiosInstance
-      .get<{ jobs: SubtitleJob[] }>("/api/subtitles?limit=5")
-      .then((res) => {
-        const mapped: Project[] = (res.data.jobs ?? []).map((job) => ({
-          id: job._id,
+    Promise.all([
+      axiosInstance
+        .get<{ jobs: SubtitleJob[] }>("/api/subtitles?limit=10")
+        .then((res) => res.data.jobs ?? [])
+        .catch(() => [] as SubtitleJob[]),
+      axiosInstance
+        .get<{ jobs: DubbingJob[] }>("/api/dubbing?limit=10")
+        .then((res) => res.data.jobs ?? [])
+        .catch(() => [] as DubbingJob[]),
+    ])
+      .then(([subtitleJobs, dubbingJobs]) => {
+        const subtitleProjects: Project[] = subtitleJobs.map((job) => ({
+          id: `subtitle-${job._id}`,
           name: job.originalFileName,
-          meta: `${timeAgo(job.createdAt)} • ${formatDuration(job.duration)}`,
-          status: job.status === "completed" ? "Ready" : "Syncing",
+          meta: `Subtitles • ${timeAgo(job.createdAt)} • ${formatDuration(job.duration)}`,
+          status: SUBTITLE_COMPLETED.has(job.status) ? "Ready" : "Syncing",
           icon: job.fileType === "video" ? "movie" : "mic",
           jobId: job._id,
+          type: "subtitle" as const,
+          createdAt: job.createdAt,
         }));
-        setProjects(mapped);
+
+        const dubbingProjects: Project[] = dubbingJobs.map((job) => ({
+          id: `dubbing-${job._id}`,
+          name: job.originalFileName,
+          meta: `Dubbing → ${job.targetLanguage} • ${timeAgo(job.createdAt)} • ${formatDuration(job.duration)}`,
+          status: DUBBING_STATUSES.has(job.status) ? "Ready" : "Syncing",
+          icon: "translate",
+          jobId: job._id,
+          type: "dubbing" as const,
+          createdAt: job.createdAt,
+        }));
+
+        const merged = [...subtitleProjects, ...dubbingProjects]
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt!).getTime() -
+              new Date(a.createdAt!).getTime()
+          )
+          .slice(0, 5);
+
+        setProjects(merged);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -114,7 +157,14 @@ export default function ProjectList() {
         {projects.map((project) => (
           <div
             key={project.id}
-            onClick={() => project.jobId && router.push(`/dashboard/export?jobId=${project.jobId}`)}
+            onClick={() => {
+              if (!project.jobId) return;
+              if (project.type === "dubbing") {
+                router.push(`/dashboard/dubbing/editor?jobId=${project.jobId}`);
+              } else {
+                router.push(`/dashboard/export?jobId=${project.jobId}`);
+              }
+            }}
             className="cursor-pointer"
           >
             <ProjectCard project={project} />

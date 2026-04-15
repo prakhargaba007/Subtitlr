@@ -6,6 +6,8 @@ export interface Project {
   thumbnail?: string;
   icon?: string;
   jobId?: string;
+  type?: "subtitle" | "dubbing";
+  createdAt?: string;
 }
 
 export default function ProjectCard({ project }: { project: Project }) {
