@@ -12,18 +12,18 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### Navigation Bar (appears on every page)
 
-- [ ] **"Use Cases"** nav link → `href="#"` — goes nowhere
-- [ ] **"Docs"** nav link → `href="#"` — goes nowhere
-- [ ] **"Product"** nav link → `href="/"` — just reloads the homepage instead of going to a dedicated Product page
+- **"Use Cases"** nav link → `href="#"` — goes nowhere 
+- **✅ "Docs"** nav link → `href="#"` — goes nowhere - comming soon
+- **"Product"** nav link → `href="/"` — just reloads the homepage instead of going to a dedicated Product page
 
 ### Footer (appears on every page)
 
-- [ ] **"Privacy Policy"** → `href="#"` — dead link, no actual privacy policy page
-- [ ] **"Terms of Service"** → `href="#"` — dead link, no actual terms page
-- [ ] **"Help Center"** → `href="#"` — dead link, no help center exists
-- [ ] **"API Status"** → `href="#"` — dead link, no status page exists
-- [ ] **"Twitter"** → `href="#"` — dead link, does not go to any Twitter/X profile
-- [ ] **"GitHub"** → `href="#"` — dead link, does not go to any GitHub repository
+- **✅"Privacy Policy"** → `href="#"` — dead link, no actual privacy policy page
+- **✅"Terms of Service"** → `href="#"` — dead link, no actual terms page
+- **✅"Help Center"** → `href="#"` — dead link, no help center exists
+- **"API Status"** → `href="#"` — dead link, no status page exists
+- **"Twitter"** → `href="#"` — dead link, does not go to any Twitter/X profile
+- **✅"GitHub"** → `href="#"` — dead link, does not go to any GitHub repository
 
 > **Impact:** 8 out of 10 footer/nav links are completely non-functional. This is a major trust issue for any visitor.
 
@@ -33,25 +33,25 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### Homepage
 
-- [ ] **"Start Free Trial"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no modal, no action.
-- [ ] **"View All Features"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no action.
-- [ ] **"No video? Try a sample file"** button — does nothing on click. Should load a demo sample file but has no functionality.
-- [ ] **"View Presets"** button (in the "Reels & TikTok Ready" section) — does nothing on click.
-- [ ] **"Start Dubbing"** button (on homepage uploader) — shows "Select a file to get started" text but has no error feedback, tooltip, or visual indication when clicked without a file.
+- **"Start Free Trial"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no modal, no action.
+- **"View All Features"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no action.
+- **"No video? Try a sample file"** button — does nothing on click. Should load a demo sample file but has no functionality.
+- **"View Presets"** button (in the "Reels & TikTok Ready" section) — does nothing on click.
+- **"Start Dubbing"** button (on homepage uploader) — shows "Select a file to get started" text but has no error feedback, tooltip, or visual indication when clicked without a file.
 
 ### Pricing Page
 
-- [ ] **"Start free"** button (Free plan) — redirects to dashboard, which is fine, but inconsistent with Premium/Pro buttons.
-- [ ] **"Get started"** button (Premium plan) — redirects to dashboard but does not initiate any plan selection or checkout flow.
-- [ ] **"Get started"** button (Pro plan) — same issue, just goes to dashboard with no plan context.
+- **"Start free"** button (Free plan) — redirects to dashboard, which is fine, but inconsistent with Premium/Pro buttons.
+- **"Get started"** button (Premium plan) — redirects to dashboard but does not initiate any plan selection or checkout flow.
+- **"Get started"** button (Pro plan) — same issue, just goes to dashboard with no plan context.
 
 ### Dashboard Sidebar
 
-- [ ] **"Projects"** sidebar link → `href="#"` — dead link
-- [ ] **"AI Tools"** sidebar link → `href="#"` — dead link
-- [ ] **"All Projects"** sidebar link → `href="#"` — dead link
-- [ ] **"Credit History"** sidebar link → `href="#"` — dead link
-- [ ] **"Documentation"** sidebar link → `href="#"` — dead link
+- **"Projects"** sidebar link → `href="#"` — dead link
+- **"AI Tools"** sidebar link → `href="#"` — dead link
+- **"All Projects"** sidebar link → `href="#"` — dead link
+- **"Credit History"** sidebar link → `href="#"` — dead link
+- **"Documentation"** sidebar link → `href="#"` — dead link
 
 > **Impact:** The dashboard sidebar has 5 out of 7 links that are non-functional. The app feels like a shell.
 
@@ -59,62 +59,62 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ## 3. CONTENT & COPY ISSUES
 
-- [ ] **Hero headline vs. subtitle mismatch** — The headline says "Turn Video & Audio into **Dubs** in Seconds" but the subtitle says "Upload a video, get accurate **SRT/VTT captions** in 60+ languages." The headline is about dubbing; the subtitle is about captions/subtitles. These are different features and the messaging is contradictory.
-- [ ] **Page title mismatch** — The browser tab says "The Intelligent Canvas for **Transcription**" but the product is branded as a dubbing studio. The title, headline, and subtitle all describe different products.
-- [ ] **Meta description mismatch** — Says "High-precision transcription meets editorial elegance. Turn video & audio into subtitles in seconds." Again references transcription/subtitles, not dubbing.
-- [ ] **Dashboard greeting uses hardcoded name** — Says "Good morning, **Alex**" but the logged-in user is "harshjorwal2006." The greeting is not personalized and uses a placeholder name.
-- [ ] **"Billing runs through Dodo"** — The pricing page references "Dodo" as the payment processor. This is an obscure reference that most users won't recognize. No link to explain what Dodo is.
-- [ ] **"V2.0 NOW LIVE" badge** — This announcement badge has no link, no changelog, and no way to learn what's new in V2.0. It's a decorative dead-end.
-- [ ] **FAQ section heading inconsistency** — Homepage FAQ says "Frequently Asked Questions" while Pricing page FAQ says just "FAQ." The styling and subtitle text also differ between pages.
+- **Hero headline vs. subtitle mismatch** — The headline says "Turn Video & Audio into **Dubs** in Seconds" but the subtitle says "Upload a video, get accurate **SRT/VTT captions** in 60+ languages." The headline is about dubbing; the subtitle is about captions/subtitles. These are different features and the messaging is contradictory.
+- **Page title mismatch** — The browser tab says "The Intelligent Canvas for **Transcription**" but the product is branded as a dubbing studio. The title, headline, and subtitle all describe different products.
+- **Meta description mismatch** — Says "High-precision transcription meets editorial elegance. Turn video & audio into subtitles in seconds." Again references transcription/subtitles, not dubbing.
+- **Dashboard greeting uses hardcoded name** — Says "Good morning, **Alex**" but the logged-in user is "harshjorwal2006." The greeting is not personalized and uses a placeholder name.
+- **"Billing runs through Dodo"** — The pricing page references "Dodo" as the payment processor. This is an obscure reference that most users won't recognize. No link to explain what Dodo is.
+- **"V2.0 NOW LIVE" badge** — This announcement badge has no link, no changelog, and no way to learn what's new in V2.0. It's a decorative dead-end.
+- **FAQ section heading inconsistency** — Homepage FAQ says "Frequently Asked Questions" while Pricing page FAQ says just "FAQ." The styling and subtitle text also differ between pages.
 
 ---
 
 ## 4. BRAND LOGOS / TRUST SECTION ISSUES
 
-- [ ] **Fake client logos** — The section says "BUILT FOR CREATORS ON YOUTUBE, TIKTOK, AND REELS" but displays logos of Microsoft, Spotify, IBM, Google, and Nike. These are Fortune 500 companies, not content creators. There's no indication these companies actually use the product.
-- [ ] **Logos are hotlinked from Wikipedia** — All brand images are loaded directly from `upload.wikimedia.org`. This is unreliable (Wikipedia can block hotlinking), unprofessional, and potentially violates Wikipedia's usage terms.
-- [ ] **Logo links go to company homepages** — Clicking the Microsoft logo goes to microsoft.com, Nike logo to nike.com, etc. These links serve no purpose and confuse users by navigating them away from the site.
-- [ ] **Logo section text mismatch** — Says "Built for creators" but shows enterprise company logos, not creator brands or testimonials.
+- **Fake client logos** — The section says "BUILT FOR CREATORS ON YOUTUBE, TIKTOK, AND REELS" but displays logos of Microsoft, Spotify, IBM, Google, and Nike. These are Fortune 500 companies, not content creators. There's no indication these companies actually use the product.
+- **Logos are hotlinked from Wikipedia** — All brand images are loaded directly from `upload.wikimedia.org`. This is unreliable (Wikipedia can block hotlinking), unprofessional, and potentially violates Wikipedia's usage terms.
+- **Logo links go to company homepages** — Clicking the Microsoft logo goes to microsoft.com, Nike logo to nike.com, etc. These links serve no purpose and confuse users by navigating them away from the site.
+- **Logo section text mismatch** — Says "Built for creators" but shows enterprise company logos, not creator brands or testimonials.
 
 ---
 
 ## 5. COLOR SCHEME & VISUAL DESIGN ISSUES
 
-- [ ] **Inconsistent button styling** — The "Get started" button on Premium (filled purple) looks different from "Get started" on Pro (outlined). The Free plan button says "Start free" instead of "Get started." Three different treatments for the same action across three pricing cards.
-- [ ] **Purple/indigo overuse without hierarchy** — Nearly everything interactive is the same shade of purple/indigo (#4F46E5 or similar): nav active state, CTA buttons, heading accents, toggle switches, credit bar, links, checkmarks. There's no visual hierarchy to distinguish primary from secondary actions.
-- [ ] **Low contrast on footer text** — Footer links (Privacy Policy, Terms, etc.) use a muted gray color on a slightly off-white background. Readability suffers.
-- [ ] **"EDITORIAL PRECISION" label** — Uses a red/coral accent color that appears only once on the entire site, creating visual inconsistency.
-- [ ] **The "Dubbing" toggle active state** — Uses a subtle outlined style that doesn't clearly communicate it's the selected/active tab versus the "Subtitles" tab.
+- **Inconsistent button styling** — The "Get started" button on Premium (filled purple) looks different from "Get started" on Pro (outlined). The Free plan button says "Start free" instead of "Get started." Three different treatments for the same action across three pricing cards.
+- **Purple/indigo overuse without hierarchy** — Nearly everything interactive is the same shade of purple/indigo (#4F46E5 or similar): nav active state, CTA buttons, heading accents, toggle switches, credit bar, links, checkmarks. There's no visual hierarchy to distinguish primary from secondary actions.
+- **Low contrast on footer text** — Footer links (Privacy Policy, Terms, etc.) use a muted gray color on a slightly off-white background. Readability suffers.
+- **"EDITORIAL PRECISION" label** — Uses a red/coral accent color that appears only once on the entire site, creating visual inconsistency.
+- **The "Dubbing" toggle active state** — Uses a subtle outlined style that doesn't clearly communicate it's the selected/active tab versus the "Subtitles" tab.
 
 ---
 
 ## 6. UX & LAYOUT ISSUES
 
-- [ ] **No mobile hamburger menu** — The site has no responsive mobile navigation. At mobile widths, the desktop nav bar persists without collapsing into a hamburger menu. Nav items likely overflow or get cramped on small screens.
-- [ ] **Excessive whitespace between sections** — There are very large empty gaps between the "Frictionless Journey" section, the feature cards, the pricing section, and the testimonials. These feel like unfinished placeholder spacing.
-- [ ] **No hover states on feature cards** — The "Smart Context Engine," "Global Scale," "Team Sync," and "Reels & TikTok Ready" cards have no hover interaction, cursor change, or visual feedback, even though they look clickable.
-- [ ] **Testimonials lack credibility** — Three testimonials are shown, but they only show first name and generic titles ("Content Creator," "Marketing Team," "Freelancer"). No photos, no company names, no links. They read as placeholder content.
-- [ ] **"+ 50 more" language chip** — In the Supported Languages section, the "+ 50 more" chip looks like a clickable button but does nothing. Should either expand the full list or link to documentation.
-- [ ] **Notification bell (dashboard)** — The bell icon in the dashboard header has no visible badge/count and no dropdown. It appears non-functional.
-- [ ] **"Jump to project..." search (dashboard)** — The search box exists but with no projects, there's no indication of what it does or any placeholder guidance beyond the text.
-- [ ] **Upgrade Plan button (dashboard sidebar)** — Visible but there's no clear indication of what upgrading does or what plan you're currently on beyond "FREE PLAN" label.
+- **No mobile hamburger menu** — The site has no responsive mobile navigation. At mobile widths, the desktop nav bar persists without collapsing into a hamburger menu. Nav items likely overflow or get cramped on small screens.
+- **Excessive whitespace between sections** — There are very large empty gaps between the "Frictionless Journey" section, the feature cards, the pricing section, and the testimonials. These feel like unfinished placeholder spacing.
+- **No hover states on feature cards** — The "Smart Context Engine," "Global Scale," "Team Sync," and "Reels & TikTok Ready" cards have no hover interaction, cursor change, or visual feedback, even though they look clickable.
+- **Testimonials lack credibility** — Three testimonials are shown, but they only show first name and generic titles ("Content Creator," "Marketing Team," "Freelancer"). No photos, no company names, no links. They read as placeholder content.
+- **"+ 50 more" language chip** — In the Supported Languages section, the "+ 50 more" chip looks like a clickable button but does nothing. Should either expand the full list or link to documentation.
+- **Notification bell (dashboard)** — The bell icon in the dashboard header has no visible badge/count and no dropdown. It appears non-functional.
+- **"Jump to project..." search (dashboard)** — The search box exists but with no projects, there's no indication of what it does or any placeholder guidance beyond the text.
+- **Upgrade Plan button (dashboard sidebar)** — Visible but there's no clear indication of what upgrading does or what plan you're currently on beyond "FREE PLAN" label.
 
 ---
 
 ## 7. PRICING PAGE SPECIFIC ISSUES
 
-- [ ] **Free plan doesn't show "Billed monthly/yearly" label** — When toggling between Monthly and Yearly, the Free plan card stays identical. Premium says "Billed monthly" or "Billed yearly" but Free shows nothing, making the toggle feel broken for that card.
-- [ ] **Strikethrough pricing on Free is missing** — Premium shows ~~$10/mo~~ → $9.50/mo and Pro shows ~~$25/mo~~ → $22/mo, but the Free plan has no original price shown. This inconsistency makes the discounted prices less believable.
-- [ ] **Yearly pricing math is questionable** — Premium yearly is $8/mo (originally $10/mo) = 20% off. Pro yearly is $20/mo (originally $25/mo) = 20% off. But the homepage pricing section (which duplicates the pricing page) shows $9.50/mo and $22/mo — these are the monthly prices, not yearly. The homepage and pricing page show different numbers depending on toggle state, but the homepage defaults to monthly while the pricing page URL has no toggle memory.
-- [ ] **No Enterprise/Custom plan** — Most SaaS pricing pages include a "Contact Us" enterprise tier. Missing this for a product claiming Google, IBM, and Nike as users is contradictory.
+- **Free plan doesn't show "Billed monthly/yearly" label** — When toggling between Monthly and Yearly, the Free plan card stays identical. Premium says "Billed monthly" or "Billed yearly" but Free shows nothing, making the toggle feel broken for that card.
+- **Strikethrough pricing on Free is missing** — Premium shows ~~$10/mo~~ → $9.50/mo and Pro shows ~~$25/mo~~ → $22/mo, but the Free plan has no original price shown. This inconsistency makes the discounted prices less believable.
+- **Yearly pricing math is questionable** — Premium yearly is $8/mo (originally $10/mo) = 20% off. Pro yearly is $20/mo (originally $25/mo) = 20% off. But the homepage pricing section (which duplicates the pricing page) shows $9.50/mo and $22/mo — these are the monthly prices, not yearly. The homepage and pricing page show different numbers depending on toggle state, but the homepage defaults to monthly while the pricing page URL has no toggle memory.
+- **No Enterprise/Custom plan** — Most SaaS pricing pages include a "Contact Us" enterprise tier. Missing this for a product claiming Google, IBM, and Nike as users is contradictory.
 
 ---
 
 ## 8. TECHNICAL & SEO ISSUES
 
-- [ ] **No favicon visible** — The favicon URL contains a suspicious query string (`?favicon.0x3dzn~oxb6tn.ico`) suggesting it may be auto-generated or misconfigured.
-- [ ] **No Open Graph / social sharing meta tags visible** — Sharing this site on social media would show generic or missing previews.
-- [ ] **Console errors possible from hotlinked Wikipedia images** — External image loading from Wikipedia is fragile and may generate CORS or 403 errors intermittently.
+- **No favicon visible** — The favicon URL contains a suspicious query string (`?favicon.0x3dzn~oxb6tn.ico`) suggesting it may be auto-generated or misconfigured.
+- **No Open Graph / social sharing meta tags visible** — Sharing this site on social media would show generic or missing previews.
+- **Console errors possible from hotlinked Wikipedia images** — External image loading from Wikipedia is fragile and may generate CORS or 403 errors intermittently.
 
 ---
 
@@ -138,12 +138,12 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### Critical Priority Fixes
 
-- [ ] Fix all dead `href="#"` links (nav, footer, dashboard) — or remove them
-- [ ] Wire up CTA buttons ("Start Free Trial," "View All Features," "View Presets")
-- [ ] Fix the hero headline/subtitle/title mismatch (dubbing vs. transcription vs. captions)
-- [ ] Replace fake brand logos or remove the section entirely
-- [ ] Fix the hardcoded "Good morning, Alex" greeting
-- [ ] Add mobile responsive navigation
+- Fix all dead `href="#"` links (nav, footer, dashboard) — or remove them
+- Wire up CTA buttons ("Start Free Trial," "View All Features," "View Presets")
+- Fix the hero headline/subtitle/title mismatch (dubbing vs. transcription vs. captions)
+- Replace fake brand logos or remove the section entirely
+- Fix the hardcoded "Good morning, Alex" greeting
+- Add mobile responsive navigation
 
 ---
 
@@ -157,34 +157,34 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### A. User Onboarding & First-Time Experience
 
-- [ ] **No onboarding flow** — When a new user signs up and lands on the dashboard, there's no welcome tour, no guided walkthrough, no tooltips pointing out where to upload, how credits work, or what "Dubbing" vs. "Subtitles" means. A first-time user is dropped into the app cold.
-- [ ] **No sample/demo project** — The "Recent Projects" section shows an empty state that says "No projects yet. Upload a file to get started." There should be a pre-loaded sample project so new users can explore what a completed dubbing job looks like — what the output is, what the editor feels like, what export options are available — without spending their credits.
-- [ ] **No interactive product demo on homepage** — The homepage upload widget is live but there's no way to experience the product before signing up. An embedded video demo, a GIF walkthrough, or even a side-by-side "before/after" audio clip would massively increase conversions.
+- **No onboarding flow** — When a new user signs up and lands on the dashboard, there's no welcome tour, no guided walkthrough, no tooltips pointing out where to upload, how credits work, or what "Dubbing" vs. "Subtitles" means. A first-time user is dropped into the app cold.
+- **No sample/demo project** — The "Recent Projects" section shows an empty state that says "No projects yet. Upload a file to get started." There should be a pre-loaded sample project so new users can explore what a completed dubbing job looks like — what the output is, what the editor feels like, what export options are available — without spending their credits.
+- **No interactive product demo on homepage** — The homepage upload widget is live but there's no way to experience the product before signing up. An embedded video demo, a GIF walkthrough, or even a side-by-side "before/after" audio clip would massively increase conversions.
 
 ### B. Core Product Features
 
-- [ ] **No drag-and-drop progress feedback** — The upload area says "Drop your file here" but there's no visual drag-over state (no border highlight, no color change, no icon animation). Users can't tell if their drag is being recognized.
-- [ ] **No file size limit displayed** — The uploader shows accepted formats (MP4, MOV, MP3, WAV, WEBM) but never tells users the maximum file size. Users will hit a mystery error on large files.
-- [ ] **No upload progress bar** — There's no loading/progress indicator anywhere in the codebase. After a user drops a large video file, they'd see... nothing. No spinner, no percentage, no ETA.
-- [ ] **No project management** — The "Projects" sidebar exists but is dead. A real dubbing tool needs: project folders, rename/delete projects, search/filter by date or language, tags, and batch operations.
-- [ ] **No editor/preview for completed dubs** — There's no visible way to preview your dubbed audio/video, edit timestamps, adjust translations, or fine-tune the output before exporting. The "Frictionless Journey" section implies Upload → Convert → Generate → Download, but there's no editing step.
-- [ ] **No subtitle editor** — For a tool that claims to generate SRT/VTT captions, there's no inline subtitle editor where users can correct timestamps, fix AI transcription errors, split/merge captions, or adjust display timing.
-- [ ] **No real-time collaboration** — The "Team Sync" feature card claims "Collaborative workspace for production teams to edit and review in real-time," but the dashboard has zero collaboration features: no sharing, no invite team members, no comments, no version history.
-- [ ] **No export format preview** — Users can't preview what their SRT, VTT, or MP4 output will look like before downloading. A live preview pane would be essential.
+- **No drag-and-drop progress feedback** — The upload area says "Drop your file here" but there's no visual drag-over state (no border highlight, no color change, no icon animation). Users can't tell if their drag is being recognized.
+- **No file size limit displayed** — The uploader shows accepted formats (MP4, MOV, MP3, WAV, WEBM) but never tells users the maximum file size. Users will hit a mystery error on large files.
+- **No upload progress bar** — There's no loading/progress indicator anywhere in the codebase. After a user drops a large video file, they'd see... nothing. No spinner, no percentage, no ETA.
+- **No project management** — The "Projects" sidebar exists but is dead. A real dubbing tool needs: project folders, rename/delete projects, search/filter by date or language, tags, and batch operations.
+- **No editor/preview for completed dubs** — There's no visible way to preview your dubbed audio/video, edit timestamps, adjust translations, or fine-tune the output before exporting. The "Frictionless Journey" section implies Upload → Convert → Generate → Download, but there's no editing step.
+- **No subtitle editor** — For a tool that claims to generate SRT/VTT captions, there's no inline subtitle editor where users can correct timestamps, fix AI transcription errors, split/merge captions, or adjust display timing.
+- **No real-time collaboration** — The "Team Sync" feature card claims "Collaborative workspace for production teams to edit and review in real-time," but the dashboard has zero collaboration features: no sharing, no invite team members, no comments, no version history.
+- **No export format preview** — Users can't preview what their SRT, VTT, or MP4 output will look like before downloading. A live preview pane would be essential.
 
 ### C. Account & Settings
 
-- [ ] **No profile/settings page** — The "Settings" option appears in the user dropdown, but there's no actual settings page visible. Users need to be able to change their name, email, password, notification preferences, and default language.
-- [ ] **No billing/subscription management** — The "Upgrade Plan" button exists, but there's no way to view current subscription, billing history, payment method, download invoices, or cancel a plan.
-- [ ] **No credit usage analytics** — The sidebar shows "60 / 60 left" but there's no breakdown of how credits were spent, no usage chart over time, no "you'll run out in X days" projection.
-- [ ] **No API key management** — The footer mentions "API Status" which implies an API exists. But there's no API key generation, documentation, or usage dashboard for developers.
+- **No profile/settings page** — The "Settings" option appears in the user dropdown, but there's no actual settings page visible. Users need to be able to change their name, email, password, notification preferences, and default language.
+- **No billing/subscription management** — The "Upgrade Plan" button exists, but there's no way to view current subscription, billing history, payment method, download invoices, or cancel a plan.
+- **No credit usage analytics** — The sidebar shows "60 / 60 left" but there's no breakdown of how credits were spent, no usage chart over time, no "you'll run out in X days" projection.
+- **No API key management** — The footer mentions "API Status" which implies an API exists. But there's no API key generation, documentation, or usage dashboard for developers.
 
 ### D. Trust & Legal (Required for a Paid Product)
 
-- [ ] **No actual Privacy Policy page** — This is legally required for any product that collects user data, especially one that processes audio/video files. This is not optional.
-- [ ] **No Terms of Service page** — Also legally required. Users are paying money and uploading potentially sensitive media. Terms must exist.
-- [ ] **No cookie consent banner** — If the site uses any analytics or third-party scripts (likely), a cookie consent mechanism is required under GDPR/CCPA.
-- [ ] **No data deletion option** — Users must be able to request deletion of their data and uploaded files. The FAQ mentions "What happens to my files after processing?" but the answer is hidden behind an accordion.
+- **No actual Privacy Policy page** — This is legally required for any product that collects user data, especially one that processes audio/video files. This is not optional.
+- **No Terms of Service page** — Also legally required. Users are paying money and uploading potentially sensitive media. Terms must exist.
+- **No cookie consent banner** — If the site uses any analytics or third-party scripts (likely), a cookie consent mechanism is required under GDPR/CCPA.
+- **No data deletion option** — Users must be able to request deletion of their data and uploaded files. The FAQ mentions "What happens to my files after processing?" but the answer is hidden behind an accordion.
 
 ---
 

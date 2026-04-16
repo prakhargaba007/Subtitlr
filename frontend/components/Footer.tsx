@@ -1,14 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
-  "Privacy Policy",
-  "Terms of Service",
-  "Help Center",
-  "API Status",
-  "Twitter",
-  "GitHub",
+const LINKS: Array<{ label: string; href: string; external?: boolean }> = [
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Help", href: "/help" },
+  {label: "Feedback", href: "/feedback"},
+  { label: "GitHub", href: "https://github.com/prakhargaba007", external: true },
 ];
 
 export default function Footer() {
@@ -21,20 +21,32 @@ export default function Footer() {
         <div className="flex flex-col items-center px-8 max-w-7xl mx-auto gap-6">
           <p className="text-center text-sm text-slate-500">
             Exclusive Priority Support active.{" "}
-            <a className="text-[#d4af37] font-semibold hover:underline" href="#">
+            <Link className="text-[#d4af37] font-semibold hover:underline" href="/feedback">
               Talk to an Agent
-            </a>
+            </Link>
           </p>
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-            {LINKS.map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="text-sm text-slate-500 hover:text-[#d4af37] transition-colors"
-              >
-                {link}
-              </a>
-            ))}
+            {LINKS.map((link) =>
+              link.external ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-slate-500 hover:text-[#d4af37] transition-colors"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-slate-500 hover:text-[#d4af37] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </div>
           <div className="text-center border-t border-white/5 pt-8 w-full">
             <p className="font-headline font-bold text-white mb-0.5">Dubbing Studio</p>
@@ -56,15 +68,27 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-          {LINKS.map((link) => (
-            <a
-              key={link}
-              href="#"
-              className="text-sm text-on-surface-variant hover:text-primary transition-colors"
-            >
-              {link}
-            </a>
-          ))}
+          {LINKS.map((link) =>
+            link.external ? (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-on-surface-variant hover:text-primary transition-colors"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm text-on-surface-variant hover:text-primary transition-colors"
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
         </div>
       </div>
     </footer>
