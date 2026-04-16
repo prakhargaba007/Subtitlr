@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import FadingCircle from "@/components/FadingCircle";
-
-const STORAGE_KEY = "notify_docs_email_v1";
+import axios from "@/utils/axios";
+import type { AxiosError } from "axios";
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -12,31 +12,45 @@ function isValidEmail(value: string) {
 
 export default function DocsComingSoonPage() {
   const [email, setEmail] = useState("");
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(() => {
-    try {
-      if (typeof window === "undefined") return null;
-      return localStorage.getItem(STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  });
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
   const canSubmit = useMemo(() => isValidEmail(email), [email]);
 
-  const handleNotify = () => {
+  const handleNotify = async () => {
     const trimmed = email.trim();
     if (!isValidEmail(trimmed)) return;
 
     try {
-      localStorage.setItem(STORAGE_KEY, trimmed);
-    } catch {
-      // ignore storage errors
-    }
+      setIsSubmitting(true);
+      setErrorMessage(null);
+      setAlreadyRegistered(false);
 
-    setSubmittedEmail(trimmed);
-    setIsSubmitted(true);
-    setEmail("");
+      const resp = await axios.post("/api/coming-soon/notify", {
+        email: trimmed,
+        pageKey: "docs",
+        source: "navbar",
+      });
+
+      const data = (resp?.data ?? {}) as { alreadyRegistered?: boolean };
+
+      setSubmittedEmail(trimmed);
+      setAlreadyRegistered(Boolean(data.alreadyRegistered));
+      setIsSubmitted(true);
+      setEmail("");
+    } catch (e: unknown) {
+      const axiosErr = e as AxiosError<{ message?: string }>;
+      const message =
+        axiosErr?.response?.data?.message ||
+        axiosErr?.message ||
+        "Could not register you right now. Please try again.";
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -84,7 +98,9 @@ export default function DocsComingSoonPage() {
 
             {isSubmitted ? (
               <div className="rounded-3xl border border-outline-variant bg-primary/5 px-5 py-4 text-sm text-on-surface">
-                Thanks! We’ll notify you when Docs launches.
+                {alreadyRegistered
+                  ? "You’re already on the list. We’ll notify you when Docs launches."
+                  : "Thanks! We’ll notify you when Docs launches."}
               </div>
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -100,14 +116,18 @@ export default function DocsComingSoonPage() {
                   variant="primary"
                   size="md"
                   pill
-                  disabled={!canSubmit}
+                  disabled={!canSubmit || isSubmitting}
                   onClick={handleNotify}
                   className="whitespace-nowrap"
                 >
-                  Notify me
+                  {isSubmitting ? "Notifying..." : "Notify me"}
                 </Button>
               </div>
             )}
+
+            {errorMessage ? (
+              <p className="mt-3 text-xs text-red-600">{errorMessage}</p>
+            ) : null}
 
             {!isSubmitted ? (
               <p className="mt-3 text-xs text-on-surface-variant">
