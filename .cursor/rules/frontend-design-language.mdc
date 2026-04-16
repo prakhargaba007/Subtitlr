@@ -1,0 +1,20 @@
+---
+description: Frontend must follow DESIGN_LANGUAGE.md (and keep the components catalog updated)
+globs: frontend/**/*.{tsx,ts,css,md,mdx}
+alwaysApply: false
+---
+
+# Frontend Design Language (mandatory)
+
+When working on any `frontend/**` file:
+
+- Follow `frontend/DESIGN_LANGUAGE.md` for UX, copy, layout, and component reuse decisions.
+- Follow `.cursor/rules/design-system.mdc` for semantic tokens, typography scale, and `<Button>` usage.
+- Never add dead links (`href="#"`) or non-functional CTAs.
+
+## Keeping the catalog updated
+
+If you introduce a new reusable UI component (meant for 2+ places), you must add it to:
+
+- `frontend/DESIGN_LANGUAGE.md` → “Reusable Components Catalog”
+

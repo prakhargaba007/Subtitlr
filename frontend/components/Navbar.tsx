@@ -67,9 +67,9 @@ export default function Navbar() {
           <a href="#" className={navLinkClass}>
             Use Cases
           </a>
-          <a href="#" className={navLinkClass}>
+          <Link href="/docs" className={navLinkClass}>
             Docs
-          </a>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-6">
