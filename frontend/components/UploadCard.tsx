@@ -157,16 +157,27 @@ function UploadCardFallback() {
   );
 }
 
-function UploadCardInner({ basePath = "", onModeChange }: { basePath?: string; onModeChange?: (mode: "subtitles" | "dubbing") => void }) {
+function UploadCardInner({
+  basePath = "",
+  onModeChange,
+  selectedFile: selectedFileProp,
+  onSelectedFileChange,
+}: {
+  basePath?: string;
+  onModeChange?: (mode: "subtitles" | "dubbing") => void;
+  selectedFile?: File | null;
+  onSelectedFileChange?: (file: File | null) => void;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState("");
   const [languages, setLanguages] = useState<ApiLanguage[]>([AUTO_DETECT]);
+  const selectedFile = selectedFileProp ?? internalSelectedFile;
 
   const urlMode = (searchParams.get("mode") || "dubbing").toLowerCase();
   const [mode, setMode] = useState<"subtitles" | "dubbing">(urlMode === "subtitles" ? "subtitles" : "dubbing");
@@ -189,8 +200,9 @@ function UploadCardInner({ basePath = "", onModeChange }: { basePath?: string; o
       setError("Unsupported file type. Please upload a video or audio file (MP4, MOV, MP3, WAV…).");
       return;
     }
-    setSelectedFile(file);
-  }, []);
+    setInternalSelectedFile(file);
+    onSelectedFileChange?.(file);
+  }, [onSelectedFileChange]);
 
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -263,7 +275,12 @@ function UploadCardInner({ basePath = "", onModeChange }: { basePath?: string; o
                     <p className="text-sm text-on-surface-variant">{formatBytes(selectedFile.size)}</p>
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setError(null); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInternalSelectedFile(null);
+                      onSelectedFileChange?.(null);
+                      setError(null);
+                    }}
                     className="flex items-center gap-1.5 text-xs font-headline font-semibold text-on-surface-variant hover:text-primary transition-colors"
                   >
                     <span className="material-symbols-outlined text-sm">swap_horiz</span>
@@ -381,7 +398,12 @@ function UploadCardInner({ basePath = "", onModeChange }: { basePath?: string; o
   );
 }
 
-export default function UploadCard(props: { basePath?: string; onModeChange?: (mode: "subtitles" | "dubbing") => void }) {
+export default function UploadCard(props: {
+  basePath?: string;
+  onModeChange?: (mode: "subtitles" | "dubbing") => void;
+  selectedFile?: File | null;
+  onSelectedFileChange?: (file: File | null) => void;
+}) {
   return (
     <Suspense fallback={<UploadCardFallback />}>
       <UploadCardInner {...props} />

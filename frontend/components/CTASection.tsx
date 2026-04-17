@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 
 export default function CTASection() {
   return (
@@ -23,9 +24,11 @@ export default function CTASection() {
         </p>
 
         <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
-          <Button variant="surface" size="lg">
-            Start Free Trial
-          </Button>
+          <Link href="/dashboard">
+            <Button variant="surface" size="lg">
+              Start Free Trial
+            </Button>
+          </Link>
           <Button variant="ghost-inverse" size="lg">
             View All Features
           </Button>

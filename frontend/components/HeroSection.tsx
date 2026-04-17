@@ -7,6 +7,22 @@ import UploadCard from "@/components/UploadCard";
 
 export default function HeroSection() {
   const [mode, setMode] = useState<"subtitles" | "dubbing">("dubbing");
+  const [sampleLoading, setSampleLoading] = useState(false);
+  const [sampleFile, setSampleFile] = useState<File | null>(null);
+
+  const handleSample = async () => {
+    if (sampleLoading) return;
+    setSampleLoading(true);
+    try {
+      const res = await fetch("/sample.mp4");
+      if (!res.ok) throw new Error("Failed to load sample video");
+      const blob = await res.blob();
+      const file = new File([blob], "sample.mp4", { type: blob.type || "video/mp4" });
+      setSampleFile(file);
+    } finally {
+      setSampleLoading(false);
+    }
+  };
 
   return (
     <section className="max-w-9xl mx-auto px-8 mb-40 text-center relative z-10 overflow-x-clip">
@@ -35,14 +51,24 @@ export default function HeroSection() {
       </p>
 
       <div className="max-w-3xl mx-auto mb-4">
-        <UploadCard onModeChange={setMode} />
+        <UploadCard onModeChange={setMode} selectedFile={sampleFile} onSelectedFileChange={setSampleFile} />
       </div>
 
       <div className="flex justify-center mb-16">
-        <button className="text-sm font-headline font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5">
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSample}
+            disabled={sampleLoading}
+            className="text-sm font-headline font-medium text-primary hover:text-primary/80 disabled:text-primary/60 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+          >
           <span className="material-symbols-outlined text-sm">play_circle</span>
-          No video? Try a sample file
-        </button>
+            {sampleLoading ? "Loading sample…" : "No video? Try the sample"}
+          </button>
+          {/* <p className="text-xs text-on-surface-variant/70">
+            Sample video is from the Rennrat YouTube channel.
+          </p> */}
+        </div>
       </div>
 
       <div className="mt-8 pt-8 border-t border-slate-200/50 max-w-3xl mx-auto opacity-60">

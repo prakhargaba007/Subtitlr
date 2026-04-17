@@ -33,7 +33,7 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### Homepage
 
-- **"Start Free Trial"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no modal, no action.
+- **✅ "Start Free Trial"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no modal, no action.
 - **"View All Features"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no action.
 - **"No video? Try a sample file"** button — does nothing on click. Should load a demo sample file but has no functionality.
 - **"View Presets"** button (in the "Reels & TikTok Ready" section) — does nothing on click.
