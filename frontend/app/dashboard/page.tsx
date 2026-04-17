@@ -17,7 +17,7 @@ export default function DashboardPage() {
                 <FadingCircle size={560} color="var(--color-primary)" />
             </div>
 
-            <div className="max-w-4xl mx-auto px-8 py-12 relative z-10">
+            <div className="max-w-7xl mx-auto px-8 py-12 relative z-10">
                 {/* Hero copy */}
                 <div className="mb-12 text-center">
                     <h2 className="text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight mb-4 font-headline">
@@ -29,7 +29,7 @@ export default function DashboardPage() {
                 </div>
 
                 <UploadZone />
-                <ProjectList />
+                <ProjectList title="Recent Projects" showSeeAll={true} layout="grid" />
             </div>
         </div>
     );
