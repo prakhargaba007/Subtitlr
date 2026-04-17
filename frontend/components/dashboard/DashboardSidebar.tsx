@@ -10,13 +10,13 @@ import axiosInstance from "@/utils/axios";
 
 const NAV_ITEMS = [
   { icon: "dashboard", label: "Launchpad", href: "/dashboard" },
-  { icon: "folder", label: "Projects", href: "#" },
+  { icon: "folder", label: "Projects", href: "/dashboard/projects" },
   { icon: "auto_awesome", label: "AI Tools", href: "#" },
 ];
 
 const DIRECT_LINKS = [
   { icon: "upload_file", label: "New Upload", href: "/dashboard" },
-  { icon: "folder_open", label: "All Projects", href: "#" },
+  { icon: "folder_open", label: "All Projects", href: "/dashboard/projects" },
   { icon: "toll", label: "Credit History", href: "#" },
   { icon: "help_outline", label: "Documentation", href: "#" },
 ];

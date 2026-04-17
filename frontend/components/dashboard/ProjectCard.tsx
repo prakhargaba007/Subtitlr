@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export interface Project {
   id: string | number;
   name: string;
@@ -10,20 +12,52 @@ export interface Project {
   createdAt?: string;
 }
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({
+  project,
+  variant = "list",
+}: {
+  project: Project;
+  variant?: "list" | "grid";
+}) {
   const isReady = project.status === "Ready";
+  const mediaUrl = project.thumbnail ?? null;
+  const isVideoThumb = !!mediaUrl && /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(mediaUrl);
+
+  const isGrid = variant === "grid";
 
   return (
-    <div className="group bg-surface-container-lowest hover:bg-surface-container-low p-4 rounded-2xl flex items-center gap-4 transition-all border border-outline-variant/20 hover:border-primary/20 editorial-glow">
+    <div
+      className={[
+        "group bg-surface-container-lowest hover:bg-surface-container-low p-4 rounded-2xl transition-all border border-outline-variant/20 hover:border-primary/20 editorial-glow",
+        isGrid ? "flex flex-col gap-3" : "flex items-center gap-4",
+      ].join(" ")}
+    >
       {/* Thumbnail / icon */}
-      <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 relative">
-        {project.thumbnail ? (
+      <div
+        className={[
+          "rounded-xl overflow-hidden shrink-0 relative bg-surface-container",
+          isGrid ? "w-full aspect-video" : "w-14 h-14",
+        ].join(" ")}
+      >
+        {mediaUrl ? (
           <>
-            <img
-              alt="Thumbnail"
-              className="w-full h-full object-cover"
-              src={project.thumbnail}
-            />
+            {isVideoThumb ? (
+              <video
+                className="w-full h-full object-cover"
+                src={mediaUrl}
+                preload="metadata"
+                muted
+                playsInline
+              />
+            ) : (
+              <Image
+                alt="Thumbnail"
+                className="w-full h-full object-cover"
+                src={mediaUrl}
+                width={100}
+                height={100}
+              />
+            )}
             <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="material-symbols-outlined text-white text-lg">play_arrow</span>
             </div>
@@ -36,13 +70,13 @@ export default function ProjectCard({ project }: { project: Project }) {
       </div>
 
       {/* Name + meta */}
-      <div className="flex-1 min-w-0">
+      <div className={isGrid ? "w-full min-w-0" : "flex-1 min-w-0"}>
         <h4 className="font-bold text-on-surface truncate text-sm font-headline">{project.name}</h4>
         <p className="text-[11px] text-on-surface-variant font-medium font-body">{project.meta}</p>
       </div>
 
       {/* Status badge + menu */}
-      <div className="flex items-center gap-3">
+      <div className={isGrid ? "flex items-center justify-between gap-3" : "flex items-center gap-3"}>
         {isReady ? (
           <span className="px-3 py-1 rounded-full bg-green-50 text-green-600 text-[10px] font-extrabold uppercase tracking-wider border border-green-100 font-label">
             {project.status}

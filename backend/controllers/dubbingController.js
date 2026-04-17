@@ -8,6 +8,7 @@ const OpenAI = require("openai");
 const DubbingJob = require("../models/DubbingJob");
 const User = require("../models/User");
 const { storage } = require("../utils/storage");
+const { extractRandomVideoThumbnailJpg } = require("../utils/videoThumbnailUtils");
 const {
   calculateCreditsNeeded,
   assertEnoughCredits,
@@ -328,6 +329,21 @@ exports.startDubbingJob = async (req, res) => {
       );
     }
     saveArtifact(jobIdStr, `00_input${ext}`, tmpInput);
+
+    // Generate a thumbnail for video uploads (best-effort)
+    if (isVideo) {
+      try {
+        const tmpThumb = path.join(os.tmpdir(), `dub_thumb_${uuidv4()}.jpg`);
+        tmpPaths.push(tmpThumb);
+        await extractRandomVideoThumbnailJpg(tmpInput, tmpThumb);
+        const key = `dubbing/${req.userId}/${uuidv4()}_thumb.jpg`;
+        await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
+        job.thumbnailKey = key;
+        await job.save();
+      } catch (thumbErr) {
+        console.warn("[dubbing] thumbnail generation failed:", thumbErr.message);
+      }
+    }
 
     // ── Step 1: Extract audio ─────────────────────────────────────────────────
     emit({ stage: "extracting", message: "Extracting audio from file…" });
@@ -1347,7 +1363,13 @@ exports.getDubbingJob = async (req, res, next) => {
       throw err;
     }
 
-    res.json({ job });
+    const jobObj = job.toObject ? job.toObject() : job;
+    if (jobObj.thumbnailKey) {
+      try {
+        jobObj.thumbnailUrl = await storage.getPublicUrl(jobObj.thumbnailKey);
+      } catch (_) {}
+    }
+    res.json({ job: jobObj });
   } catch (err) {
     if (!err.statusCode) err.statusCode = 500;
     next(err);
@@ -1373,8 +1395,20 @@ exports.getDubbingJobs = async (req, res, next) => {
       DubbingJob.countDocuments({ user: req.userId }),
     ]);
 
+    const jobsWithThumbs = await Promise.all(
+      jobs.map(async (j) => {
+        const job = j.toObject ? j.toObject() : j;
+        if (!job.thumbnailKey) return job;
+        try {
+          return { ...job, thumbnailUrl: await storage.getPublicUrl(job.thumbnailKey) };
+        } catch (_) {
+          return job;
+        }
+      })
+    );
+
     res.json({
-      jobs,
+      jobs: jobsWithThumbs,
       total,
       page,
       pages: Math.ceil(total / limit),

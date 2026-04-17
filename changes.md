@@ -35,15 +35,15 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 - **✅ "Start Free Trial"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no modal, no action.
 - **"View All Features"** button (CTA in the purple banner at page bottom) — does nothing on click. No navigation, no action.
-- **"No video? Try a sample file"** button — does nothing on click. Should load a demo sample file but has no functionality.
+- **✅ "No video? Try a sample file"** button — does nothing on click. Should load a demo sample file but has no functionality.
 - **"View Presets"** button (in the "Reels & TikTok Ready" section) — does nothing on click.
-- **"Start Dubbing"** button (on homepage uploader) — shows "Select a file to get started" text but has no error feedback, tooltip, or visual indication when clicked without a file.
+- **✅ "Start Dubbing"** button (on homepage uploader) — shows "Select a file to get started" text but has no error feedback, tooltip, or visual indication when clicked without a file.
 
 ### Pricing Page
 
-- **"Start free"** button (Free plan) — redirects to dashboard, which is fine, but inconsistent with Premium/Pro buttons.
-- **"Get started"** button (Premium plan) — redirects to dashboard but does not initiate any plan selection or checkout flow.
-- **"Get started"** button (Pro plan) — same issue, just goes to dashboard with no plan context.
+- **✅ "Start free"** button (Free plan) — redirects to dashboard, which is fine, but inconsistent with Premium/Pro buttons.
+- **✅ "Get started"** button (Premium plan) — redirects to dashboard but does not initiate any plan selection or checkout flow.
+- **✅ "Get started"** button (Pro plan) — same issue, just goes to dashboard with no plan context.
 
 ### Dashboard Sidebar
 

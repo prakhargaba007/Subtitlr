@@ -62,6 +62,11 @@ const SubtitleJobSchema = new Schema(
       type: String,
       default: null,
     },
+    /** Storage key for a generated thumbnail image (video uploads only). */
+    thumbnailKey: {
+      type: String,
+      default: null,
+    },
     errorMessage: {
       type: String,
     },

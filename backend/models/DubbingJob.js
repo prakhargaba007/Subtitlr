@@ -124,6 +124,8 @@ const dubbingJobSchema = new mongoose.Schema(
     // Public URLs for the final outputs
     dubbedVideoUrl: { type: String, default: null },
     dubbedAudioUrl: { type: String, default: null },
+    // Thumbnail for quick grid previews (video uploads only)
+    thumbnailKey: { type: String, default: null },
     /** Server path to folder with local copies of all dubbing artifacts (see dubbingOutputUtils) */
     localOutputPath: { type: String, default: null },
     // Processing metadata

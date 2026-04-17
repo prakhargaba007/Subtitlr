@@ -22,6 +22,8 @@ const {
   cleanupPath,
 } = require("../utils/audioUtils");
 
+const { extractRandomVideoThumbnailJpg } = require("../utils/videoThumbnailUtils");
+
 const {
   LANGUAGE_LIST,
   resolveLanguage,
@@ -93,6 +95,22 @@ exports.generateSubtitles = async (req, res, next) => {
 
     const isVideo = req.file.mimetype.startsWith("video/");
     let audioPath = tmpInput;
+
+    // Generate a thumbnail for video uploads (best-effort)
+    let thumbnailKey = null;
+    if (isVideo) {
+      try {
+        const tmpThumb = path.join(os.tmpdir(), `sub_thumb_${uuidv4()}.jpg`);
+        tmpPaths.push(tmpThumb);
+        await extractRandomVideoThumbnailJpg(tmpInput, tmpThumb);
+
+        const key = `subtitles/${req.userId}/${uuidv4()}_thumb.jpg`;
+        await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
+        thumbnailKey = key;
+      } catch (thumbErr) {
+        console.warn("[subtitles] thumbnail generation failed:", thumbErr.message);
+      }
+    }
 
     if (isVideo) {
       emit({ stage: "extracting", message: "Extracting audio from video…" });
@@ -238,6 +256,7 @@ exports.generateSubtitles = async (req, res, next) => {
       segments: allSegments,
       originalFileKey,
       originalFileUrl,
+      thumbnailKey,
     });
 
     emit({
@@ -333,8 +352,20 @@ exports.getSubtitleJobs = async (req, res, next) => {
       SubtitleJob.countDocuments({ user: req.userId }),
     ]);
 
+    const jobsWithThumbs = await Promise.all(
+      jobs.map(async (j) => {
+        const job = j.toObject ? j.toObject() : j;
+        if (!job.thumbnailKey) return job;
+        try {
+          return { ...job, thumbnailUrl: await storage.getPublicUrl(job.thumbnailKey) };
+        } catch (_) {
+          return job;
+        }
+      })
+    );
+
     res.json({
-      jobs,
+      jobs: jobsWithThumbs,
       total,
       page,
       pages: Math.ceil(total / limit),
@@ -363,7 +394,13 @@ exports.getSubtitleJob = async (req, res, next) => {
       err.statusCode = 403;
       throw err;
     }
-    res.json({ job });
+    const jobObj = job.toObject ? job.toObject() : job;
+    if (jobObj.thumbnailKey) {
+      try {
+        jobObj.thumbnailUrl = await storage.getPublicUrl(jobObj.thumbnailKey);
+      } catch (_) {}
+    }
+    res.json({ job: jobObj });
   } catch (err) {
     if (!err.statusCode) err.statusCode = 500;
     next(err);

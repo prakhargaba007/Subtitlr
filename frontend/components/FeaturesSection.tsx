@@ -8,7 +8,7 @@ export default function FeaturesSection() {
             <span className="bg-secondary/10 text-secondary group-hover:text-gray-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-6 inline-block">
               Editorial Precision
             </span>
-            <h3 className="font-headline text-3xl font-bold mb-4 max-w-md">Smart Context Engine</h3>
+            <h3 className="font-headline text-3xl font-bold mb-4 max-w-md group-hover:text-gray-50">Smart Context Engine</h3>
             <p className="text-on-surface-variant group-hover:text-gray-300 max-w-sm mb-8">
               AI that understands punctuation, speaker shifts, and industry-specific jargon.
             </p>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import axiosInstance from "@/utils/axios";
 import ProjectCard, { type Project } from "./ProjectCard";
 
@@ -13,6 +14,9 @@ interface SubtitleJob {
   creditsUsed: number;
   status: string;
   createdAt: string;
+  originalFileUrl?: string | null;
+  thumbnailUrl?: string | null;
+  thumbnailKey?: string | null;
 }
 
 interface DubbingJob {
@@ -23,6 +27,10 @@ interface DubbingJob {
   targetLanguage: string;
   status: string;
   createdAt: string;
+  dubbedVideoUrl?: string | null;
+  dubbedAudioUrl?: string | null;
+  thumbnailUrl?: string | null;
+  thumbnailKey?: string | null;
 }
 
 function formatDuration(seconds: number): string {
@@ -44,7 +52,17 @@ function timeAgo(dateStr: string): string {
 const DUBBING_STATUSES = new Set(["completed", "done"]);
 const SUBTITLE_COMPLETED = new Set(["completed"]);
 
-export default function ProjectList() {
+export default function ProjectList({
+  limit = 5,
+  title = "Recent Projects",
+  showSeeAll = true,
+  layout = "list",
+}: {
+  limit?: number;
+  title?: string;
+  showSeeAll?: boolean;
+  layout?: "list" | "grid";
+}) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +71,11 @@ export default function ProjectList() {
   useEffect(() => {
     Promise.all([
       axiosInstance
-        .get<{ jobs: SubtitleJob[] }>("/api/subtitles?limit=10")
+        .get<{ jobs: SubtitleJob[] }>(`/api/subtitles?limit=${limit}`)
         .then((res) => res.data.jobs ?? [])
         .catch(() => [] as SubtitleJob[]),
       axiosInstance
-        .get<{ jobs: DubbingJob[] }>("/api/dubbing?limit=10")
+        .get<{ jobs: DubbingJob[] }>(`/api/dubbing?limit=${limit}`)
         .then((res) => res.data.jobs ?? [])
         .catch(() => [] as DubbingJob[]),
     ])
@@ -68,6 +86,10 @@ export default function ProjectList() {
           meta: `Subtitles • ${timeAgo(job.createdAt)} • ${formatDuration(job.duration)}`,
           status: SUBTITLE_COMPLETED.has(job.status) ? "Ready" : "Syncing",
           icon: job.fileType === "video" ? "movie" : "mic",
+          thumbnail:
+            job.fileType === "video"
+              ? (job.thumbnailUrl ?? job.originalFileUrl ?? undefined)
+              : undefined,
           jobId: job._id,
           type: "subtitle" as const,
           createdAt: job.createdAt,
@@ -79,6 +101,10 @@ export default function ProjectList() {
           meta: `Dubbing → ${job.targetLanguage} • ${timeAgo(job.createdAt)} • ${formatDuration(job.duration)}`,
           status: DUBBING_STATUSES.has(job.status) ? "Ready" : "Syncing",
           icon: "translate",
+          thumbnail:
+            job.fileType === "video"
+              ? (job.thumbnailUrl ?? job.dubbedVideoUrl ?? undefined)
+              : undefined,
           jobId: job._id,
           type: "dubbing" as const,
           createdAt: job.createdAt,
@@ -90,22 +116,28 @@ export default function ProjectList() {
               new Date(b.createdAt!).getTime() -
               new Date(a.createdAt!).getTime()
           )
-          .slice(0, 5);
+          .slice(0, limit);
 
         setProjects(merged);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [limit]);
 
   if (loading) {
     return (
       <section>
         <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="text-xl font-extrabold text-on-surface font-headline">Recent Projects</h3>
+          <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
         </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
+        <div
+          className={
+            layout === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+              : "space-y-3"
+          }
+        >
+          {Array.from({ length: layout === "grid" ? 6 : 3 }).map((_, i) => (
             <div key={i} className="h-20 bg-surface-container rounded-2xl animate-pulse" />
           ))}
         </div>
@@ -117,7 +149,7 @@ export default function ProjectList() {
     return (
       <section>
         <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="text-xl font-extrabold text-on-surface font-headline">Recent Projects</h3>
+          <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
         </div>
         <p className="text-sm text-on-surface-variant text-center py-8">
           Could not load projects. Please try again later.
@@ -130,7 +162,7 @@ export default function ProjectList() {
     return (
       <section>
         <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="text-xl font-extrabold text-on-surface font-headline">Recent Projects</h3>
+          <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
         </div>
         <div className="text-center py-12 text-on-surface-variant">
           <span className="material-symbols-outlined text-4xl mb-3 block opacity-40">folder_open</span>
@@ -143,17 +175,25 @@ export default function ProjectList() {
   return (
     <section>
       <div className="flex items-center justify-between mb-6 px-2">
-        <h3 className="text-xl font-extrabold text-on-surface font-headline">Recent Projects</h3>
-        <a
-          href="#"
-          className="text-sm font-bold text-primary hover:underline flex items-center gap-1 font-label"
-        >
-          See All
-          <span className="material-symbols-outlined text-sm">arrow_forward</span>
-        </a>
+        <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
+        {showSeeAll ? (
+          <Link
+            href="/dashboard/projects"
+            className="text-sm font-bold text-primary hover:border-b-2 hover:border-primary flex items-center gap-1 font-label"
+          >
+            See All
+            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          </Link>
+        ) : null}
       </div>
 
-      <div className="space-y-3">
+      <div
+        className={
+          layout === "grid"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+            : "space-y-3"
+        }
+      >
         {projects.map((project) => (
           <div
             key={project.id}
@@ -167,7 +207,7 @@ export default function ProjectList() {
             }}
             className="cursor-pointer"
           >
-            <ProjectCard project={project} />
+            <ProjectCard project={project} variant={layout === "grid" ? "grid" : "list"} />
           </div>
         ))}
       </div>
