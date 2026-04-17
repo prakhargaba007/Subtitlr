@@ -18,9 +18,9 @@ export default function DashboardLayout({
     <div className="bg-background text-on-surface">
       <DashboardInit />
       <DashboardSidebar />
-      <DashboardHeader />
+      {/* <DashboardHeader /> */}
 
-      <main className="ml-20 lg:ml-64 pt-16 h-screen overflow-y-auto custom-scrollbar relative">
+      <main className="ml-20 lg:ml-64 h-screen overflow-y-auto custom-scrollbar relative">
         {children}
       </main>
 

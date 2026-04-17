@@ -26,7 +26,7 @@ export type ProjectAction =
   | "rename"
   | "pin"
   | "unpin"
-  | "archive"
+  | "delete"
   | "restore"
   | "details";
 
@@ -74,7 +74,7 @@ export default function ProjectCard({
         : { id: "pin", label: "Pin", icon: "keep" },
       isArchived
         ? { id: "restore", label: "Restore", icon: "restore" }
-        : { id: "archive", label: "Archive", icon: "archive", danger: true },
+        : { id: "delete", label: "Delete", icon: "delete", danger: true },
     ];
 
     return items.filter((i) => !i.hidden);
@@ -169,7 +169,23 @@ export default function ProjectCard({
           </div>
         )}
         {onAction ? (
-          <div className="relative" ref={menuRef}>
+          <div className="flex items-center gap-0.5 shrink-0">
+            {!isArchived ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onAction("delete", project);
+                }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant/40 hover:text-red-600 hover:bg-red-50 transition-all"
+                aria-label="Delete project"
+                title="Delete project"
+              >
+                <span className="material-symbols-outlined text-sm">delete</span>
+              </button>
+            ) : null}
+            <div className="relative" ref={menuRef}>
             <button
               type="button"
               onClick={(e) => {
@@ -218,6 +234,7 @@ export default function ProjectCard({
                 ))}
               </div>
             ) : null}
+            </div>
           </div>
         ) : null}
       </div>

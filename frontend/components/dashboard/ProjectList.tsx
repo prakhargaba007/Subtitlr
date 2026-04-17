@@ -236,7 +236,7 @@ export default function ProjectList({
       action === "rename" ||
       action === "pin" ||
       action === "unpin" ||
-      action === "archive" ||
+      action === "delete" ||
       action === "restore";
     if (needsProjectId && !project.projectId) return;
 
@@ -287,13 +287,13 @@ export default function ProjectList({
       } else if (action === "pin" || action === "unpin") {
         const op = action === "pin" ? "pin" : "unpin";
         await axiosInstance.post(`/api/projects/${project.projectId}/${op}`);
-      } else if (action === "archive" || action === "restore") {
-        if (action === "archive") {
-          const ok = window.confirm("Archive this project? You can restore it later.");
+      } else if (action === "delete" || action === "restore") {
+        if (action === "delete") {
+          const ok = window.confirm("Delete this project? You can restore it later.");
           if (!ok) return;
           setProjects((prev) => prev.filter((p) => p.id !== project.id));
         }
-        const op = action === "archive" ? "archive" : "restore";
+        const op = action === "delete" ? "archive" : "restore";
         await axiosInstance.post(`/api/projects/${project.projectId}/${op}`);
       }
     } finally {
