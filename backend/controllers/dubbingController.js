@@ -80,6 +80,7 @@ const {
   synthesizeSmallestTts,
 } = require("../utils/smallestTtsUtils");
 const { loadLocalInworldVoices } = require("../utils/localInworldVoices");
+const { createProjectForDubbingJob } = require("../utils/projectUtils");
 
 // Dubbing costs more credits than subtitles — 5 credits per minute
 const DUBBING_CREDITS_PER_MINUTE = 5;
@@ -315,6 +316,8 @@ exports.startDubbingJob = async (req, res) => {
       creditsUsed: creditsNeeded,
       status: "extracting",
     });
+
+    await createProjectForDubbingJob(req.userId, job._id);
 
     emit({ stage: "validating", message: "Job created.", jobId: job._id });
 

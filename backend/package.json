@@ -9,7 +9,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js",
-    "worker": "node workers/startWorker.js"
+    "worker": "node workers/startWorker.js",
+    "fix-project-indexes": "node scripts/fixProjectIndexes.js",
+    "backfill-projects": "node scripts/backfillProjects.js"
   },
   "author": "",
   "license": "ISC",

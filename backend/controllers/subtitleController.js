@@ -42,6 +42,7 @@ const {
   transcribeWithVadPipeline,
   refineSegmentsWithVadTimeline,
 } = require("../utils/sileroVadUtils");
+const { createProjectForSubtitleJob } = require("../utils/projectUtils");
 
 // Whisper hard limit is 25 MB — keep chunks safely below it
 const WHISPER_MAX_BYTES = 24 * 1024 * 1024;
@@ -258,6 +259,8 @@ exports.generateSubtitles = async (req, res, next) => {
       originalFileUrl,
       thumbnailKey,
     });
+
+    await createProjectForSubtitleJob(req.userId, job._id);
 
     emit({
       stage: "done",
