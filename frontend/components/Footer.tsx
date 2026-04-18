@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const LINKS: Array<{ label: string; href: string; external?: boolean }> = [
   { label: "Privacy Policy", href: "/privacy" },
@@ -49,7 +50,10 @@ export default function Footer() {
             )}
           </div>
           <div className="text-center border-t border-white/5 pt-8 w-full">
-            <p className="font-headline font-bold text-white mb-0.5">Kili</p>
+            <div className="flex items-center justify-center gap-2 mb-0.5">
+              <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={24} height={24} />
+              <p className="font-headline font-bold text-white">Kili</p>
+            </div>
             <p className="text-sm text-slate-500">© 2026 Kili AI. All rights reserved.</p>
           </div>
         </div>
@@ -61,7 +65,10 @@ export default function Footer() {
     <footer className="border-t border-outline-variant/20 py-10 bg-surface">
       <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-4">
         <div className="mb-4 md:mb-0 text-center md:text-left">
-          <p className="font-headline font-bold text-on-surface mb-0.5">Kili</p>
+          <div className="flex items-center justify-center md:justify-start gap-2 mb-0.5">
+            <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={24} height={24} />
+            <p className="font-headline font-bold text-on-surface">Kili</p>
+          </div>
           <p className="text-sm text-on-surface-variant">
             © 2026 Kili AI. All rights reserved.
           </p>

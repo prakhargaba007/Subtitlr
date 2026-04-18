@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 
 interface AppNavbarProps {
@@ -35,8 +36,12 @@ export default function AppNavbar({
 
         {/* Left — logo + optional app links */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-2xl font-bold tracking-tighter text-primary font-headline">
-            Kili
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-2xl font-bold tracking-tighter text-primary font-headline"
+          >
+            <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={28} height={28} priority />
+            <span>Kili</span>
           </Link>
 
           {links.length > 0 && !subtitle && (

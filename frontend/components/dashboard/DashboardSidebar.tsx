@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
@@ -75,9 +76,12 @@ export default function DashboardSidebar() {
 
       {/* Logo – wide */}
       <div className="mb-10 px-4 hidden lg:block">
-        <h1 className="font-headline text-xl font-extrabold text-primary tracking-tight">
-          Kili
-        </h1>
+        <div className="flex items-center gap-2">
+          <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={28} height={28} priority />
+          <h1 className="font-headline text-xl font-extrabold text-primary tracking-tight">
+            Kili
+          </h1>
+        </div>
         <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
           Workspace
         </p>
@@ -85,9 +89,7 @@ export default function DashboardSidebar() {
 
       {/* Logo – collapsed */}
       <div className="mb-10 lg:hidden flex justify-center">
-        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-on-primary font-bold font-headline">
-          S
-        </div>
+        <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={40} height={40} priority />
       </div>
 
       {/* Main nav */}
@@ -208,6 +210,7 @@ export default function DashboardSidebar() {
         >
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center">
             {userInfo?.profilePicture ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 alt={displayName}
                 className="w-full h-full object-cover"

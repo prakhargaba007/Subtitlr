@@ -35,7 +35,7 @@ export default function HeroSection() {
 
       <div className="inline-flex items-center space-x-2 bg-primary/5 px-4 py-1.5 rounded-full mb-8">
         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-        <span className="text-xs font-headline font-bold uppercase tracking-widest text-primary">Launch Date - 18th April 2026</span>
+        <span className="text-xs font-headline font-bold uppercase tracking-widest text-primary">Launch Date - 19th April 2026</span>
       </div>
 
       <h1 className="font-headline text-h1 md:text-display leading-[1.1] font-bold text-on-surface mb-8 tracking-tight max-w-4xl mx-auto transition-all duration-300">

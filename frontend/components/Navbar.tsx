@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 
 export default function Navbar() {
@@ -50,11 +51,12 @@ export default function Navbar() {
           href="/"
           className={
             isBillingSuccess
-              ? "text-2xl font-bold tracking-tighter text-white font-headline"
-              : "text-2xl font-bold tracking-tighter text-indigo-700 font-headline"
+              ? "flex items-center gap-2 text-2xl font-bold tracking-tighter text-white font-headline"
+              : "flex items-center gap-2 text-2xl font-bold tracking-tighter text-indigo-700 font-headline"
           }
         >
-          Kili
+          <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={28} height={28} priority />
+          <span>Kili</span>
         </Link>
 
         <div className="hidden md:flex items-center space-x-10 font-headline font-medium text-sm tracking-tight">
@@ -81,7 +83,7 @@ export default function Navbar() {
                 pill
                 className={
                   isBillingSuccess
-                    ? "!bg-white !from-white !to-white !text-[#0a0b14] hover:!bg-slate-100 border-0 shadow-[0_0_20px_rgba(255,255,255,0.12)] scale-100 hover:scale-[1.02] active:scale-95"
+                      ? "bg-white! from-white! to-white! text-[#0a0b14]! hover:bg-slate-100! border-0 shadow-[0_0_20px_rgba(255,255,255,0.12)] scale-100 hover:scale-[1.02] active:scale-95"
                     : "hover:shadow-[0_0_15px_rgba(57,44,193,0.3)] scale-100 hover:scale-[1.02] active:scale-95"
                 }
               >
@@ -100,7 +102,7 @@ export default function Navbar() {
                   pill
                   className={
                     isBillingSuccess
-                      ? "!bg-white !from-white !to-white !text-[#0a0b14] hover:!bg-slate-100 border-0 shadow-[0_0_20px_rgba(255,255,255,0.12)] scale-100 hover:scale-[1.02] active:scale-95"
+                      ? "bg-white! from-white! to-white! text-[#0a0b14]! hover:bg-slate-100! border-0 shadow-[0_0_20px_rgba(255,255,255,0.12)] scale-100 hover:scale-[1.02] active:scale-95"
                       : "hover:shadow-[0_0_15px_rgba(57,44,193,0.3)] scale-100 hover:scale-[1.02] active:scale-95"
                   }
                 >
