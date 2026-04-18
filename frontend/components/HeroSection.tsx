@@ -6,7 +6,7 @@ import LogoLoop from "./reactBit/LogoLoop";
 import UploadCard from "@/components/UploadCard";
 
 export default function HeroSection() {
-  const [mode, setMode] = useState<"subtitles" | "dubbing">("dubbing");
+  const [mode, setMode] = useState<"subtitles" | "dubbing">("subtitles");
   const [sampleLoading, setSampleLoading] = useState(false);
   const [sampleFile, setSampleFile] = useState<File | null>(null);
 
@@ -47,7 +47,9 @@ export default function HeroSection() {
       </h1>
 
       <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto mb-10 font-light leading-relaxed">
-        Upload a video, get accurate SRT/VTT captions in 60+ languages in under a minute.
+        {mode === "dubbing"
+          ? "Upload a video, generate natural-sounding dubs in 15+ languages in under a minute."
+          : "Upload a video, get accurate SRT/VTT captions in 60+ languages in under a minute."}
       </p>
 
       <div className="max-w-3xl mx-auto mb-4">

@@ -15,10 +15,10 @@ const NAV_ITEMS = [
 ];
 
 const DIRECT_LINKS = [
-  { icon: "upload_file", label: "New Upload", href: "/dashboard" },
-  { icon: "folder_open", label: "All Projects", href: "/dashboard/projects" },
-  { icon: "toll", label: "Credit History", href: "#" },
-  { icon: "help_outline", label: "Documentation", href: "#" },
+  // { icon: "upload_file", label: "New Upload", href: "/dashboard" },
+  // { icon: "folder_open", label: "All Projects", href: "/dashboard/projects" },
+  { icon: "toll", label: "Credit History", href: "/dashboard/credit-history" },
+  { icon: "help_outline", label: "Documentation", href: "/docs" },
 ];
 
 const MAX_CREDITS = 60;
@@ -177,7 +177,11 @@ export default function DashboardSidebar() {
           <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-outline-variant/20 rounded-2xl shadow-xl overflow-hidden z-50">
             {[
               { icon: "settings", label: "Settings", action: () => { } },
-              { icon: "toll", label: "Credit History", action: () => { } },
+              {
+                icon: "toll",
+                label: "Credit History",
+                action: () => router.push("/dashboard/credit-history"),
+              },
               { icon: "logout", label: "Log Out", action: handleLogout, danger: true },
             ].map(({ icon, label, action, danger }) => (
               <button

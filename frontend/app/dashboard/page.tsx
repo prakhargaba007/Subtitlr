@@ -1,8 +1,16 @@
+"use client";
+
 import UploadZone from "@/components/dashboard/UploadZone";
 import ProjectList from "@/components/dashboard/ProjectList";
 import FadingCircle from "@/components/FadingCircle";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 
 export default function DashboardPage() {
+    const userInfo = useSelector((state: RootState) => state.user.userInfo);
+    const displayName = userInfo?.name?.trim() || userInfo?.email?.trim() || "";
+    const greetingName = displayName ? `, ${displayName}` : "";
+
     return (
         <div className="relative">
             {/* Ambient glow */}
@@ -24,7 +32,7 @@ export default function DashboardPage() {
                         What are we creating today?
                     </h2>
                     <p className="text-on-surface-variant text-lg font-body">
-                        Good morning, Alex. Upload your media and let&apos;s get to work.
+                        Good morning{greetingName}. Upload your media and let&apos;s get to work.
                     </p>
                 </div>
 

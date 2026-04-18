@@ -16,9 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Kili | The Intelligent Canvas for Transcription",
+  title: "Kili | Subtitles & Dubbing in Seconds",
   description:
-    "High-precision transcription meets editorial elegance. Turn video & audio into subtitles in seconds.",
+    "Upload a video or audio file and get accurate SRT/VTT subtitles or AI dubs in 60+ languages—fast.",
 };
 
 export default function RootLayout({
