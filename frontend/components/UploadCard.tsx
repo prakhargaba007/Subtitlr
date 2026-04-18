@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useRef, useState, useCallback, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   setPendingFile,
@@ -25,12 +26,20 @@ const ACCEPTED_MIME = new Set([
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ApiLanguage {
-  value: string;
+  lang_name: string;
   label: string;
-  isoCode: string | null;
+  iso_code: string | null;
+  sub: { isEnable: boolean; provider: string | null };
+  dub: { isEnable: boolean; provider: string | null };
 }
 
-const AUTO_DETECT: ApiLanguage = { value: "", label: "Auto-detect", isoCode: null };
+const AUTO_DETECT: ApiLanguage = {
+  lang_name: "",
+  label: "Auto-detect",
+  iso_code: null,
+  sub: { isEnable: true, provider: null },
+  dub: { isEnable: false, provider: null },
+};
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -57,7 +66,7 @@ function LanguagePicker({
     return q ? languages.filter((l) => l.label.toLowerCase().includes(q)) : languages;
   }, [languages, query]);
 
-  const selected = languages.find((l) => l.value === value) ?? AUTO_DETECT;
+  const selected = languages.find((l) => l.lang_name === value) ?? AUTO_DETECT;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -71,7 +80,7 @@ function LanguagePicker({
   }, []);
 
   const pick = (lang: ApiLanguage) => {
-    onChange(lang.value);
+    onChange(lang.lang_name);
     setOpen(false);
     setQuery("");
   };
@@ -119,22 +128,22 @@ function LanguagePicker({
             {filtered.length === 0 ? (
               <li className="px-4 py-3 text-sm text-on-surface-variant text-center">No results</li>
             ) : (
-              filtered.map((lang) => (
-                <li key={lang.value}>
+              filtered.map((lang, idx) => (
+                <li key={`${lang.lang_name}::${lang.label}::${lang.iso_code ?? "x"}::${idx}`}>
                   <button
                     type="button"
                     onClick={() => pick(lang)}
                     className={[
                       "w-full text-left px-4 py-2.5 text-sm font-body transition-colors flex items-center gap-3",
-                      lang.value === value
+                      lang.lang_name === value
                         ? "bg-primary/8 text-primary font-semibold"
                         : "text-on-surface hover:bg-surface-container-low",
                     ].join(" ")}
                   >
-                    {lang.value === value && (
+                    {lang.lang_name === value && (
                       <span className="material-symbols-outlined text-primary text-base">check</span>
                     )}
-                    <span className={lang.value === value ? "" : "ml-[22px]"}>{lang.label}</span>
+                    <span className={lang.lang_name === value ? "" : "ml-[22px]"}>{lang.label}</span>
                   </button>
                 </li>
               ))
@@ -176,22 +185,57 @@ function UploadCardInner({
   const [error, setError] = useState<string | null>(null);
   const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(null);
   const [language, setLanguage] = useState("");
-  const [languages, setLanguages] = useState<ApiLanguage[]>([AUTO_DETECT]);
+  const [languageBundle, setLanguageBundle] = useState<{
+    mode: "subtitles" | "dubbing";
+    languages: ApiLanguage[];
+  } | null>(null);
   const selectedFile = selectedFileProp ?? internalSelectedFile;
 
   const urlMode = (searchParams.get("mode") || "dubbing").toLowerCase();
   const [mode, setMode] = useState<"subtitles" | "dubbing">(urlMode === "subtitles" ? "subtitles" : "dubbing");
+
+  const langReady =
+    languageBundle !== null && languageBundle.mode === mode;
+  const languages =
+    langReady && languageBundle ? languageBundle.languages : [];
 
   useEffect(() => {
     if (onModeChange) onModeChange(mode);
   }, [mode, onModeChange]);
 
   useEffect(() => {
+    const q = mode === "subtitles" ? "subtitles" : "dubbing";
+    let cancelled = false;
     axiosInstance
-      .get<{ languages: ApiLanguage[] }>("/api/subtitles/languages")
-      .then((res) => setLanguages([AUTO_DETECT, ...res.data.languages]))
-      .catch(() => { });
-  }, []);
+      .get<{ languages: ApiLanguage[] }>(`/api/subtitles/languages?mode=${q}`)
+      .then((res) => {
+        if (cancelled) return;
+        const raw = res.data.languages ?? [];
+        if (q === "subtitles") {
+          const next = [AUTO_DETECT, ...raw];
+          setLanguageBundle({ mode: "subtitles", languages: next });
+          setLanguage((prev) => (prev && raw.some((l) => l.lang_name === prev) ? prev : ""));
+        } else {
+          setLanguageBundle({ mode: "dubbing", languages: raw });
+          setLanguage((prev) => {
+            if (prev && raw.some((l) => l.lang_name === prev)) return prev;
+            return raw[0]?.lang_name ?? "";
+          });
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        if (q === "subtitles") {
+          setLanguageBundle({ mode: "subtitles", languages: [AUTO_DETECT] });
+        } else {
+          setLanguageBundle({ mode: "dubbing", languages: [] });
+          setLanguage("");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   const handleFile = useCallback((file: File | undefined | null) => {
     if (!file) return;
@@ -221,6 +265,7 @@ function UploadCardInner({
 
   const handleNext = () => {
     if (!selectedFile) return;
+    if (mode === "dubbing" && !language.trim()) return;
     setPendingFile(selectedFile);
     setPendingMode(mode);
     if (mode === "subtitles") {
@@ -233,6 +278,15 @@ function UploadCardInner({
     router.push(`${basePath}/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`);
   };
 
+  const selectedLangRow = langReady ? languages.find((l) => l.lang_name === language) : undefined;
+  const dubProvider = selectedLangRow?.dub?.provider;
+  const dubbingTtsLabel =
+    dubProvider === "sarvam"
+      ? "Sarvam TTS"
+      : dubProvider === "inworld"
+        ? "Inworld TTS (voice catalog)"
+        : "your configured dubbing TTS provider";
+
   return (
     <>
       <input ref={inputRef} type="file" accept="video/*,audio/*" className="hidden" onChange={onInputChange} />
@@ -240,7 +294,7 @@ function UploadCardInner({
       <div className="relative">
         <div className="absolute -inset-1 bg-linear-to-r from-primary/10 to-secondary/10 rounded-4xl blur opacity-75" />
 
-        <div className="relative bg-white/80 backdrop-blur-sm border border-white/60 rounded-4xl overflow-hidden shadow-xl shadow-indigo-100/40">
+        <div className="relative bg-white/80 backdrop-blur-sm border border-white/60 rounded-4xl shadow-xl shadow-indigo-100/40">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_300px]">
 
             {/* ── Left: drop zone ── */}
@@ -346,15 +400,23 @@ function UploadCardInner({
                 <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
                   {mode === "dubbing" ? "Dubbing Language (Target)" : "Subtitle Language"}
                 </p>
-                <LanguagePicker languages={languages} value={language} onChange={setLanguage} />
+                {!langReady ? (
+                  <div className="relative w-full">
+                    <div className="h-[46px] w-full rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 animate-pulse" />
+                  </div>
+                ) : mode === "dubbing" && languages.length === 0 ? (
+                  <p className="text-sm text-red-600/90 py-2">Could not load dubbing languages. Try again later.</p>
+                ) : (
+                  <LanguagePicker languages={languages} value={language} onChange={setLanguage} />
+                )}
                 <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
-                  {language === ""
-                    ? mode === "dubbing"
-                      ? "We will auto-detect the source language and dub into your selected target."
-                      : "Whisper will detect the language automatically."
-                    : mode === "dubbing"
-                      ? `Dubbing to ${languages.find((l) => l.value === language)?.label ?? language}.`
-                      : `Transcribing in ${languages.find((l) => l.value === language)?.label ?? language}.`}
+                  {mode === "dubbing"
+                    ? language
+                      ? `Dubbing to ${selectedLangRow?.label ?? language}. This target is set up for ${dubbingTtsLabel}. Source speech is auto-detected.`
+                      : "Pick a dubbing target from the list. Indic languages use Sarvam TTS when configured; other listed languages map to the Inworld voice catalog when Inworld is your TTS backend."
+                    : language === ""
+                      ? "Whisper will detect the language automatically."
+                      : `Transcribing in ${selectedLangRow?.label ?? language} (Whisper).`}
                 </p>
               </div>
 
@@ -362,10 +424,10 @@ function UploadCardInner({
 
               <button
                 onClick={handleNext}
-                disabled={!selectedFile}
+                disabled={!selectedFile || !langReady || (mode === "dubbing" && !language.trim())}
                 className={[
                   "w-full flex items-center justify-center gap-2 py-3.5 font-headline font-bold text-sm rounded-2xl transition-all",
-                  selectedFile
+                  selectedFile && langReady && (mode !== "dubbing" || language.trim())
                     ? "bg-primary text-on-primary hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/25"
                     : "bg-surface-container text-on-surface-variant cursor-not-allowed",
                 ].join(" ")}
@@ -398,7 +460,7 @@ function UploadCardInner({
   );
 }
 
-export default function UploadCard(props: {
+function UploadCardRoot(props: {
   basePath?: string;
   onModeChange?: (mode: "subtitles" | "dubbing") => void;
   selectedFile?: File | null;
@@ -410,3 +472,9 @@ export default function UploadCard(props: {
     </Suspense>
   );
 }
+
+/** Client-only: avoids SSR/hydration mismatches from `useSearchParams` + async language lists. */
+export default dynamic(() => Promise.resolve({ default: UploadCardRoot }), {
+  ssr: false,
+  loading: () => <UploadCardFallback />,
+});

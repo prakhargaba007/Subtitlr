@@ -5,19 +5,9 @@ const axios = require("axios");
 const OpenAI = require("openai");
 const { v4: uuidv4 } = require("uuid");
 const { getFileDuration } = require("./audioUtils");
+const { SARVAM_BCP47_MAP } = require("./languageCatalog");
 
-const BCP_47_MAP = {
-  hindi: "hi-IN",
-  bengali: "bn-IN",
-  gujarati: "gu-IN",
-  kannada: "kn-IN",
-  malayalam: "ml-IN",
-  marathi: "mr-IN",
-  odia: "or-IN",
-  punjabi: "pa-IN",
-  tamil: "ta-IN",
-  telugu: "te-IN"
-};
+const BCP_47_MAP = SARVAM_BCP47_MAP;
 
 const SARVAM_VOICES = [
   "shubh", "aditya", "ritu", "priya", "neha", "rahul", "pooja", "rohan", "simran", "kavya", 

@@ -23,93 +23,7 @@ const { getInworldApplyTextNormalization } = require("./dubbingConfig");
  * Only languages present in the Inworld voice catalog are listed here.
  * Unsupported languages resolve to null → full catalog fallback.
  */
-const LANG_CODE_MAP = {
-  // ── Hindi ──────────────────────────────────────────────────────────────────
-  hindi: "HI_IN",
-  hi: "HI_IN",
-  "hi-in": "HI_IN",
-
-  // ── English ────────────────────────────────────────────────────────────────
-  english: "EN_US",
-  en: "EN_US",
-  "en-us": "EN_US",
-  "en-gb": "EN_US", // Inworld catalog uses EN_US for all English variants
-
-  // ── German ─────────────────────────────────────────────────────────────────
-  german: "DE_DE",
-  deutsch: "DE_DE",
-  de: "DE_DE",
-  "de-de": "DE_DE",
-
-  // ── Spanish ────────────────────────────────────────────────────────────────
-  spanish: "ES_ES",
-  español: "ES_ES",
-  espanol: "ES_ES",
-  es: "ES_ES",
-  "es-es": "ES_ES",
-  "es-mx": "ES_ES",
-
-  // ── French ─────────────────────────────────────────────────────────────────
-  french: "FR_FR",
-  français: "FR_FR",
-  francais: "FR_FR",
-  fr: "FR_FR",
-  "fr-fr": "FR_FR",
-
-  // ── Italian ────────────────────────────────────────────────────────────────
-  italian: "IT_IT",
-  italiano: "IT_IT",
-  it: "IT_IT",
-  "it-it": "IT_IT",
-
-  // ── Japanese ───────────────────────────────────────────────────────────────
-  japanese: "JA_JP",
-  ja: "JA_JP",
-  "ja-jp": "JA_JP",
-
-  // ── Korean ─────────────────────────────────────────────────────────────────
-  korean: "KO_KR",
-  ko: "KO_KR",
-  "ko-kr": "KO_KR",
-
-  // ── Portuguese ─────────────────────────────────────────────────────────────
-  portuguese: "PT_BR",
-  português: "PT_BR",
-  portugues: "PT_BR",
-  pt: "PT_BR",
-  "pt-br": "PT_BR",
-
-  // ── Russian ────────────────────────────────────────────────────────────────
-  russian: "RU_RU",
-  ru: "RU_RU",
-  "ru-ru": "RU_RU",
-
-  // ── Chinese ────────────────────────────────────────────────────────────────
-  chinese: "ZH_CN",
-  mandarin: "ZH_CN",
-  zh: "ZH_CN",
-  "zh-cn": "ZH_CN",
-
-  // ── Arabic ─────────────────────────────────────────────────────────────────
-  arabic: "AR_SA",
-  ar: "AR_SA",
-  "ar-sa": "AR_SA",
-
-  // ── Dutch ──────────────────────────────────────────────────────────────────
-  dutch: "NL_NL",
-  nl: "NL_NL",
-  "nl-nl": "NL_NL",
-
-  // ── Polish ─────────────────────────────────────────────────────────────────
-  polish: "PL_PL",
-  pl: "PL_PL",
-  "pl-pl": "PL_PL",
-
-  // ── Hebrew ─────────────────────────────────────────────────────────────────
-  hebrew: "HE_IL",
-  he: "HE_IL",
-  "he-il": "HE_IL",
-};
+const { INWORLD_LANG_CODE_MAP } = require("./languageCatalog");
 
 /**
  * Resolves a human-readable / BCP-47 language string to the Inworld
@@ -123,10 +37,10 @@ const resolveInworldLangCode = (lang) => {
   if (!lang) return null;
   const key = String(lang).toLowerCase().trim();
   // Direct map hit
-  if (LANG_CODE_MAP[key]) return LANG_CODE_MAP[key];
+  if (INWORLD_LANG_CODE_MAP[key]) return INWORLD_LANG_CODE_MAP[key];
   // Try just the primary subtag ("hi" from "hi-IN")
   const primary = key.split(/[-_]/)[0];
-  return LANG_CODE_MAP[primary] || null;
+  return INWORLD_LANG_CODE_MAP[primary] || null;
 };
 
 /**

@@ -26,6 +26,7 @@ const { extractRandomVideoThumbnailJpg } = require("../utils/videoThumbnailUtils
 
 const {
   LANGUAGE_LIST,
+  DUBBING_LANGUAGE_LIST,
   resolveLanguage,
   transcribeSpeechClip,
   shiftSegments,
@@ -447,6 +448,21 @@ exports.getCreditSummary = async (req, res, next) => {
   }
 };
 
-exports.getLanguages = (_req, res) => {
-  res.json({ languages: LANGUAGE_LIST });
+exports.getLanguages = (req, res) => {
+  const raw = (req.query.mode || "subtitles").toLowerCase().trim();
+  const mode = raw === "dubbing" ? "dubbing" : "subtitles";
+  const languages =
+    mode === "dubbing" ? DUBBING_LANGUAGE_LIST : LANGUAGE_LIST;
+  res.json({
+    mode,
+    languages,
+    legend: {
+      subtitles:
+        "Whisper ASR; `LANGUAGE_MAP` entries with ISO codes in `backend/utils/languageCatalog.js`.",
+      dubbingSarvam:
+        "Indic targets route TTS to Sarvam when the target matches `SARVAM_BCP47_MAP` keys.",
+      dubbingInworld:
+        "Other listed targets align with `INWORLD_LANG_CODE_MAP` / Inworld voice catalog when using the Inworld TTS stack.",
+    },
+  });
 };
