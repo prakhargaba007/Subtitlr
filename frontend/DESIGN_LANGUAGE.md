@@ -1,6 +1,6 @@
-## Dubbing Studio – Frontend Design Language
+## Kili – Frontend Design Language
 
-This document defines the **visual and UX language** for the Dubbing Studio frontend. All new components and pages should follow these rules.
+This document defines the **visual and UX language** for the Kili frontend. All new components and pages should follow these rules.
 
 **Source of truth note:** This document works alongside `.cursor/rules/design-system.mdc`. If there’s a conflict, prefer the **semantic tokens** and conventions defined in `design-system.mdc`, and then update this file to match.
 
@@ -203,7 +203,7 @@ This is the inventory of reusable frontend components. **If you add a new reusab
 ## 11. Copy & Naming Conventions
 
 - **Product naming**:
-  - Use `Dubbing Studio` consistently (no alternate product names).
+  - Use `Kili` consistently (no alternate product names).
 - **Feature naming**:
   - “Dubbing” for voice-over outputs.
   - “Subtitles” for SRT/VTT.

@@ -36,7 +36,7 @@ export default function AppNavbar({
         {/* Left — logo + optional app links */}
         <div className="flex items-center gap-8">
           <Link href="/" className="text-2xl font-bold tracking-tighter text-primary font-headline">
-            Dubbing Studio
+            Kili
           </Link>
 
           {links.length > 0 && !subtitle && (

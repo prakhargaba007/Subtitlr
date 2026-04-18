@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Dubbing Studio | The Intelligent Canvas for Transcription",
+  title: "Kili | The Intelligent Canvas for Transcription",
   description:
     "High-precision transcription meets editorial elegance. Turn video & audio into subtitles in seconds.",
 };

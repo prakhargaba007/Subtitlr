@@ -29,7 +29,7 @@ export default function DashboardPage() {
                 </div>
 
                 <UploadZone />
-                <ProjectList title="Recent Projects" showSeeAll={true} layout="grid" />
+                <ProjectList title="Recent Projects" pageSize={9} showSeeAll={true} layout="grid" />
             </div>
         </div>
     );

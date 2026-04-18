@@ -51,7 +51,7 @@ exports.submitFeedback = async (req, res, next) => {
       : "Not rated";
 
     const ownerHtml = `
-      <h2 style="font-family:sans-serif">New Feedback — Dubbing Studio</h2>
+      <h2 style="font-family:sans-serif">New Feedback — Kili</h2>
       <table style="font-family:sans-serif;font-size:14px;border-collapse:collapse">
         <tr><td style="padding:4px 12px 4px 0;color:#666">Type</td><td><strong>${typeLabel}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Rating</td><td>${ratingText}</td></tr>
@@ -70,8 +70,8 @@ exports.submitFeedback = async (req, res, next) => {
         <div style="background:#1e2228;border-left:3px solid #6b63ff;padding:12px 16px;border-radius:6px;color:#e8eaed;font-size:14px;margin:20px 0">
           ${message}
         </div>
-        <p style="color:#9aa3ad;font-size:13px">We read every piece of feedback and use it to make Dubbing Studio better. 💜</p>
-        <p style="color:#9aa3ad;font-size:13px">— The Dubbing Studio Team</p>
+        <p style="color:#9aa3ad;font-size:13px">We read every piece of feedback and use it to make Kili better. 💜</p>
+        <p style="color:#9aa3ad;font-size:13px">— The Kili Team</p>
       </div>
     `;
 
@@ -87,21 +87,21 @@ exports.submitFeedback = async (req, res, next) => {
     try {
       await sendEmail(
         ownerEmail,
-        `[Dubbing Studio Feedback] ${typeLabel} from ${name}`,
+        `[Kili Feedback] ${typeLabel} from ${name}`,
         message,
         ownerHtml,
         [],
         3,
-        "Dubbing Studio",
+        "Kili",
       );
       await sendEmail(
         email,
-        "Thanks for your feedback — Dubbing Studio",
+        "Thanks for your feedback — Kili",
         message,
         userHtml,
         [],
         3,
-        "Dubbing Studio",
+        "Kili",
       );
     } catch (emailErr) {
       console.warn("[feedback] Email send failed:", emailErr.message);

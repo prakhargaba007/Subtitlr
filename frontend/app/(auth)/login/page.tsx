@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import Login from "@/components/auth/login";
 
 export const metadata = {
-  title: "Sign In | Dubbing Studio",
-  description: "Sign in to Dubbing Studio to manage transcriptions and subtitles.",
+  title: "Sign In | Kili",
+  description: "Sign in to Kili to manage transcriptions and subtitles.",
 };
 
 export default function LoginPage() {

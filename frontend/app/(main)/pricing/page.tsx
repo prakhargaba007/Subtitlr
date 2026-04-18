@@ -4,7 +4,7 @@ import PricingFAQ from "@/components/PricingFAQ";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Pricing | Dubbing Studio",
+  title: "Pricing | Kili",
   description: "Plans and credits for transcription and dubbing. Compare monthly and yearly billing.",
 };
 

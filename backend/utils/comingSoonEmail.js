@@ -12,7 +12,7 @@ function prettyPageLabel(pageKey) {
 
 async function sendComingSoonAckEmail(email, pageKey) {
   const label = prettyPageLabel(pageKey);
-  const subject = `You're on the list — ${label} (Dubbing Studio)`;
+  const subject = `You're on the list — ${label} (Kili)`;
   const text = `You're registered. We'll notify you when ${label} is live.`;
 
   const html = `
@@ -24,11 +24,11 @@ async function sendComingSoonAckEmail(email, pageKey) {
       <div style="background:#1e2228;border-left:3px solid #6b63ff;padding:12px 16px;border-radius:6px;color:#e8eaed;font-size:14px;margin:20px 0">
         If you didn't request this, you can ignore this email.
       </div>
-      <p style="color:#9aa3ad;font-size:13px;margin:0">— The Dubbing Studio Team</p>
+      <p style="color:#9aa3ad;font-size:13px;margin:0">— The Kili Team</p>
     </div>
   `;
 
-  return await sendEmail(email, subject, text, html, [], 3, "Dubbing Studio");
+  return await sendEmail(email, subject, text, html, [], 3, "Kili");
 }
 
 module.exports = { sendComingSoonAckEmail };

@@ -1,10 +1,10 @@
 ---
-description: Dubbing Studio design system – typography scale, color tokens, and Button usage for consistent UI
+description: Kili design system – typography scale, color tokens, and Button usage for consistent UI
 globs: frontend/**/*.{tsx,css}
 alwaysApply: false
 ---
 
-# Dubbing Studio Design System
+# Kili Design System
 
 ## Type Scale
 

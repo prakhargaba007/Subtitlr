@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Dubbing Studio",
-  description: "How Dubbing Studio collects, uses, and protects your information.",
+  title: "Privacy Policy | Kili",
+  description: "How Kili collects, uses, and protects your information.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -73,7 +73,7 @@ export default function PrivacyPolicyPage() {
             <section className="space-y-3">
               <h2 className="text-h4 font-headline font-bold">2. How we use information</h2>
               <ul className="list-disc pl-6 space-y-2 text-body text-on-surface-variant leading-relaxed">
-                <li>Provide and improve Dubbing Studio features and performance.</li>
+                <li>Provide and improve Kili features and performance.</li>
                 <li>Process your uploads to generate transcriptions, subtitles, and dubbing outputs.</li>
                 <li>Prevent abuse, troubleshoot issues, and keep the service secure.</li>
                 <li>Communicate with you about product updates, billing, and support.</li>
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
                 </p>
                 <p>
                   We may also share information when required by law, or to protect the rights,
-                  safety, and security of Dubbing Studio and our users.
+                  safety, and security of Kili and our users.
                 </p>
               </div>
             </section>
@@ -129,7 +129,7 @@ export default function PrivacyPolicyPage() {
             <section className="space-y-3">
               <h2 className="text-h4 font-headline font-bold">7. Children’s privacy</h2>
               <p className="text-body text-on-surface-variant leading-relaxed">
-                Dubbing Studio is not directed to children under 13, and we do not knowingly collect
+                Kili is not directed to children under 13, and we do not knowingly collect
                 personal information from children under 13.
               </p>
             </section>

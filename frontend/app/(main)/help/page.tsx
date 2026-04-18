@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Help | Dubbing Studio",
+  title: "Help | Kili",
   description: "Get help with uploads, processing, billing, and troubleshooting.",
 };
 

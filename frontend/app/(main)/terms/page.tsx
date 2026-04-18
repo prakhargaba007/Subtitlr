@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Dubbing Studio",
-  description: "The terms that govern your use of Dubbing Studio.",
+  title: "Terms of Service | Kili",
+  description: "The terms that govern your use of Kili.",
 };
 
 export default function TermsOfServicePage() {
@@ -35,7 +35,7 @@ export default function TermsOfServicePage() {
             Terms of Service
           </h1>
           <p className="text-on-surface-variant text-body-lg leading-relaxed font-light">
-            These terms govern your use of Dubbing Studio.
+            These terms govern your use of Kili.
           </p>
           <p className="mt-3 text-xs text-on-surface-variant">
             Effective date: April 17, 2026
@@ -48,7 +48,7 @@ export default function TermsOfServicePage() {
             <section className="space-y-3">
               <h2 className="text-h4 font-headline font-bold">1. Using the service</h2>
               <p className="text-body text-on-surface-variant leading-relaxed">
-                You may use Dubbing Studio only in compliance with applicable law and these terms.
+                You may use Kili only in compliance with applicable law and these terms.
                 You’re responsible for activities that occur under your account.
               </p>
             </section>

@@ -54,11 +54,11 @@ export default function Navbar() {
               : "text-2xl font-bold tracking-tighter text-indigo-700 font-headline"
           }
         >
-          Dubbing Studio
+          Kili
         </Link>
 
         <div className="hidden md:flex items-center space-x-10 font-headline font-medium text-sm tracking-tight">
-          <Link href="/" className={navLinkClass}>
+          <Link href="/product" className={navLinkClass}>
             Product
           </Link>
           <Link href="/pricing" className={navLinkClass}>

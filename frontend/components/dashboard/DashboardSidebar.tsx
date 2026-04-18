@@ -11,7 +11,7 @@ import axiosInstance from "@/utils/axios";
 const NAV_ITEMS = [
   { icon: "dashboard", label: "Launchpad", href: "/dashboard" },
   { icon: "folder", label: "Projects", href: "/dashboard/projects" },
-  { icon: "auto_awesome", label: "AI Tools", href: "#" },
+  { icon: "auto_awesome", label: "AI Tools", href: "/dashboard/ai-tools" },
 ];
 
 const DIRECT_LINKS = [
@@ -76,7 +76,7 @@ export default function DashboardSidebar() {
       {/* Logo – wide */}
       <div className="mb-10 px-4 hidden lg:block">
         <h1 className="font-headline text-xl font-extrabold text-primary tracking-tight">
-          Dubbing Studio
+          Kili
         </h1>
         <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
           Workspace

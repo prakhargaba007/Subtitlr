@@ -77,7 +77,7 @@ export default function FeedbackPage() {
             We&apos;d love your <span className="text-primary bg-clip-text bg-linear-to-r from-primary to-secondary">feedback</span>
           </h1>
           <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto leading-relaxed font-light">
-            Every suggestion helps us build a better Dubbing Studio. Tell us what you think — good, bad, or anywhere in between.
+            Every suggestion helps us build a better Kili. Tell us what you think — good, bad, or anywhere in between.
           </p>
         </div>
 
@@ -89,7 +89,7 @@ export default function FeedbackPage() {
             </div>
             <h2 className="text-h3 font-bold font-headline">Thank you! 🎉</h2>
             <p className="text-on-surface-variant text-body max-w-md mx-auto">
-              Your feedback has been received. We&apos;ll send a confirmation to your email and will use your input to improve Dubbing Studio.
+              Your feedback has been received. We&apos;ll send a confirmation to your email and will use your input to improve Kili.
             </p>
             <button
               type="button"

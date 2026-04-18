@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import DubbingEditorPage from "@/app/dubbing/editor/page";
 
 export const metadata = {
-  title: "Dubbing editor | Dubbing Studio",
+  title: "Dubbing editor | Kili",
   description: "Edit your dubbed segments precisely.",
 };
 

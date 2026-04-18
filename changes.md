@@ -1,4 +1,4 @@
-# Dubbing Studio Website Review
+# Kili Website Review
 
 **URL:** [https://dubbingstudio.prakhargaba.com/](https://dubbingstudio.prakhargaba.com/)  
 **Date:** April 16, 2026  
@@ -47,11 +47,11 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### Dashboard Sidebar
 
-- **"Projects"** sidebar link → `href="#"` — dead link
+- **✅ "Projects"** sidebar link → `href="#"` — dead link
 - **"AI Tools"** sidebar link → `href="#"` — dead link
-- **"All Projects"** sidebar link → `href="#"` — dead link
+- **✅ "All Projects"** sidebar link → `href="#"` — dead link
 - **"Credit History"** sidebar link → `href="#"` — dead link
-- **"Documentation"** sidebar link → `href="#"` — dead link
+- **✅ "Documentation"** sidebar link → `href="#"` — dead link
 
 > **Impact:** The dashboard sidebar has 5 out of 7 links that are non-functional. The app feels like a shell.
 
@@ -60,7 +60,7 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 ## 3. CONTENT & COPY ISSUES
 
 - **Hero headline vs. subtitle mismatch** — The headline says "Turn Video & Audio into **Dubs** in Seconds" but the subtitle says "Upload a video, get accurate **SRT/VTT captions** in 60+ languages." The headline is about dubbing; the subtitle is about captions/subtitles. These are different features and the messaging is contradictory.
-- **Page title mismatch** — The browser tab says "The Intelligent Canvas for **Transcription**" but the product is branded as a dubbing studio. The title, headline, and subtitle all describe different products.
+- **Page title mismatch** — The browser tab says "The Intelligent Canvas for **Transcription**" but the product is branded as a Kili. The title, headline, and subtitle all describe different products.
 - **Meta description mismatch** — Says "High-precision transcription meets editorial elegance. Turn video & audio into subtitles in seconds." Again references transcription/subtitles, not dubbing.
 - **Dashboard greeting uses hardcoded name** — Says "Good morning, **Alex**" but the logged-in user is "harshjorwal2006." The greeting is not personalized and uses a placeholder name.
 - **"Billing runs through Dodo"** — The pricing page references "Dodo" as the payment processor. This is an obscure reference that most users won't recognize. No link to explain what Dodo is.
@@ -222,7 +222,7 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 ### SEO & Marketing
 
 - **Add Open Graph meta tags** — So sharing the site on Twitter/LinkedIn/Slack shows a proper card with image, title, and description.
-- **Create actual Use Cases pages** — "Podcasters," "YouTubers," "E-learning," "Corporate Training" — each with a dedicated landing page explaining how Dubbing Studio solves their specific problem.
+- **Create actual Use Cases pages** — "Podcasters," "YouTubers," "E-learning," "Corporate Training" — each with a dedicated landing page explaining how Kili solves their specific problem.
 - **Add a blog/resources section** — Content like "How to dub your YouTube video in 5 minutes" or "Best practices for multilingual content" would drive organic search traffic.
 - **Add schema.org structured data** — Product schema, FAQ schema (for the FAQ section), and Organization schema.
 
@@ -232,7 +232,7 @@ These links exist in the navigation or footer but point to `#`, meaning they do 
 
 ### The Identity Crisis is the #1 Problem
 
-The site can't decide if it's a **dubbing** tool, a **transcription** tool, or a **subtitling** tool. The brand name says "Dubbing Studio," the headline says "Dubs," the subtitle says "SRT/VTT captions," the page title says "Transcription," and the meta description says "subtitles." This confusion will hurt at every level — SEO, paid ads, word-of-mouth, investor pitches. Pick "AI Video Dubbing" as the primary positioning, and treat subtitles/transcription as add-on features.
+The site can't decide if it's a **dubbing** tool, a **transcription** tool, or a **subtitling** tool. The brand name says "Kili," the headline says "Dubs," the subtitle says "SRT/VTT captions," the page title says "Transcription," and the meta description says "subtitles." This confusion will hurt at every level — SEO, paid ads, word-of-mouth, investor pitches. Pick "AI Video Dubbing" as the primary positioning, and treat subtitles/transcription as add-on features.
 
 ### The Product Feels Like a UI Mockup, Not a Product
 
@@ -248,7 +248,7 @@ Users are being asked to upload their video/audio files and pay money. But there
 
 ### Competitive Positioning Gap
 
-Tools like ElevenLabs, Rask.ai, and HeyGen are in this space. What makes Dubbing Studio different? The homepage doesn't answer this question. Consider adding a "Why Dubbing Studio?" section or a comparison chart against alternatives. The "Smart Context Engine" and "Editorial Precision" cards hint at differentiators but don't explain them clearly enough.
+Tools like ElevenLabs, Rask.ai, and HeyGen are in this space. What makes Kili different? The homepage doesn't answer this question. Consider adding a "Why Kili?" section or a comparison chart against alternatives. The "Smart Context Engine" and "Editorial Precision" cards hint at differentiators but don't explain them clearly enough.
 
 ### The "AI Tools" Sidebar Item Is Intriguing But Dead
 
