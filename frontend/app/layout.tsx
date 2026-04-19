@@ -36,9 +36,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" className="light" suppressHydrationWarning>
       <body
         className={`${manrope.variable} ${inter.variable} bg-surface font-body text-on-surface antialiased`}
+        suppressHydrationWarning
       >
         <Providers>{children}</Providers>
       </body>
