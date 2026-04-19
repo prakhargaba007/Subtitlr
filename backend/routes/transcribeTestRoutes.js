@@ -3,7 +3,10 @@ const multer = require("multer");
 const router = express.Router();
 
 const isAuth = require("../middleware/is-auth");
-const { testTranscribe } = require("../controllers/transcribeTestController");
+const {
+  testTranscribe,
+  youtubeDownloadDebug,
+} = require("../controllers/transcribeTestController");
 
 const AUDIO_VIDEO_MIMES = new Set([
   "audio/mpeg",
@@ -50,5 +53,6 @@ const upload = multer({
 });
 
 router.post("/test", isAuth, upload.single("file"), testTranscribe);
+router.post("/youtube-video", isAuth, youtubeDownloadDebug);
 
 module.exports = router;

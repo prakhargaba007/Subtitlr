@@ -17,6 +17,7 @@ const {
 
 const {
   getFileDuration,
+  getMediaStreamSummary,
   extractAudio,
   cleanupPath,
   ensureMinAudioDuration,
@@ -81,6 +82,7 @@ const {
 } = require("../utils/smallestTtsUtils");
 const { loadLocalInworldVoices } = require("../utils/localInworldVoices");
 const { createProjectForDubbingJob } = require("../utils/projectUtils");
+const { downloadYoutubeVideo } = require("../utils/youtubeDownloadUtils");
 
 // Dubbing costs more credits than subtitles — 5 credits per minute
 const DUBBING_CREDITS_PER_MINUTE = 5;
@@ -168,6 +170,288 @@ async function ensureJobEditable(req, jobId) {
   return job;
 }
 
+async function runDubbingPipelineFromInput(
+  req,
+  emit,
+  tmpPaths,
+  {
+    tmpInput,
+    inputBuffer,
+    inputMimeType,
+    originalFileName,
+  },
+) {
+  const targetLanguage = (req.body.targetLanguage || "").trim();
+  if (!targetLanguage) {
+    const err = new Error("targetLanguage is required.");
+    err.statusCode = 422;
+    throw err;
+  }
+
+  const sourceLanguage = (req.body.sourceLanguage || "").trim() || null;
+
+  emit({ stage: "validating", message: "Checking file and credits…" });
+
+  const isVideo = String(inputMimeType || "").startsWith("video/");
+  const ext = path.extname(originalFileName || "") || (isVideo ? ".mp4" : ".mp3");
+
+  const duration = await getFileDuration(tmpInput);
+  const creditsNeeded = calculateDubbingCredits(duration);
+
+  const user = await User.findById(req.userId);
+  if (!user) {
+    const err = new Error("User not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  assertEnoughCredits(user, creditsNeeded);
+
+  let ttsProvider = getTtsProvider();
+  const sarvamSupportedLanguages = Object.keys(BCP_47_MAP);
+  if (sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase())) {
+    ttsProvider = "sarvam";
+  }
+
+  if (
+    ttsProvider === "elevenlabs" &&
+    !String(process.env.ELEVENLABS_API_KEY || "").trim()
+  ) {
+    const err = new Error(
+      "ELEVENLABS_API_KEY is required when DUBBING_TTS_PROVIDER=elevenlabs.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (
+    !String(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim()
+  ) {
+    const err = new Error(
+      "GOOGLE_API_KEY (or GEMINI_API_KEY) is required for dubbing transcription.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (!String(process.env.OPENAI_API_KEY || "").trim()) {
+    const err = new Error(
+      "OPENAI_API_KEY is required for dubbing (translation and voice selection).",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "inworld" && !isInworldConfigured()) {
+    const err = new Error(
+      "INWORLD_API_KEY is required when DUBBING_TTS_PROVIDER=inworld.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "sarvam" && !isSarvamConfigured()) {
+    const err = new Error(
+      "SARVAM_API_KEY is required when DUBBING_TTS_PROVIDER=sarvam or for Indic languages.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "smallest" && !isSmallestConfigured()) {
+    const err = new Error(
+      "SMALLEST_API_KEY is required when DUBBING_TTS_PROVIDER=smallest.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+
+  // Create a DB record immediately so the client can poll by ID
+  const job = await DubbingJob.create({
+    user: req.userId,
+    originalFileName,
+    fileType: isVideo ? "video" : "audio",
+    sourceLanguage: sourceLanguage || "auto",
+    targetLanguage,
+    duration,
+    creditsUsed: creditsNeeded,
+    status: "extracting",
+  });
+
+  await createProjectForDubbingJob(req.userId, job._id);
+
+  emit({ stage: "validating", message: "Job created.", jobId: job._id });
+
+  const jobIdStr = job._id.toString();
+  const localOutputPath = getJobOutputDir(jobIdStr);
+  try {
+    fs.mkdirSync(localOutputPath, { recursive: true });
+  } catch (mkdirErr) {
+    console.warn("Could not create dubbing local output dir:", mkdirErr.message);
+  }
+  saveArtifact(jobIdStr, `00_input${ext}`, tmpInput);
+
+  // Generate a thumbnail for video inputs (best-effort)
+  if (isVideo) {
+    try {
+      const tmpThumb = path.join(os.tmpdir(), `dub_thumb_${uuidv4()}.jpg`);
+      tmpPaths.push(tmpThumb);
+      await extractRandomVideoThumbnailJpg(tmpInput, tmpThumb);
+      const key = `dubbing/${req.userId}/${uuidv4()}_thumb.jpg`;
+      await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
+      job.thumbnailKey = key;
+      await job.save();
+    } catch (thumbErr) {
+      console.warn("[dubbing] thumbnail generation failed:", thumbErr.message);
+    }
+  }
+
+  // ── Step 1: Extract audio ─────────────────────────────────────────────────
+  emit({ stage: "extracting", message: "Extracting audio from file…" });
+
+  let audioPath = tmpInput;
+  if (isVideo) {
+    const tmpMp3 = path.join(os.tmpdir(), `dub_audio_${uuidv4()}.mp3`);
+    tmpPaths.push(tmpMp3);
+    await extractAudio(tmpInput, tmpMp3);
+    audioPath = tmpMp3;
+  }
+
+  saveArtifact(jobIdStr, "01_full_audio.mp3", audioPath);
+
+  // Upload original file to S3
+  try {
+    const videoKey = `dubbing/${req.userId}/${uuidv4()}${ext}`;
+    await storage.saveFile(inputBuffer, videoKey, inputMimeType);
+    job.originalVideoKey = videoKey;
+    await job.save();
+  } catch (uploadErr) {
+    console.warn("Original file S3 upload failed:", uploadErr.message);
+  }
+
+  // ── Step 2: Source separation ─────────────────────────────────────────────
+  emit({
+    stage: "separating",
+    message: "Separating vocals from background audio…",
+  });
+  await DubbingJob.findByIdAndUpdate(job._id, { status: "separating" });
+
+  const separationDir = path.join(os.tmpdir(), `dub_stems_${uuidv4()}`);
+  tmpPaths.push(separationDir);
+
+  const {
+    vocalsPath,
+    backgroundPath,
+    method: separationMethod,
+  } = await separateVocalsAndBackground(audioPath, separationDir);
+
+  emit({
+    stage: "separating",
+    message: `Audio separated (${separationMethod === "replicate" ? "Demucs" : "ElevenLabs fallback"}).`,
+  });
+
+  saveArtifact(jobIdStr, "02_vocals.mp3", vocalsPath);
+  saveArtifact(jobIdStr, "03_background.mp3", backgroundPath);
+
+  // Upload stems to S3
+  try {
+    const [vocalsKey, backgroundKey] = await Promise.all([
+      (async () => {
+        const key = `dubbing/${req.userId}/${uuidv4()}_vocals.mp3`;
+        await storage.saveFile(fs.readFileSync(vocalsPath), key, "audio/mpeg");
+        return key;
+      })(),
+      (async () => {
+        const key = `dubbing/${req.userId}/${uuidv4()}_background.mp3`;
+        await storage.saveFile(
+          fs.readFileSync(backgroundPath),
+          key,
+          "audio/mpeg",
+        );
+        return key;
+      })(),
+    ]);
+    await DubbingJob.findByIdAndUpdate(job._id, {
+      vocalsKey,
+      backgroundKey,
+      separationMethod,
+    });
+  } catch (uploadErr) {
+    console.warn("Stems S3 upload failed:", uploadErr.message);
+  }
+
+  // The rest of the pipeline remains unchanged; it relies on:
+  // - jobIdStr, localOutputPath, isVideo, duration, sourceLanguage, targetLanguage
+  // - tmpInput, audioPath, vocalsPath, backgroundPath, separationMethod
+  // - creditsNeeded, ttsProvider
+  //
+  // NOTE: We intentionally keep the original control flow below to minimize risk.
+
+  // ── Step 3: Transcribe with speaker diarization ───────────────────────────
+  emit({
+    stage: "transcribing",
+    message: "Transcribing audio and identifying speakers…",
+  });
+  await DubbingJob.findByIdAndUpdate(job._id, { status: "transcribing" });
+
+  const { segments: rawSegments, speaker_profiles } =
+    await transcribeWithSpeakers(vocalsPath, sourceLanguage, {
+      fullMixPath: audioPath,
+      backgroundPath,
+    });
+
+  emit({
+    stage: "transcribing",
+    message: `Transcription complete. Found ${rawSegments.length} segments, ${speaker_profiles.length} speaker(s).`,
+    speakerCount: speaker_profiles.length,
+    segmentCount: rawSegments.length,
+  });
+
+  emit({
+    stage: "transcribing",
+    message: "Enriching segments with voice profile (optional)…",
+  });
+  const segmentsForTranslate = await enrichSegmentsWithInworldVoiceProfile(
+    rawSegments,
+    audioPath,
+  );
+
+  // ── Step 4: Translate to speech-ready target language ────────────────────
+  emit({
+    stage: "translating",
+    message: `Translating to ${targetLanguage}…`,
+  });
+  await DubbingJob.findByIdAndUpdate(job._id, { status: "translating" });
+
+  const translationMode = String(req.body.translationMode || "auto").trim() || "auto";
+  const translatedSegments = await translateToSpeechReady(
+    segmentsForTranslate,
+    targetLanguage,
+    speaker_profiles,
+    { sourceLanguage, translationMode },
+  );
+
+  emit({ stage: "translating", message: "Translation complete." });
+
+  // ── Step 5+: keep existing implementation by jumping into original code path
+  // (below is the original file content; we return values needed later)
+
+  return {
+    job,
+    jobIdStr,
+    localOutputPath,
+    isVideo,
+    ext,
+    duration,
+    creditsNeeded,
+    separationMethod,
+    ttsProvider,
+    sourceLanguage,
+    targetLanguage,
+    audioPath,
+    vocalsPath,
+    backgroundPath,
+    translatedSegments,
+    speaker_profiles,
+    segmentsForTranslate,
+  };
+}
+
 // ─── Controllers ──────────────────────────────────────────────────────────────
 
 /**
@@ -198,21 +482,6 @@ exports.startDubbingJob = async (req, res) => {
       return res.end();
     }
 
-    const targetLanguage = (req.body.targetLanguage || "").trim();
-    if (!targetLanguage) {
-      emit({
-        stage: "error",
-        message: "targetLanguage is required.",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-    console.log("targetLanguage", targetLanguage);
-
-    const sourceLanguage = (req.body.sourceLanguage || "").trim() || null;
-
-    emit({ stage: "validating", message: "Checking file and credits…" });
-
     const isVideo = req.file.mimetype.startsWith("video/");
     const ext =
       path.extname(req.file.originalname) || (isVideo ? ".mp4" : ".mp3");
@@ -220,258 +489,31 @@ exports.startDubbingJob = async (req, res) => {
     fs.writeFileSync(tmpInput, req.file.buffer);
     tmpPaths.push(tmpInput);
 
-    const duration = await getFileDuration(tmpInput);
-    const creditsNeeded = calculateDubbingCredits(duration);
-
-    const user = await User.findById(req.userId);
-    if (!user) {
-      emit({ stage: "error", message: "User not found.", statusCode: 404 });
-      return res.end();
-    }
-
-    try {
-      assertEnoughCredits(user, creditsNeeded);
-    } catch (creditErr) {
-      emit({ stage: "error", message: creditErr.message, statusCode: 402 });
-      return res.end();
-    }
-
-    let ttsProvider = getTtsProvider();
-
-    const sarvamSupportedLanguages = Object.keys(BCP_47_MAP);
-    if (sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase())) {
-      ttsProvider = "sarvam";
-    }
-
-    if (
-      ttsProvider === "elevenlabs" &&
-      !String(process.env.ELEVENLABS_API_KEY || "").trim()
-    ) {
-      emit({
-        stage: "error",
-        message:
-          "ELEVENLABS_API_KEY is required when DUBBING_TTS_PROVIDER=elevenlabs.",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-    if (
-      !String(
-        process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "",
-      ).trim()
-    ) {
-      emit({
-        stage: "error",
-        message:
-          "GOOGLE_API_KEY (or GEMINI_API_KEY) is required for dubbing transcription.",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-    if (!String(process.env.OPENAI_API_KEY || "").trim()) {
-      emit({
-        stage: "error",
-        message:
-          "OPENAI_API_KEY is required for dubbing (translation and voice selection).",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-    if (ttsProvider === "inworld" && !isInworldConfigured()) {
-      emit({
-        stage: "error",
-        message:
-          "INWORLD_API_KEY is required when DUBBING_TTS_PROVIDER=inworld.",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-    if (ttsProvider === "sarvam" && !isSarvamConfigured()) {
-      emit({
-        stage: "error",
-        message:
-          "SARVAM_API_KEY is required when DUBBING_TTS_PROVIDER=sarvam or for Indic languages.",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-    if (ttsProvider === "smallest" && !isSmallestConfigured()) {
-      emit({
-        stage: "error",
-        message:
-          "SMALLEST_API_KEY is required when DUBBING_TTS_PROVIDER=smallest.",
-        statusCode: 422,
-      });
-      return res.end();
-    }
-
-    // Create a DB record immediately so the client can poll by ID
-    job = await DubbingJob.create({
-      user: req.userId,
+    const prepared = await runDubbingPipelineFromInput(req, emit, tmpPaths, {
+      tmpInput,
+      inputBuffer: req.file.buffer,
+      inputMimeType: req.file.mimetype,
       originalFileName: req.file.originalname,
-      fileType: isVideo ? "video" : "audio",
-      sourceLanguage: sourceLanguage || "auto",
-      targetLanguage,
-      duration,
-      creditsUsed: creditsNeeded,
-      status: "extracting",
     });
 
-    await createProjectForDubbingJob(req.userId, job._id);
-
-    emit({ stage: "validating", message: "Job created.", jobId: job._id });
-
-    const jobIdStr = job._id.toString();
-    const localOutputPath = getJobOutputDir(jobIdStr);
-    try {
-      fs.mkdirSync(localOutputPath, { recursive: true });
-    } catch (mkdirErr) {
-      console.warn(
-        "Could not create dubbing local output dir:",
-        mkdirErr.message,
-      );
-    }
-    saveArtifact(jobIdStr, `00_input${ext}`, tmpInput);
-
-    // Generate a thumbnail for video uploads (best-effort)
-    if (isVideo) {
-      try {
-        const tmpThumb = path.join(os.tmpdir(), `dub_thumb_${uuidv4()}.jpg`);
-        tmpPaths.push(tmpThumb);
-        await extractRandomVideoThumbnailJpg(tmpInput, tmpThumb);
-        const key = `dubbing/${req.userId}/${uuidv4()}_thumb.jpg`;
-        await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
-        job.thumbnailKey = key;
-        await job.save();
-      } catch (thumbErr) {
-        console.warn("[dubbing] thumbnail generation failed:", thumbErr.message);
-      }
-    }
-
-    // ── Step 1: Extract audio ─────────────────────────────────────────────────
-    emit({ stage: "extracting", message: "Extracting audio from file…" });
-
-    let audioPath = tmpInput;
-    if (isVideo) {
-      const tmpMp3 = path.join(os.tmpdir(), `dub_audio_${uuidv4()}.mp3`);
-      tmpPaths.push(tmpMp3);
-      await extractAudio(tmpInput, tmpMp3);
-      audioPath = tmpMp3;
-    }
-
-    saveArtifact(jobIdStr, "01_full_audio.mp3", audioPath);
-
-    // Upload original file to S3
-    try {
-      const videoKey = `dubbing/${req.userId}/${uuidv4()}${ext}`;
-      await storage.saveFile(req.file.buffer, videoKey, req.file.mimetype);
-      job.originalVideoKey = videoKey;
-      await job.save();
-    } catch (uploadErr) {
-      console.warn("Original file S3 upload failed:", uploadErr.message);
-    }
-
-    // ── Step 2: Source separation ─────────────────────────────────────────────
-    emit({
-      stage: "separating",
-      message: "Separating vocals from background audio…",
-    });
-    await DubbingJob.findByIdAndUpdate(job._id, { status: "separating" });
-
-    const separationDir = path.join(os.tmpdir(), `dub_stems_${uuidv4()}`);
-    tmpPaths.push(separationDir);
+    job = prepared.job;
 
     const {
+      jobIdStr,
+      localOutputPath,
+      separationMethod,
+      ttsProvider,
+      sourceLanguage,
+      targetLanguage,
+      duration,
+      creditsNeeded,
+      isVideo: preparedIsVideo,
+      translatedSegments,
+      speaker_profiles,
+      audioPath,
       vocalsPath,
       backgroundPath,
-      method: separationMethod,
-    } = await separateVocalsAndBackground(audioPath, separationDir);
-
-    emit({
-      stage: "separating",
-      message: `Audio separated (${separationMethod === "replicate" ? "Demucs" : "ElevenLabs fallback"}).`,
-    });
-
-    saveArtifact(jobIdStr, "02_vocals.mp3", vocalsPath);
-    saveArtifact(jobIdStr, "03_background.mp3", backgroundPath);
-
-    // Upload stems to S3
-    try {
-      const [vocalsKey, backgroundKey] = await Promise.all([
-        (async () => {
-          const key = `dubbing/${req.userId}/${uuidv4()}_vocals.mp3`;
-          await storage.saveFile(
-            fs.readFileSync(vocalsPath),
-            key,
-            "audio/mpeg",
-          );
-          return key;
-        })(),
-        (async () => {
-          const key = `dubbing/${req.userId}/${uuidv4()}_background.mp3`;
-          await storage.saveFile(
-            fs.readFileSync(backgroundPath),
-            key,
-            "audio/mpeg",
-          );
-          return key;
-        })(),
-      ]);
-      await DubbingJob.findByIdAndUpdate(job._id, {
-        vocalsKey,
-        backgroundKey,
-        separationMethod,
-      });
-    } catch (uploadErr) {
-      console.warn("Stems S3 upload failed:", uploadErr.message);
-    }
-
-    // ── Step 3: Transcribe with speaker diarization ───────────────────────────
-    emit({
-      stage: "transcribing",
-      message: "Transcribing audio and identifying speakers…",
-    });
-    await DubbingJob.findByIdAndUpdate(job._id, { status: "transcribing" });
-
-    const { segments: rawSegments, speaker_profiles } =
-      await transcribeWithSpeakers(vocalsPath, sourceLanguage, {
-        fullMixPath: audioPath,
-        backgroundPath,
-      });
-
-    emit({
-      stage: "transcribing",
-      message: `Transcription complete. Found ${rawSegments.length} segments, ${speaker_profiles.length} speaker(s).`,
-      speakerCount: speaker_profiles.length,
-      segmentCount: rawSegments.length,
-    });
-
-    emit({
-      stage: "transcribing",
-      message: "Enriching segments with voice profile (optional)…",
-    });
-    const segmentsForTranslate = await enrichSegmentsWithInworldVoiceProfile(
-      rawSegments,
-      audioPath,
-    );
-
-    // ── Step 4: Translate to speech-ready target language ────────────────────
-    emit({
-      stage: "translating",
-      message: `Translating to ${targetLanguage}…`,
-    });
-    await DubbingJob.findByIdAndUpdate(job._id, { status: "translating" });
-
-    const translationMode =
-      String(req.body.translationMode || "auto").trim() || "auto";
-    const translatedSegments = await translateToSpeechReady(
-      segmentsForTranslate,
-      targetLanguage,
-      speaker_profiles,
-      { sourceLanguage, translationMode },
-    );
-
-    emit({ stage: "translating", message: "Translation complete." });
+    } = prepared;
 
     // ── Step 5: Match each speaker to a TTS voice (OpenAI, Inworld, Smallest, or ElevenLabs) ─
     emit({ stage: "generating", message: "Matching speakers to voices…" });
@@ -1258,10 +1300,10 @@ exports.startDubbingJob = async (req, res) => {
       req.userId,
       creditsNeeded,
       "dubbing_job",
-      `Dubbed ${req.file.originalname} → ${targetLanguage} (${creditsNeeded} credits)`,
+      `Dubbed ${job.originalFileName} → ${targetLanguage} (${creditsNeeded} credits)`,
       {
-        fileName: req.file.originalname,
-        fileType: isVideo ? "video" : "audio",
+        fileName: job.originalFileName,
+        fileType: preparedIsVideo ? "video" : "audio",
         sourceLanguage: sourceLanguage || "auto",
         targetLanguage,
         duration,
@@ -1338,6 +1380,62 @@ exports.startDubbingJob = async (req, res) => {
     } catch (_) {}
   } finally {
     // Clean up all temp files
+    tmpPaths.forEach(cleanupPath);
+  }
+};
+
+/**
+ * POST /api/dubbing/start-youtube
+ * Body: { youtubeUrl, targetLanguage, sourceLanguage? }
+ *
+ * Notes:
+ * - Downloads the video first, then reuses the existing upload-based SSE pipeline.
+ * - The SSE stream begins after the download completes (simpler + minimal-risk).
+ */
+exports.startDubbingFromYoutube = async (req, res) => {
+  const tmpPaths = [];
+  try {
+    const youtubeUrl = (req.body.youtubeUrl || "").trim();
+    const dl = await downloadYoutubeVideo(youtubeUrl);
+    tmpPaths.push(dl.filePath);
+
+    const buf = fs.readFileSync(dl.filePath);
+    const summary = await getMediaStreamSummary(dl.filePath);
+    const extFromPath = path.extname(dl.filePath).toLowerCase() || ".mp4";
+
+    let mimetype;
+    let nameExt;
+    if (summary.hasVideo) {
+      if (extFromPath === ".webm") mimetype = "video/webm";
+      else if (extFromPath === ".mkv") mimetype = "video/x-matroska";
+      else mimetype = "video/mp4";
+      nameExt = [".mp4", ".webm", ".mkv"].includes(extFromPath) ? extFromPath : ".mp4";
+    } else {
+      const audioMimeByExt = {
+        ".m4a": "audio/mp4",
+        ".mp4": "audio/mp4",
+        ".webm": "audio/webm",
+        ".opus": "audio/opus",
+        ".ogg": "audio/ogg",
+        ".mp3": "audio/mpeg",
+      };
+      mimetype = audioMimeByExt[extFromPath] || "audio/mp4";
+      nameExt = extFromPath || ".m4a";
+    }
+
+    req.file = {
+      buffer: buf,
+      mimetype,
+      originalname: `YouTube - ${dl.title}${nameExt}`,
+    };
+
+    return await exports.startDubbingJob(req, res);
+  } catch (err) {
+    const status = err.statusCode || 500;
+    return res.status(status).json({
+      message: err.message || "Failed to download YouTube video.",
+    });
+  } finally {
     tmpPaths.forEach(cleanupPath);
   }
 };

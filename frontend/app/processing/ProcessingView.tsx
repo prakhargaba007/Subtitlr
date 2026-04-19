@@ -11,6 +11,7 @@ import {
   getPendingMode,
   getPendingSourceLanguage,
   getPendingTargetLanguage,
+  getPendingYoutubeUrl,
 } from "@/utils/fileStore";
 import axios from "axios";
 import axiosInstance from "@/utils/axios";
@@ -124,8 +125,9 @@ export default function ProcessingView() {
     let cancelled = false;
 
     const file = getPendingFile();
+    const youtubeUrl = getPendingYoutubeUrl();
 
-    if (!file) {
+    if (!file && !youtubeUrl) {
       router.replace(homeHref);
       return;
     }
@@ -133,17 +135,24 @@ export default function ProcessingView() {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const body = new FormData();
-    body.append("file", file);
-    if (mode === "subtitles") {
-      const lang = getPendingLanguage();
-      if (lang) body.append("language", lang);
-    } else {
-      const targetLanguage = getPendingTargetLanguage();
-      const sourceLanguage = getPendingSourceLanguage();
-      if (targetLanguage) body.append("targetLanguage", targetLanguage);
-      if (sourceLanguage) body.append("sourceLanguage", sourceLanguage);
-    }
+    const targetLanguage = getPendingTargetLanguage();
+    const sourceLanguage = getPendingSourceLanguage();
+
+    const body =
+      mode === "dubbing" && youtubeUrl
+        ? { youtubeUrl, targetLanguage, sourceLanguage }
+        : (() => {
+          const fd = new FormData();
+          if (file) fd.append("file", file);
+          if (mode === "subtitles") {
+            const lang = getPendingLanguage();
+            if (lang) fd.append("language", lang);
+          } else {
+            if (targetLanguage) fd.append("targetLanguage", targetLanguage);
+            if (sourceLanguage) fd.append("sourceLanguage", sourceLanguage);
+          }
+          return fd;
+        })();
 
     let parsedUpTo = 0;
 
@@ -195,17 +204,25 @@ export default function ProcessingView() {
     };
 
     axiosInstance
-      .post<string>(mode === "dubbing" ? "/api/dubbing/start" : "/api/subtitles/generate", body, {
+      .post<string>(
+        mode === "dubbing"
+          ? youtubeUrl
+            ? "/api/dubbing/start-youtube"
+            : "/api/dubbing/start"
+          : "/api/subtitles/generate",
+        body as any,
+        {
         responseType: "text",
         signal: controller.signal,
-        headers: { "Content-Type": undefined },
+        headers: { "Content-Type": youtubeUrl ? "application/json" : undefined },
         onDownloadProgress: (progressEvent) => {
           if (cancelled) return;
           const responseText =
             (progressEvent.event?.target as XMLHttpRequest | undefined)?.responseText ?? "";
           handleSSEText(responseText);
         },
-      })
+      },
+      )
       .catch((err) => {
         if (cancelled || axios.isCancel(err) || err?.code === "ERR_CANCELED") return;
         const status = err?.response?.status;

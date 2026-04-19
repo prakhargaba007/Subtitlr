@@ -20,6 +20,33 @@ const getFileDuration = (filePath) =>
   });
 
 /**
+ * Lightweight stream list for debugging / routing (e.g. YouTube audio-only vs video).
+ * @returns {Promise<{ hasVideo: boolean, formatName: string, streams: Array<{ index: number, codec_type: string, codec_name: string }> }>}
+ */
+const getMediaStreamSummary = (filePath) =>
+  new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(filePath, (err, metadata) => {
+      if (err) return reject(err);
+      const streams = (metadata.streams || []).map((s) => ({
+        index: s.index,
+        codec_type: String(s.codec_type || ""),
+        codec_name: String(s.codec_name || ""),
+      }));
+      const hasVideo = streams.some((s) => s.codec_type === "video");
+      resolve({
+        hasVideo,
+        formatName: String(metadata.format?.format_name || ""),
+        streams,
+      });
+    });
+  });
+
+const fileHasVideoStream = async (filePath) => {
+  const { hasVideo } = await getMediaStreamSummary(filePath);
+  return hasVideo;
+};
+
+/**
  * Extract audio (mp3) from a video file, discarding the video stream.
  */
 const extractAudio = (inputPath, outputPath) =>
@@ -196,6 +223,8 @@ const ensureMinAudioDuration = async (inputPath, minSeconds, outputPath) => {
 
 module.exports = {
   getFileDuration,
+  getMediaStreamSummary,
+  fileHasVideoStream,
   extractAudio,
   extractAudioWindow,
   concatMp3Files,

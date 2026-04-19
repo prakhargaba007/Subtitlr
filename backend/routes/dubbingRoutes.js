@@ -5,6 +5,7 @@ const router = express.Router();
 const isAuth = require("../middleware/is-auth");
 const {
   startDubbingJob,
+  startDubbingFromYoutube,
   getDubbingJob,
   getDubbingJobs,
   getDubbingEditor,
@@ -68,6 +69,13 @@ const upload = multer({
 //   - targetLanguage: e.g. "french", "spanish", "hindi"
 //   - sourceLanguage: (optional) e.g. "english" — auto-detected if omitted
 router.post("/start", isAuth, upload.single("file"), startDubbingJob);
+
+// POST /api/dubbing/start-youtube
+// Body: application/json
+//   - youtubeUrl: full YouTube video URL
+//   - targetLanguage: e.g. "french", "spanish", "hindi"
+//   - sourceLanguage: (optional) e.g. "english" — auto-detected if omitted
+router.post("/start-youtube", isAuth, express.json(), startDubbingFromYoutube);
 
 // GET /api/dubbing/voices/local-inworld — curated Inworld IDs from backend/voices (must be before /:id)
 router.get("/voices/local-inworld", isAuth, listLocalInworldVoices);

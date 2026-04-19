@@ -8,9 +8,11 @@ let pendingLanguage: string = "";
 let pendingMode: "subtitles" | "dubbing" = "dubbing";
 let pendingTargetLanguage: string = "";
 let pendingSourceLanguage: string = "";
+let pendingYoutubeUrl: string = "";
 
 export const setPendingFile = (file: File | null): void => {
   pendingFile = file;
+  if (file) pendingYoutubeUrl = "";
 };
 
 export const getPendingFile = (): File | null => pendingFile;
@@ -38,3 +40,10 @@ export const setPendingSourceLanguage = (lang: string): void => {
 };
 
 export const getPendingSourceLanguage = (): string => pendingSourceLanguage;
+
+export const setPendingYoutubeUrl = (url: string): void => {
+  pendingYoutubeUrl = url;
+  if (url) pendingFile = null;
+};
+
+export const getPendingYoutubeUrl = (): string => pendingYoutubeUrl;

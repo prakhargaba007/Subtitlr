@@ -9,6 +9,7 @@ import {
   setPendingMode,
   setPendingSourceLanguage,
   setPendingTargetLanguage,
+  setPendingYoutubeUrl,
 } from "@/utils/fileStore";
 import axiosInstance from "@/utils/axios";
 
@@ -184,6 +185,7 @@ function UploadCardInner({
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [language, setLanguage] = useState("");
   const [languageBundle, setLanguageBundle] = useState<{
     mode: "subtitles" | "dubbing";
@@ -210,7 +212,50 @@ function UploadCardInner({
       .get<{ languages: ApiLanguage[] }>(`/api/subtitles/languages?mode=${q}`)
       .then((res) => {
         if (cancelled) return;
-        const raw = res.data.languages ?? [];
+        const incoming = (() => {
+          const d = res.data as unknown as { languages?: unknown } | unknown[];
+          if (Array.isArray(d)) return d;
+          const langs = (d as { languages?: unknown })?.languages;
+          return Array.isArray(langs) ? langs : [];
+        })();
+
+        const raw: ApiLanguage[] = incoming
+          .map((l) => {
+            const obj =
+              typeof l === "object" && l !== null ? (l as Record<string, unknown>) : null;
+            if (!obj) return null;
+
+            const lang_name =
+              typeof obj.lang_name === "string"
+                ? obj.lang_name
+                : typeof obj.value === "string"
+                  ? obj.value
+                  : null;
+            if (!lang_name || !lang_name.trim()) return null;
+
+            const label =
+              typeof obj.label === "string" && obj.label.trim() ? obj.label : lang_name;
+
+            const iso_code =
+              typeof obj.iso_code === "string"
+                ? obj.iso_code
+                : typeof obj.isoCode === "string"
+                  ? obj.isoCode
+                  : null;
+
+            const dubbingProvider =
+              typeof obj.dubbingTts === "string" ? obj.dubbingTts : null;
+
+            return {
+              lang_name,
+              label,
+              iso_code,
+              sub: { isEnable: q === "subtitles", provider: q === "subtitles" ? "whisper" : null },
+              dub: { isEnable: q === "dubbing", provider: q === "dubbing" ? dubbingProvider : null },
+            };
+          })
+          .filter((x): x is ApiLanguage => Boolean(x));
+
         if (q === "subtitles") {
           const next = [AUTO_DETECT, ...raw];
           setLanguageBundle({ mode: "subtitles", languages: next });
@@ -219,7 +264,7 @@ function UploadCardInner({
           setLanguageBundle({ mode: "dubbing", languages: raw });
           setLanguage((prev) => {
             if (prev && raw.some((l) => l.lang_name === prev)) return prev;
-            return raw[0]?.lang_name ?? "";
+            return raw[0]?.lang_name || "";
           });
         }
       })
@@ -263,16 +308,53 @@ function UploadCardInner({
     e.target.value = "";
   };
 
+  const isValidYoutubeUrl = (raw: string): boolean => {
+    const v = raw.trim();
+    if (!v) return false;
+    try {
+      const u = new URL(v);
+      const host = (u.hostname || "").toLowerCase();
+      return (
+        host === "youtube.com" ||
+        host === "www.youtube.com" ||
+        host === "m.youtube.com" ||
+        host === "music.youtube.com" ||
+        host === "youtu.be" ||
+        host === "www.youtu.be"
+      );
+    } catch {
+      return false;
+    }
+  };
+
   const handleNext = () => {
+    const safeLang = language ?? "";
+    if (mode === "dubbing" && !safeLang.trim()) return;
+
+    const yt = youtubeUrl.trim();
+    if (mode === "dubbing" && yt) {
+      if (!isValidYoutubeUrl(yt)) {
+        setError("Please enter a valid YouTube video URL.");
+        return;
+      }
+      setError(null);
+      setPendingYoutubeUrl(yt);
+      setPendingMode(mode);
+      setPendingTargetLanguage(safeLang);
+      setPendingSourceLanguage(""); // auto
+      router.push(`${basePath}/processing?name=${encodeURIComponent("youtube")}&size=0`);
+      return;
+    }
+
     if (!selectedFile) return;
-    if (mode === "dubbing" && !language.trim()) return;
+
     setPendingFile(selectedFile);
     setPendingMode(mode);
     if (mode === "subtitles") {
-      setPendingLanguage(language);
+      setPendingLanguage(safeLang);
     } else {
       // For dubbing we treat the picker as *target language* for now
-      setPendingTargetLanguage(language);
+      setPendingTargetLanguage(safeLang);
       setPendingSourceLanguage(""); // auto
     }
     router.push(`${basePath}/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`);
@@ -297,84 +379,153 @@ function UploadCardInner({
         <div className="relative bg-white/80 backdrop-blur-sm border border-white/60 rounded-4xl shadow-xl shadow-indigo-100/40">
           <div className="grid grid-cols-1 md:grid-cols-[1fr_300px]">
 
-            {/* ── Left: drop zone ── */}
-            <div
-              className={[
-                "group cursor-pointer border-r border-outline-variant/10 p-10 flex flex-col items-center justify-center gap-5 transition-all min-h-[260px]",
-                dragOver ? "bg-primary/5" : "hover:bg-primary/2",
-              ].join(" ")}
-              onClick={() => inputRef.current?.click()}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              role="button"
-              tabIndex={0}
-              aria-label="Upload video or audio file"
-              onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
-            >
-              {selectedFile ? (
-                <>
-                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                    <span className="material-symbols-outlined text-3xl [font-variation-settings:'FILL'_1]">
-                      {selectedFile.type.startsWith("video/") ? "movie" : "music_note"}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <p
-                      className="font-headline font-bold text-on-surface text-base truncate max-w-[260px]"
-                      title={selectedFile.name}
-                    >
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-sm text-on-surface-variant">{formatBytes(selectedFile.size)}</p>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInternalSelectedFile(null);
-                      onSelectedFileChange?.(null);
-                      setError(null);
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-headline font-semibold text-on-surface-variant hover:text-primary transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-sm">swap_horiz</span>
-                    Change file
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div
-                    className={[
-                      "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300",
-                      dragOver
-                        ? "bg-primary text-on-primary scale-110"
-                        : "bg-primary/8 text-primary group-hover:scale-105",
-                    ].join(" ")}
-                  >
-                    <span className="material-symbols-outlined text-4xl [font-variation-settings:'FILL'_1]">
-                      {dragOver ? "file_upload" : "cloud_upload"}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    <h3 className="font-headline text-xl font-bold text-on-surface">
-                      {dragOver ? "Drop to upload" : "Drop your file here"}
-                    </h3>
-                    <p className="text-on-surface-variant text-sm font-light">
-                      or <span className="text-primary font-semibold">click to browse</span> — MP4, MOV, MP3, WAV
-                    </p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap justify-center">
-                    {["MP4", "MOV", "MP3", "WAV", "WEBM"].map((fmt) => (
-                      <span
-                        key={fmt}
-                        className="px-2.5 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-headline font-bold rounded-lg"
-                      >
-                        {fmt}
+            {/* ── Left: drop zone or YouTube link ── */}
+            <div className="flex flex-col border-r border-outline-variant/10 min-h-[260px]">
+              <div
+                className={[
+                  "group cursor-pointer flex-1 p-10 flex flex-col items-center justify-center gap-5 transition-all",
+                  dragOver ? "bg-primary/5" : "hover:bg-primary/2",
+                ].join(" ")}
+                onClick={() => inputRef.current?.click()}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                role="button"
+                tabIndex={0}
+                aria-label="Upload video or audio file"
+                onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
+              >
+                {selectedFile ? (
+                  <>
+                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined text-3xl [font-variation-settings:'FILL'_1]">
+                        {selectedFile.type.startsWith("video/") ? "movie" : "music_note"}
                       </span>
-                    ))}
-                  </div>
-                </>
-              )}
+                    </div>
+                    <div className="space-y-1">
+                      <p
+                        className="font-headline font-bold text-on-surface text-base truncate max-w-[260px]"
+                        title={selectedFile.name}
+                      >
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-sm text-on-surface-variant">{formatBytes(selectedFile.size)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInternalSelectedFile(null);
+                        onSelectedFileChange?.(null);
+                        setError(null);
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-headline font-semibold text-on-surface-variant hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                      Change file
+                    </button>
+                  </>
+                ) : mode === "dubbing" && youtubeUrl.trim() ? (
+                  <>
+                    <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-600">
+                      <span className="material-symbols-outlined text-3xl [font-variation-settings:'FILL'_1]">
+                        link
+                      </span>
+                    </div>
+                    <div className="space-y-1 w-full max-w-[280px]">
+                      <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant text-center">
+                        YouTube link
+                      </p>
+                      <p
+                        className="font-headline font-bold text-on-surface text-sm break-all line-clamp-3 text-center"
+                        title={youtubeUrl.trim()}
+                      >
+                        {youtubeUrl.trim()}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setYoutubeUrl("");
+                        setError(null);
+                      }}
+                      className="flex items-center gap-1.5 text-xs font-headline font-semibold text-on-surface-variant hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                      Clear link
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className={[
+                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300",
+                        dragOver
+                          ? "bg-primary text-on-primary scale-110"
+                          : "bg-primary/8 text-primary group-hover:scale-105",
+                      ].join(" ")}
+                    >
+                      <span className="material-symbols-outlined text-4xl [font-variation-settings:'FILL'_1]">
+                        {dragOver ? "file_upload" : "cloud_upload"}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="font-headline text-xl font-bold text-on-surface">
+                        {dragOver ? "Drop to upload" : "Drop your file here"}
+                      </h3>
+                      <p className="text-on-surface-variant text-sm font-light">
+                        or <span className="text-primary font-semibold">click to browse</span> — MP4, MOV, MP3, WAV
+                      </p>
+                    </div>
+                    <div className="flex gap-2 flex-wrap justify-center">
+                      {["MP4", "MOV", "MP3", "WAV", "WEBM"].map((fmt) => (
+                        <span
+                          key={fmt}
+                          className="px-2.5 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-headline font-bold rounded-lg"
+                        >
+                          {fmt}
+                        </span>
+                      ))}
+                    </div>
+                    {mode === "dubbing" && (
+                      <div
+                        className="w-full max-w-[320px] mt-2 flex flex-col gap-3"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        role="presentation"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <span className="h-px bg-outline-variant/20 flex-1" />
+                          <span className="text-xs font-headline font-semibold text-on-surface-variant shrink-0">or</span>
+                          <span className="h-px bg-outline-variant/20 flex-1" />
+                        </div>
+                        <input
+                          value={youtubeUrl}
+                          onChange={(e) => {
+                            const next = e.target.value;
+                            setYoutubeUrl(next);
+                            if (next.trim()) {
+                              setInternalSelectedFile(null);
+                              onSelectedFileChange?.(null);
+                            }
+                          }}
+                          placeholder="Paste a YouTube video URL"
+                          className="w-full h-[46px] px-4 rounded-2xl bg-white border border-outline-variant/15 focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm cursor-text"
+                          inputMode="url"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                        />
+                        <p className="text-[11px] text-on-surface-variant/60 text-center leading-relaxed">
+                          Dub from a link instead of uploading a file.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* ── Right: language + action ── */}
@@ -424,10 +575,18 @@ function UploadCardInner({
 
               <button
                 onClick={handleNext}
-                disabled={!selectedFile || !langReady || (mode === "dubbing" && !language.trim())}
+                disabled={
+                  !langReady ||
+                  (mode === "dubbing" && !(language ?? "").trim()) ||
+                  (mode === "dubbing"
+                    ? !(selectedFile || youtubeUrl.trim())
+                    : !selectedFile)
+                }
                 className={[
                   "w-full flex items-center justify-center gap-2 py-3.5 font-headline font-bold text-sm rounded-2xl transition-all",
-                  selectedFile && langReady && (mode !== "dubbing" || language.trim())
+                  (selectedFile || (mode === "dubbing" && youtubeUrl.trim())) &&
+                    langReady &&
+                    (mode !== "dubbing" || (language ?? "").trim())
                     ? "bg-primary text-on-primary hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/25"
                     : "bg-surface-container text-on-surface-variant cursor-not-allowed",
                 ].join(" ")}
@@ -436,9 +595,11 @@ function UploadCardInner({
                 {mode === "dubbing" ? "Start Dubbing" : "Generate Subtitles"}
               </button>
 
-              {!selectedFile && (
+              {!selectedFile && !(mode === "dubbing" && youtubeUrl.trim()) && (
                 <p className="text-[11px] text-center text-on-surface-variant/50">
-                  Select a file to get started
+                  {mode === "dubbing"
+                    ? "Select a file or paste a YouTube link"
+                    : "Select a file to get started"}
                 </p>
               )}
 

@@ -450,9 +450,11 @@ exports.getCreditSummary = async (req, res, next) => {
 
 exports.getLanguages = (req, res) => {
   const raw = (req.query.mode || "subtitles").toLowerCase().trim();
+  console.log(raw);
   const mode = raw === "dubbing" ? "dubbing" : "subtitles";
   const languages =
     mode === "dubbing" ? DUBBING_LANGUAGE_LIST : LANGUAGE_LIST;
+  console.log(languages);
   res.json({
     mode,
     languages,
