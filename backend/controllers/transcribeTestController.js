@@ -4,6 +4,7 @@ const os = require("os");
 const { v4: uuidv4 } = require("uuid");
 const { extractAudio, getMediaStreamSummary } = require("../utils/audioUtils");
 const { transcribeWithSpeakers } = require("../utils/transcribeUtils");
+const { translateToSpeechReady } = require("../utils/translationUtils");
 const {
   normalizeYoutubeUrl,
   getYoutubeMetadata,
@@ -23,6 +24,9 @@ function safeYoutubeDebugFilename(title, ext) {
 /**
  * POST /api/transcribe/test
  * Multipart: file (audio/video), optional sourceLanguage (e.g. english, hinglish, auto).
+ * Optional: targetLanguage (e.g. hindi, spanish) + translationMode (auto|default|hindi_devanagari|hinglish_concise|split_for_timing)
+ * — when targetLanguage is set, also runs speech-ready translation (Gemini-style bracket tags in translatedText) and returns `translation`.
+ * Requires OPENAI_API_KEY when targetLanguage is set.
  * Runs Gemini dubbing-style transcription on extracted MP3 (full mix, no stem separation).
  */
 exports.testTranscribe = async (req, res, next) => {
@@ -42,6 +46,17 @@ exports.testTranscribe = async (req, res, next) => {
         ? null
         : sourceLanguageRaw;
 
+    const targetLanguageRaw = String(req.body.targetLanguage || "").trim();
+    const targetLanguage = targetLanguageRaw || null;
+    const translationModeRaw = String(req.body.translationMode || "auto").trim() || "auto";
+
+    if (targetLanguage && !String(process.env.OPENAI_API_KEY || "").trim()) {
+      return res.status(422).json({
+        message:
+          "OPENAI_API_KEY is required when targetLanguage is set (translation uses OpenAI).",
+      });
+    }
+
     const isVideo = req.file.mimetype.startsWith("video/");
     const ext = path.extname(req.file.originalname) || (isVideo ? ".mp4" : ".bin");
     const tmpInput = path.join(os.tmpdir(), `transcribe_test_in_${uuidv4()}${ext}`);
@@ -54,15 +69,34 @@ exports.testTranscribe = async (req, res, next) => {
       const { segments, speaker_profiles } = await transcribeWithSpeakers(
         tmpMp3,
         sourceLanguage,
-        null
       );
-      return res.json({
+
+      const payload = {
         ok: true,
         segments,
         speaker_profiles,
         segmentCount: segments.length,
         speakerCount: speaker_profiles.length,
-      });
+      };
+
+      if (targetLanguage) {
+        const translatedSegments = await translateToSpeechReady(
+          segments,
+          targetLanguage,
+          speaker_profiles,
+          {
+            sourceLanguage: sourceLanguage || "auto",
+            translationMode: translationModeRaw,
+          },
+        );
+        payload.translation = {
+          targetLanguage,
+          translationMode: translationModeRaw,
+          segments: translatedSegments,
+        };
+      }
+
+      return res.json(payload);
     } finally {
       try {
         fs.unlinkSync(tmpInput);

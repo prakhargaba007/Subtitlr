@@ -547,10 +547,7 @@ async function runDubbingPipelineFromInput(
   await DubbingJob.findByIdAndUpdate(job._id, { status: "transcribing" });
 
   const { segments: rawSegments, speaker_profiles } =
-    await transcribeWithSpeakers(vocalsPath, sourceLanguage, {
-      fullMixPath: audioPath,
-      backgroundPath,
-    });
+    await transcribeWithSpeakers(vocalsPath, sourceLanguage);
 
   emit({
     stage: "transcribing",

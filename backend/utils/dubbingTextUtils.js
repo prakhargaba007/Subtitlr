@@ -8,16 +8,20 @@ const bracketToken = (tag) => {
   return t;
 };
 
-/** Inworld experimental bracket tags (English-oriented). */
-const BRACKET_TAG_RE =
-  /\[(happy|sad|angry|surprised|fearful|disgusted|laughing|whispering|breathe|clear_throat|cough|laugh|sigh|yawn)\]/gi;
+/** Any [...] span (Gemini TTS audio tags, Inworld tags, etc.). */
+const BRACKET_SPAN_RE = /\[[^\]]+\]/g;
 
-const stripExperimentalInworldTags = (text) => {
-  if (!text || typeof text !== "string") return "";
-  return text
-    .replace(BRACKET_TAG_RE, " ")
+const normalizeSpacedText = (text) =>
+  String(text || "")
     .replace(/\s{2,}/g, " ")
     .trim();
+
+/**
+ * Strip all square-bracket performance / TTS tags (Gemini-style, Inworld, etc.).
+ */
+const stripExperimentalInworldTags = (text) => {
+  if (!text || typeof text !== "string") return "";
+  return normalizeSpacedText(text.replace(BRACKET_SPAN_RE, " "));
 };
 
 const isEnglishLikeTarget = (targetLanguage) => {
@@ -38,13 +42,12 @@ const textForInworldTts = (text, targetLanguage) => {
   const allow = getTtsBracketTagAllowlist();
   if (!allow.length) return stripExperimentalInworldTags(text);
   const allowSet = new Set(allow.map(bracketToken));
-  return text
-    .replace(BRACKET_TAG_RE, (match) => {
-      const inner = match.slice(1, -1).toLowerCase();
+  return normalizeSpacedText(
+    String(text || "").replace(BRACKET_SPAN_RE, (match) => {
+      const inner = bracketToken(match);
       return allowSet.has(inner) ? match : " ";
-    })
-    .replace(/\s{2,}/g, " ")
-    .trim();
+    }),
+  );
 };
 
 module.exports = {
@@ -52,5 +55,4 @@ module.exports = {
   isEnglishLikeTarget,
   textForNonInworldTts,
   textForInworldTts,
-  BRACKET_TAG_RE,
 };

@@ -754,6 +754,23 @@
           </div>
 
           <div class="field">
+            <label>Target language (optional — speech-ready translation)</label>
+            <input type="text" id="trs-target" placeholder="e.g. hindi, spanish — empty = transcribe only" />
+            <small style="display:block;margin-top:6px;opacity:0.85">Uses OpenAI. Response adds <code>translation.segments[].translatedText</code> with Gemini-style <code>[pause]</code> tags.</small>
+          </div>
+
+          <div class="field">
+            <label>Translation mode (if target set)</label>
+            <select id="trs-tmode">
+              <option value="auto">auto (infer from source/target)</option>
+              <option value="default">default</option>
+              <option value="hindi_devanagari">hindi_devanagari</option>
+              <option value="hinglish_concise">hinglish_concise</option>
+              <option value="split_for_timing">split_for_timing</option>
+            </select>
+          </div>
+
+          <div class="field">
             <label>Audio / Video</label>
             <div class="file-drop" id="trs-drop">
               <input type="file" id="trs-file" accept="audio/*,video/*" />
@@ -1155,6 +1172,8 @@
 
       const token = document.getElementById('trs-token').value.trim();
       const lang = document.getElementById('trs-lang').value;
+      const targetLang = document.getElementById('trs-target').value.trim();
+      const tmode = document.getElementById('trs-tmode').value;
       const file = document.getElementById('trs-file').files[0];
 
       if (!token) return alert('Please enter your JWT token.');
@@ -1162,16 +1181,22 @@
 
       const btn = document.getElementById('trs-btn');
       btn.disabled = true;
-      btn.textContent = 'Transcribing…';
+      btn.textContent = targetLang ? 'Transcribing & translating…' : 'Transcribing…';
 
       document.getElementById('trs-result').style.display = 'none';
       document.getElementById('trs-status').style.display = 'block';
-      document.getElementById('trs-status-text').textContent = 'Extracting audio & calling Gemini…';
+      document.getElementById('trs-status-text').textContent = targetLang
+        ? 'Extracting audio, Gemini transcribe, then OpenAI translate…'
+        : 'Extracting audio & calling Gemini…';
       document.getElementById('trs-pulse').style.animationPlayState = 'running';
 
       const form = new FormData();
       form.append('file', file);
       if (lang) form.append('sourceLanguage', lang);
+      if (targetLang) {
+        form.append('targetLanguage', targetLang);
+        form.append('translationMode', tmode);
+      }
 
       try {
         const res = await fetch(`${BASE}/api/transcribe/test`, {
