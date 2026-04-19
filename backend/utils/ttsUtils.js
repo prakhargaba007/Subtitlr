@@ -41,7 +41,7 @@ const OPENAI_TTS_VOICE_NAMES = OPENAI_TTS_VOICES.map((v) => v.voice);
 const DEFAULT_OPENAI_TTS_VOICE = "nova";
 
 /**
- * Dubbing TTS backend: `openai` | `elevenlabs` | `inworld` | `smallest` | `auto`.
+ * Dubbing TTS backend: `openai` | `elevenlabs` | `inworld` | `smallest` | `gemini` | `auto`.
  * `auto`: Inworld (if INWORLD_API_KEY) → Smallest (if SMALLEST_API_KEY) → ElevenLabs → OpenAI.
  * Default: auto
  */
@@ -52,6 +52,7 @@ const getTtsProvider = () => {
     raw === "elevenlabs" ||
     raw === "inworld" ||
     raw === "smallest" ||
+    raw === "gemini" ||
     raw === "auto"
   ) {
     return raw;

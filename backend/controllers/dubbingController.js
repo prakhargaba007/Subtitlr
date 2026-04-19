@@ -34,7 +34,13 @@ const { resolveMaxAtempo } = require("../utils/dubbingConfig");
 const {
   textForInworldTts,
   textForNonInworldTts,
+  textForGeminiTts,
 } = require("../utils/dubbingTextUtils");
+const {
+  isGeminiTtsConfigured,
+  selectBestGeminiVoice,
+  synthesizeGeminiTts,
+} = require("../utils/geminiTtsUtils");
 const {
   flattenTranslatedSegmentsForTts,
   flattenJobSegmentForTts,
@@ -144,6 +150,10 @@ async function synthesizeDubbingTts(
   }
   if (ttsProviderResolved === "smallest") {
     const o = await synthesizeSmallestTts(plain, voiceKey);
+    return { audioPath: o.audioPath, wordTimestamps: [] };
+  }
+  if (ttsProviderResolved === "gemini") {
+    const o = await synthesizeGeminiTts(textForGeminiTts(text), voiceKey);
     return { audioPath: o.audioPath, wordTimestamps: [] };
   }
   const o = await generateSpeech(plain, voiceKey);
@@ -366,7 +376,10 @@ async function runDubbingPipelineFromInput(
 
   let ttsProvider = getTtsProvider();
   const sarvamSupportedLanguages = Object.keys(BCP_47_MAP);
-  if (sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase())) {
+  if (
+    sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase()) &&
+    ttsProvider !== "gemini"
+  ) {
     ttsProvider = "sarvam";
   }
 
@@ -413,6 +426,13 @@ async function runDubbingPipelineFromInput(
   if (ttsProvider === "smallest" && !isSmallestConfigured()) {
     const err = new Error(
       "SMALLEST_API_KEY is required when DUBBING_TTS_PROVIDER=smallest.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "gemini" && !isGeminiTtsConfigured()) {
+    const err = new Error(
+      "GOOGLE_API_KEY or GEMINI_API_KEY is required when DUBBING_TTS_PROVIDER=gemini.",
     );
     err.statusCode = 422;
     throw err;
@@ -684,9 +704,11 @@ exports.startDubbingJob = async (req, res) => {
             ? "smallest"
             : ttsProvider === "sarvam"
               ? "sarvam"
-              : ttsProvider === "auto"
-                ? "openai"
-                : "elevenlabs";
+              : ttsProvider === "gemini"
+                ? "gemini"
+                : ttsProvider === "auto"
+                  ? "openai"
+                  : "elevenlabs";
     let voiceMap = {};
     let updatedProfiles = [];
 
@@ -811,6 +833,33 @@ exports.startDubbingJob = async (req, res) => {
         speakerProfiles: updatedProfiles,
         ttsProvider: "sarvam",
       });
+    } else if (ttsProvider === "gemini") {
+      emit({
+        stage: "generating",
+        message: "Selecting Gemini 3.1 Flash TTS prebuilt voices for speakers…",
+      });
+      const assignedGemini = [];
+      for (const profile of speaker_profiles) {
+        emit({
+          stage: "generating",
+          message: `Selecting Gemini voice for ${profile.speaker_id}…`,
+        });
+        const v = await selectBestGeminiVoice(profile.voice_description, {
+          excludeVoiceIds: assignedGemini,
+          speakerCount: dubbingSpeakerCount,
+        });
+        assignedGemini.push(v);
+        voiceMap[profile.speaker_id] = v;
+        updatedProfiles.push({
+          speaker_id: profile.speaker_id,
+          voice_description: profile.voice_description,
+          elevenlabs_voice_id: v,
+        });
+      }
+      await DubbingJob.findByIdAndUpdate(job._id, {
+        speakerProfiles: updatedProfiles,
+        ttsProvider: "gemini",
+      });
     } else if (ttsProvider === "auto") {
       // Voice map + synthesis for auto: Inworld → Smallest → ElevenLabs → OpenAI (Step 6)
     } else {
@@ -926,6 +975,14 @@ exports.startDubbingJob = async (req, res) => {
         segmentIds,
         segmentAudioKeys,
       } = await runSegmentPipeline("sarvam"));
+    } else if (ttsProvider === "gemini") {
+      ({
+        rawDubbedPaths,
+        wordTsForRows,
+        syncedBuffers,
+        segmentIds,
+        segmentAudioKeys,
+      } = await runSegmentPipeline("gemini"));
     } else if (ttsProvider === "auto") {
       let autoDone = false;
       const iwPaths = [];

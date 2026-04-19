@@ -1,0 +1,341 @@
+{
+  "model": {
+    "name": "Gemini 3.1 Flash TTS",
+    "provider": "Google",
+    "status": "Preview",
+    "release_date": "April 2026",
+    "total_voices": 30,
+    "supported_languages_count": "70+",
+    "audio_tags_supported": "200+",
+    "access_points": [
+      "Gemini API",
+      "Google AI Studio",
+      "Vertex AI",
+      "Google Vids (Workspace)"
+    ],
+    "key_features": [
+      "Expressive and controllable voice generation",
+      "Natural language style instructions (accent, tone, pacing)",
+      "200+ audio tags for expressive control",
+      "Multi-language support with regional variants",
+      "Cross-language tag support (English tags with non-English text)"
+    ]
+  },
+  "voices": [
+    {
+      "id": 1,
+      "name": "Zephyr",
+      "gender": "Female",
+      "character": "Bright",
+      "tone_description": "Clear, luminous, and energetic",
+      "pitch_range": "Medium-High",
+      "recommended_use_cases": ["Advertising", "Marketing", "Upbeat narration", "Promotional content"]
+    },
+    {
+      "id": 2,
+      "name": "Puck",
+      "gender": "Male",
+      "character": "Upbeat",
+      "tone_description": "Playful, cheerful, and lively",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Children's content", "Casual podcasts", "Social media", "Entertainment"]
+    },
+    {
+      "id": 3,
+      "name": "Charon",
+      "gender": "Male",
+      "character": "Informative",
+      "tone_description": "Calm, professional, and authoritative",
+      "pitch_range": "Medium-Low",
+      "recommended_use_cases": ["News", "Documentaries", "Educational content", "Corporate narration"]
+    },
+    {
+      "id": 4,
+      "name": "Kore",
+      "gender": "Female",
+      "character": "Firm",
+      "tone_description": "Strong, confident, and assertive",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Business presentations", "Leadership content", "Professional announcements"]
+    },
+    {
+      "id": 5,
+      "name": "Fenrir",
+      "gender": "Male",
+      "character": "Excitable",
+      "tone_description": "Energetic, dynamic, and passionate",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Sports commentary", "Gaming", "Action trailers", "High-energy ads"]
+    },
+    {
+      "id": 6,
+      "name": "Leda",
+      "gender": "Female",
+      "character": "Youthful",
+      "tone_description": "Fresh, young, and vibrant",
+      "pitch_range": "Medium-High",
+      "recommended_use_cases": ["Youth content", "Teen audiences", "Coming-of-age narratives", "Lifestyle content"]
+    },
+    {
+      "id": 7,
+      "name": "Orus",
+      "gender": "Male",
+      "character": "Firm",
+      "tone_description": "Steady, resolute, and grounded",
+      "pitch_range": "Medium-Low",
+      "recommended_use_cases": ["Formal announcements", "Legal content", "Instructional materials"]
+    },
+    {
+      "id": 8,
+      "name": "Aoede",
+      "gender": "Female",
+      "character": "Breezy",
+      "tone_description": "Light, airy, and effortless",
+      "pitch_range": "Medium-High",
+      "recommended_use_cases": ["Travel content", "Lifestyle blogs", "Meditation", "Casual storytelling"]
+    },
+    {
+      "id": 9,
+      "name": "Callirrhoe",
+      "gender": "Female",
+      "character": "Easy-going",
+      "tone_description": "Relaxed, approachable, and warm",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Conversational content", "Customer service", "Friendly tutorials"]
+    },
+    {
+      "id": 10,
+      "name": "Autonoe",
+      "gender": "Female",
+      "character": "Bright",
+      "tone_description": "Sparkling, clear, and enthusiastic",
+      "pitch_range": "Medium-High",
+      "recommended_use_cases": ["Commercials", "Explainer videos", "Product launches"]
+    },
+    {
+      "id": 11,
+      "name": "Enceladus",
+      "gender": "Male",
+      "character": "Breathy",
+      "tone_description": "Intimate, whispery, and soft",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["ASMR", "Meditation", "Audiobook narration", "Intimate storytelling"]
+    },
+    {
+      "id": 12,
+      "name": "Iapetus",
+      "gender": "Male",
+      "character": "Clear",
+      "tone_description": "Crisp, articulate, and precise",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["E-learning", "Technical documentation", "Instructional voiceovers"]
+    },
+    {
+      "id": 13,
+      "name": "Umbriel",
+      "gender": "Male",
+      "character": "Easy-going",
+      "tone_description": "Mellow, friendly, and laid-back",
+      "pitch_range": "Medium-Low",
+      "recommended_use_cases": ["Conversational AI", "Lifestyle content", "Casual narration"]
+    },
+    {
+      "id": 14,
+      "name": "Algieba",
+      "gender": "Male",
+      "character": "Smooth",
+      "tone_description": "Silky, polished, and refined",
+      "pitch_range": "Medium-Low",
+      "recommended_use_cases": ["Luxury brands", "High-end advertising", "Sophisticated narration"]
+    },
+    {
+      "id": 15,
+      "name": "Despina",
+      "gender": "Female",
+      "character": "Smooth",
+      "tone_description": "Elegant, flowing, and polished",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Premium brand voice", "Fashion content", "Refined storytelling"]
+    },
+    {
+      "id": 16,
+      "name": "Erinome",
+      "gender": "Female",
+      "character": "Clear",
+      "tone_description": "Precise, articulate, and pristine",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["News broadcasting", "Professional narration", "Educational content"]
+    },
+    {
+      "id": 17,
+      "name": "Algenib",
+      "gender": "Male",
+      "character": "Gravelly",
+      "tone_description": "Rough, textured, and distinctive",
+      "pitch_range": "Low",
+      "recommended_use_cases": ["Movie trailers", "Dramatic narration", "Character voices", "Thriller content"]
+    },
+    {
+      "id": 18,
+      "name": "Rasalgethi",
+      "gender": "Male",
+      "character": "Informative",
+      "tone_description": "Knowledgeable, measured, and clear",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Documentaries", "Scientific content", "News reports", "Tutorials"]
+    },
+    {
+      "id": 19,
+      "name": "Laomedeia",
+      "gender": "Female",
+      "character": "Upbeat",
+      "tone_description": "Peppy, energetic, and cheerful",
+      "pitch_range": "Medium-High",
+      "recommended_use_cases": ["Marketing", "Children's content", "Positive announcements"]
+    },
+    {
+      "id": 20,
+      "name": "Achernar",
+      "gender": "Female",
+      "character": "Soft",
+      "tone_description": "Gentle, delicate, and calming",
+      "pitch_range": "Medium-High",
+      "recommended_use_cases": ["Meditation", "Children's stories", "Sleep content", "Wellness"]
+    },
+    {
+      "id": 21,
+      "name": "Alnilam",
+      "gender": "Male",
+      "character": "Firm",
+      "tone_description": "Authoritative, confident, and commanding",
+      "pitch_range": "Medium-Low",
+      "recommended_use_cases": ["Corporate videos", "Military/official content", "Leadership speeches"]
+    },
+    {
+      "id": 22,
+      "name": "Schedar",
+      "gender": "Male",
+      "character": "Even",
+      "tone_description": "Balanced, steady, and consistent",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Audiobooks", "Long-form narration", "Technical reading", "Reports"]
+    },
+    {
+      "id": 23,
+      "name": "Gacrux",
+      "gender": "Female",
+      "character": "Mature",
+      "tone_description": "Sophisticated, experienced, and composed",
+      "pitch_range": "Medium-Low",
+      "recommended_use_cases": ["Executive content", "Documentary narration", "Serious storytelling"]
+    },
+    {
+      "id": 24,
+      "name": "Pulcherrima",
+      "gender": "Female",
+      "character": "Forward",
+      "tone_description": "Direct, confident, and assertive",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Sales pitches", "Motivational content", "Bold brand voices"]
+    },
+    {
+      "id": 25,
+      "name": "Achird",
+      "gender": "Male",
+      "character": "Friendly",
+      "tone_description": "Warm, welcoming, and approachable",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Customer service", "Welcome messages", "Friendly tutorials", "Onboarding"]
+    },
+    {
+      "id": 26,
+      "name": "Zubenelgenubi",
+      "gender": "Male",
+      "character": "Casual",
+      "tone_description": "Relaxed, informal, and conversational",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Podcasts", "Vlogs", "Informal chats", "Social media content"]
+    },
+    {
+      "id": 27,
+      "name": "Vindemiatrix",
+      "gender": "Female",
+      "character": "Gentle",
+      "tone_description": "Kind, tender, and nurturing",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Healthcare content", "Childcare", "Empathetic narration", "Wellness apps"]
+    },
+    {
+      "id": 28,
+      "name": "Sadachbia",
+      "gender": "Male",
+      "character": "Lively",
+      "tone_description": "Vibrant, animated, and engaging",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Entertainment", "Hosting", "Events", "Energetic marketing"]
+    },
+    {
+      "id": 29,
+      "name": "Sadaltager",
+      "gender": "Male",
+      "character": "Knowledgeable",
+      "tone_description": "Intellectual, thoughtful, and insightful",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Academic content", "Lectures", "Research videos", "Thought leadership"]
+    },
+    {
+      "id": 30,
+      "name": "Sulafat",
+      "gender": "Female",
+      "character": "Warm",
+      "tone_description": "Cozy, comforting, and inviting",
+      "pitch_range": "Medium",
+      "recommended_use_cases": ["Storytelling", "Audiobooks", "Hospitality", "Home & lifestyle"]
+    }
+  ],
+  "supported_languages_sample": [
+    {"language": "Arabic (Egyptian)", "code": "ar-EG"},
+    {"language": "Arabic (Standard)", "code": "ar-XA"},
+    {"language": "Bengali (India)", "code": "bn-IN"},
+    {"language": "Chinese (Mandarin)", "code": "cmn-CN"},
+    {"language": "Dutch (Netherlands)", "code": "nl-NL"},
+    {"language": "English (Australia)", "code": "en-AU"},
+    {"language": "English (India)", "code": "en-IN"},
+    {"language": "English (UK)", "code": "en-GB"},
+    {"language": "English (US)", "code": "en-US"},
+    {"language": "Filipino", "code": "fil-PH"},
+    {"language": "French (Canada)", "code": "fr-CA"},
+    {"language": "French (France)", "code": "fr-FR"},
+    {"language": "German (Germany)", "code": "de-DE"},
+    {"language": "Gujarati (India)", "code": "gu-IN"},
+    {"language": "Hebrew (Israel)", "code": "he-IL"},
+    {"language": "Hindi (India)", "code": "hi-IN"},
+    {"language": "Indonesian", "code": "id-ID"},
+    {"language": "Italian (Italy)", "code": "it-IT"},
+    {"language": "Japanese (Japan)", "code": "ja-JP"},
+    {"language": "Kannada (India)", "code": "kn-IN"},
+    {"language": "Korean (Korea)", "code": "ko-KR"},
+    {"language": "Malayalam (India)", "code": "ml-IN"},
+    {"language": "Marathi (India)", "code": "mr-IN"},
+    {"language": "Persian (Iran)", "code": "fa-IR"},
+    {"language": "Polish (Poland)", "code": "pl-PL"},
+    {"language": "Portuguese (Brazil)", "code": "pt-BR"},
+    {"language": "Romanian (Romania)", "code": "ro-RO"},
+    {"language": "Russian (Russia)", "code": "ru-RU"},
+    {"language": "Spanish (Spain)", "code": "es-ES"},
+    {"language": "Spanish (US)", "code": "es-US"},
+    {"language": "Swahili", "code": "sw-KE"},
+    {"language": "Tamil (India)", "code": "ta-IN"},
+    {"language": "Telugu (India)", "code": "te-IN"},
+    {"language": "Thai (Thailand)", "code": "th-TH"},
+    {"language": "Turkish (Turkey)", "code": "tr-TR"},
+    {"language": "Urdu (Pakistan)", "code": "ur-PK"},
+    {"language": "Vietnamese (Vietnam)", "code": "vi-VN"}
+  ],
+  "notes": {
+    "language_support": "All 30 voices support all 70+ languages. Voice selection is independent of language selection.",
+    "pitch_range": "Pitch range is an approximate descriptor inferred from the official character descriptor; exact frequencies are not published by Google.",
+    "use_cases": "Recommended use cases are suggestions based on voice character; any voice can be used for any content.",
+    "source": "Voice names, gender, and character descriptors are official Google values. Other attributes are inferred descriptions."
+  }
+}

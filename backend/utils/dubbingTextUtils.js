@@ -34,6 +34,9 @@ const isEnglishLikeTarget = (targetLanguage) => {
  */
 const textForNonInworldTts = (text) => stripExperimentalInworldTags(text);
 
+/** Gemini Native Audio TTS: keep inline English [audio tags] and dialogue unchanged. */
+const textForGeminiTts = (text) => String(text || "").trim();
+
 /**
  * Inworld TTS input: keep brackets only for English-like targets, gated by {@link getTtsBracketTagAllowlist}.
  */
@@ -55,4 +58,5 @@ module.exports = {
   isEnglishLikeTarget,
   textForNonInworldTts,
   textForInworldTts,
+  textForGeminiTts,
 };
