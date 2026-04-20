@@ -67,4 +67,20 @@ CreditTransactionSchema.index(
   { unique: true, sparse: true }
 );
 
+CreditTransactionSchema.index(
+  { source: 1, "metadata.paymentId": 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { "metadata.paymentId": { $exists: true } }
+  }
+);
+
+CreditTransactionSchema.index(
+  { "metadata.idempotencyKey": 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { "metadata.idempotencyKey": { $exists: true } }
+  }
+);
+
 module.exports = mongoose.model("CreditTransaction", CreditTransactionSchema);

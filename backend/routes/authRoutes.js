@@ -4,8 +4,6 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const isAuth = require("../middleware/is-auth");
 
-// Route: POST /api/auth/create-temp-user
-router.post("/create-temp-user", authController.createTempUser);
 
 // Route: POST /api/auth/opt-generate
 router.post(

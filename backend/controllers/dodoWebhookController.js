@@ -1,6 +1,6 @@
 const DodoWebhookReceipt = require("../models/DodoWebhookReceipt");
 const { getDodoClient } = require("../utils/dodoClient");
-const { processDodoWebhookEvent, recordWebhookReceipt } = require("../services/billingSubscriptionService");
+const { processDodoWebhookEvent } = require("../services/billingSubscriptionService");
 
 /**
  * POST /api/webhooks/dodo
@@ -9,24 +9,15 @@ const { processDodoWebhookEvent, recordWebhookReceipt } = require("../services/b
 exports.handleDodoWebhook = async (req, res) => {
   const webhookId = String(req.headers["webhook-id"] || "").trim();
   try {
-    if (!webhookId) {
-      return res.status(400).json({ message: "Missing webhook-id header." });
-    }
-
-    const dup = await DodoWebhookReceipt.findOne({ webhookId }).lean();
-    if (dup) {
-      return res.status(200).json({ received: true, duplicate: true });
-    }
+    if (!webhookId) return res.status(400).json({ message: "Missing webhook-id header." });
 
     const client = getDodoClient();
     const key = client?.webhookKey || String(process.env.DODO_PAYMENTS_WEBHOOK_KEY || "").trim();
-    if (!client || !key) {
-      return res.status(503).json({ message: "Dodo webhook key not configured." });
-    }
+    if (!client || !key) return res.status(503).json({ message: "Dodo webhook key not configured." });
 
     const raw = req.body instanceof Buffer ? req.body.toString("utf8") : String(req.body || "");
     const headers = {
-      "webhook-id": String(req.headers["webhook-id"] || ""),
+      "webhook-id": webhookId,
       "webhook-signature": String(req.headers["webhook-signature"] || ""),
       "webhook-timestamp": String(req.headers["webhook-timestamp"] || ""),
     };
@@ -39,17 +30,53 @@ exports.handleDodoWebhook = async (req, res) => {
       return res.status(401).json({ message: "Invalid signature" });
     }
 
-    await processDodoWebhookEvent(payload);
-    await recordWebhookReceipt(webhookId, payload.type || "");
-    return res.status(200).json({ received: true });
-  } catch (e) {
-    console.error("[dodo webhook]", e);
-    if (e.statusCode === 422) {
-      try {
-        await DodoWebhookReceipt.create({ webhookId, eventType: "skipped_missing_user" });
-      } catch (_) {}
-      return res.status(200).json({ received: true, skipped: true, reason: e.message });
+    // 1. Enforce EXACTLY-ONCE idempotency safely with locked processing timeout
+    const lockTimeout = new Date(Date.now() - 5 * 60 * 1000); // 5 mins dead letter limit
+    
+    const receipt = await DodoWebhookReceipt.findOneAndUpdate(
+      { 
+        webhookId,
+        $or: [
+          { status: "failed" },
+          { status: "processing", lockedAt: { $lt: lockTimeout } }
+        ]
+      },
+      { 
+        $set: { eventType: payload.type || "", status: "processing", lockedAt: new Date() },
+        $setOnInsert: { webhookId }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, rawResult: true }
+    ).catch(err => err);
+
+    if (receipt instanceof Error) {
+      if (receipt.code === 11000) {
+        const existing = await DodoWebhookReceipt.findOne({ webhookId }).lean();
+        if (existing && existing.status === "completed") {
+          return res.status(200).json({ received: true, duplicate: true });
+        }
+        return res.status(409).json({ message: "Concurrent processing detected, please retry" });
+      }
+      throw receipt;
     }
+
+    // 2. PROCESS payload safely
+    try {
+      await processDodoWebhookEvent(payload);
+      await DodoWebhookReceipt.updateOne({ webhookId }, { status: "completed", lockedAt: null });
+      return res.status(200).json({ received: true });
+    } catch (processErr) {
+      if (processErr.statusCode === 422) {
+        // Drop malformed 422 errors permanently without delete
+        await DodoWebhookReceipt.updateOne({ webhookId }, { status: "failed", error: processErr.message, lockedAt: null });
+        return res.status(200).json({ received: true, skipped: true, reason: processErr.message });
+      } else {
+        // Expected backoff error: mark failed to resume lock immediately for Dodo retry.
+        await DodoWebhookReceipt.updateOne({ webhookId }, { status: "failed", error: processErr.message || "Unknown error", lockedAt: null });
+        throw processErr; // Let Express throw 500 so Dodo retries
+      }
+    }
+  } catch (e) {
+    console.error("[dodo webhook] Critical wrapper error:", e);
     return res.status(500).json({ message: e.message || "Webhook handler error" });
   }
 };

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import TempUserInit from "@/components/TempUserInit";
 
 export const metadata: Metadata = {
   title: "Kili | Subtitles & Dubbing in Seconds",
@@ -16,7 +15,6 @@ export default function MainLayout({
 }) {
   return (
     <>
-      <TempUserInit />
       <Navbar />
       {children}
       <Footer />

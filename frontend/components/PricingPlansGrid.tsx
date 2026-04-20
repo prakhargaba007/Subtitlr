@@ -53,6 +53,8 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
 
   async function startDodoCheckout(planKey: string) {
     if (typeof window === "undefined") return;
+    if (checkoutPlanKey) return; // Strict lock to prevent multi-click spam
+    
     const token = localStorage.getItem("token");
     if (!token) {
       // login page does not support redirect params yet; keep it simple

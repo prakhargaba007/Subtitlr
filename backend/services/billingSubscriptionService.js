@@ -2,8 +2,9 @@ const mongoose = require("mongoose");
 const PlanCatalog = require("../models/PlanCatalog");
 const UserSubscription = require("../models/UserSubscription");
 const User = require("../models/User");
+const CreditTransaction = require("../models/CreditTransaction");
 const DodoWebhookReceipt = require("../models/DodoWebhookReceipt");
-const { addCredits } = require("../utils/creditUtils");
+const { addCredits, deductCredits, processRefundAtomic } = require("../utils/creditUtils");
 
 /** One grant per subscription per billing period end (avoids double grant if active + renewed share the same cycle). */
 function billingPeriodKey(dodo) {
@@ -102,7 +103,8 @@ async function syncUserSubscriptionFromDodo(dodo, opts = {}) {
   }
 
   Object.assign(existing, base);
-  if (!preserveCreditsPerRenewal && defaultCredits > 0 && !existing.creditsPerRenewal) {
+  // Guarantee upgrades apply credits to 'creditsPerRenewal'
+  if (!preserveCreditsPerRenewal && defaultCredits > 0) {
     existing.creditsPerRenewal = defaultCredits;
   }
   await existing.save();
@@ -178,6 +180,28 @@ async function handleTerminalStatus(dodo, status) {
   return sub;
 }
 
+async function handleRefund(dodo, webhookEventId) {
+  const userId = await resolveUserIdFromDodo(dodo);
+  if (!userId) return null;
+
+  const paymentId = dodo.payment_id || dodo.id;
+  if (!paymentId) return null;
+
+  // Internally derived deterministic idempotency key removing network payload trust
+  const idempotencyKey = `refund_trace_${paymentId}_${webhookEventId || Date.now()}`;
+
+  try {
+    // Offload to a pure, DB-enforced atomic function that solves all TOCTOU refund gaps
+    await processRefundAtomic(userId, paymentId, idempotencyKey);
+  } catch (e) {
+    if (e.code === 11000 || (e.writeErrors && e.writeErrors[0].code === 11000)) {
+      // Confirmed idempotency rejection natively via DB index; swallow to drop correctly
+      return;
+    }
+    throw e; // Bubble true transient errors so the outer webhook receipt forces a safe retry
+  }
+}
+
 /**
  * Process verified webhook body (parsed JSON). Persists receipt only after success.
  */
@@ -214,15 +238,22 @@ async function processDodoWebhookEvent(event) {
       await handleTerminalStatus(data, "failed");
       break;
     case "subscription.plan_changed":
-      await handleSubscriptionUpdated(data);
+      // Make sure preserveCreditsPerRenewal defaults to false to adopt new credits
+      await syncUserSubscriptionFromDodo(data, {
+        allowMissingUser: true,
+        preserveCreditsPerRenewal: false,
+      });
+      break;
+    case "payment.refunded":
+    case "payment.dispute_won":
+    case "payment.dispute_lost":
+      if (type === "payment.refunded" || type === "payment.dispute_lost") {
+        await handleRefund(data, event.event_id || event.id || String(Date.now()));
+      }
       break;
     default:
       break;
   }
-}
-
-async function recordWebhookReceipt(webhookId, eventType) {
-  await DodoWebhookReceipt.create({ webhookId, eventType: eventType || "" });
 }
 
 module.exports = {
@@ -232,5 +263,4 @@ module.exports = {
   syncUserSubscriptionFromDodo,
   grantSubscriptionCredits,
   processDodoWebhookEvent,
-  recordWebhookReceipt,
 };

@@ -12,7 +12,7 @@ const CreditTransaction = require("../models/CreditTransaction");
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Credits awarded to a temporary (anonymous) user on first visit. */
-const DEFAULT_CREDITS = 12;
+const DEFAULT_CREDITS = 0;
 
 /** Credits awarded when a user creates a verified account (OTP, Google, email). */
 const SIGNUP_CREDITS = 60;
@@ -81,6 +81,30 @@ const assertEnoughCredits = (user, creditsNeeded) => {
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
+ * Executes a MongoDB transaction with exponential backoff for transient errors.
+ */
+async function withTransactionRetry(action, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const result = await action(session);
+      await session.commitTransaction();
+      return result;
+    } catch (error) {
+      await session.abortTransaction();
+      if (error.hasErrorLabel && error.hasErrorLabel('TransientTransactionError') && attempt < maxRetries) {
+        await new Promise(res => setTimeout(res, 100 * attempt));
+        continue;
+      }
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+}
+
+/**
  * Atomically subtract `amount` credits from a user and record the transaction.
  *
  * @param {string} userId
@@ -92,32 +116,44 @@ const assertEnoughCredits = (user, creditsNeeded) => {
  */
 const deductCredits = async (userId, amount, source, description = "", metadata = {}) => {
   const abs = Math.abs(amount);
+  let balanceAfter = 0;
 
-  // { new: false } returns the document BEFORE the update — needed for balanceBefore
-  const oldUser = await User.findByIdAndUpdate(
-    userId,
-    { $inc: { credits: -abs } },
-    { new: false }
-  );
+  await withTransactionRetry(async (session) => {
+    // 1) Atomic Read-And-Decrement locked by $gte condition
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, credits: { $gte: abs } },
+      { $inc: { credits: -abs } },
+      { new: true, session }
+    );
 
-  if (!oldUser) {
-    const err = new Error("User not found when deducting credits.");
-    err.statusCode = 404;
-    throw err;
-  }
+    // 2) Handle failure securely
+    if (!updatedUser) {
+      const userExists = await User.findById(userId).session(session);
+      if (!userExists) {
+        const err = new Error("User not found when deducting credits.");
+        err.statusCode = 404;
+        throw err;
+      } else {
+        const err = new Error(`Insufficient credits`);
+        err.statusCode = 402;
+        throw err;
+      }
+    }
 
-  const balanceBefore = oldUser.credits;
-  const balanceAfter = balanceBefore - abs;
+    // 3) Mathematically derive precise ledger flow
+    balanceAfter = updatedUser.credits || 0;
+    const balanceBefore = balanceAfter + abs;
 
-  await CreditTransaction.create({
-    user: userId,
-    type: "debit",
-    amount: abs,
-    balanceBefore,
-    balanceAfter,
-    source,
-    description,
-    metadata,
+    await CreditTransaction.create([{
+      user: userId,
+      type: "debit",
+      amount: abs,
+      balanceBefore,
+      balanceAfter,
+      source,
+      description,
+      metadata,
+    }], { session });
   });
 
   return balanceAfter;
@@ -136,35 +172,99 @@ const deductCredits = async (userId, amount, source, description = "", metadata 
  */
 const addCredits = async (userId, amount, source, description = "", metadata = {}) => {
   const abs = Math.abs(amount);
+  let balanceAfter = 0;
 
-  // { new: false } returns the document BEFORE the update — needed for balanceBefore
-  const oldUser = await User.findByIdAndUpdate(
-    userId,
-    { $inc: { credits: abs } },
-    { new: false }
-  );
+  await withTransactionRetry(async (session) => {
+    // 1) Atomic Read-And-Increment
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { credits: abs } },
+      { new: true, session }
+    );
 
-  if (!oldUser) {
-    const err = new Error("User not found when adding credits.");
-    err.statusCode = 404;
-    throw err;
-  }
+    if (!updatedUser) {
+      const err = new Error("User not found when adding credits.");
+      err.statusCode = 404;
+      throw err;
+    }
 
-  const balanceBefore = oldUser.credits;
-  const balanceAfter = balanceBefore + abs;
+    // 2) Mathematically derive precise ledger flow
+    balanceAfter = updatedUser.credits || 0;
+    const balanceBefore = Math.max(0, balanceAfter - abs);
 
-  await CreditTransaction.create({
-    user: userId,
-    type: "credit",
-    amount: abs,
-    balanceBefore,
-    balanceAfter,
-    source,
-    description,
-    metadata,
+    await CreditTransaction.create([{
+      user: userId,
+      type: "credit",
+      amount: abs,
+      balanceBefore,
+      balanceAfter,
+      source,
+      description,
+      metadata,
+    }], { session });
   });
 
   return balanceAfter;
+};
+
+/**
+ * Perform a legally exact refund via a strict atomic transaction.
+ * Completely blocks TOCTOU deduplication bugs by deriving remaining thresholds mid-transaction
+ * and inherently honoring the idempotencyKey exactly-once unique index.
+ */
+const processRefundAtomic = async (userId, paymentId, idempotencyKey) => {
+  await withTransactionRetry(async (session) => {
+    // 1) Evaluate explicit transaction bounds and user capacity synchronously
+    const originalTx = await CreditTransaction.findOne({
+      user: userId, type: "credit", "metadata.paymentId": paymentId
+    }).session(session);
+
+    if (!originalTx) return;
+
+    const maxRefundable = originalTx.amount - (originalTx.metadata.refundedAmount || 0);
+    if (maxRefundable <= 0) return;
+
+    const userNow = await User.findById(userId).session(session);
+    const actualDeduction = Math.min(maxRefundable, userNow?.credits || 0);
+    if (actualDeduction <= 0) return;
+
+    // 2) Bounded increment locked mathematically against static maximum capacity
+    const updatedOriginal = await CreditTransaction.findOneAndUpdate(
+      { 
+        _id: originalTx._id, 
+        $or: [
+          { "metadata.refundedAmount": { $exists: false } },
+          { "metadata.refundedAmount": { $lte: originalTx.amount - actualDeduction } }
+        ]
+      },
+      { $inc: { "metadata.refundedAmount": actualDeduction } },
+      { new: true, session }
+    );
+    if (!updatedOriginal) throw new Error("Refund atomic safety limits breached");
+
+    // 3) Strict atomic $gte read-and-decrement
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, credits: { $gte: actualDeduction } },
+      { $inc: { credits: -actualDeduction } },
+      { new: true, session }
+    );
+    if (!updatedUser) throw new Error("Atomic balance validation failed");
+
+    // 4) Synthesize math-verified ledger continuity
+    const balanceAfter = updatedUser.credits || 0;
+    const balanceBefore = balanceAfter + actualDeduction;
+
+    await CreditTransaction.create([{
+      user: userId,
+      type: "debit",
+      amount: actualDeduction,
+      balanceBefore,
+      balanceAfter,
+      source: "refund",
+      description: `Refund processed for payment ${paymentId}`,
+      metadata: { originalPaymentId: paymentId, idempotencyKey },
+    }], { session });
+  });
 };
 
 // ─── History & analytics ──────────────────────────────────────────────────────
@@ -311,6 +411,7 @@ module.exports = {
   assertEnoughCredits,
   deductCredits,
   addCredits,
+  processRefundAtomic,
   getCreditHistory,
   getCreditSummary,
 };
