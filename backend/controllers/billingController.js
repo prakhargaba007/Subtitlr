@@ -2,6 +2,7 @@ const User = require("../models/User");
 const PlanCatalog = require("../models/PlanCatalog");
 const UserSubscription = require("../models/UserSubscription");
 const { getDodoClient } = require("../utils/dodoClient");
+const CheckoutLock = require("../models/CheckoutLock");
 
 /** GET /api/billing/subscription */
 exports.getMySubscription = async (req, res, next) => {
@@ -14,6 +15,60 @@ exports.getMySubscription = async (req, res, next) => {
       )
       .lean();
     res.json({ subscriptions: rows });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** GET /api/billing/current-plan */
+exports.getCurrentPlan = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).populate({
+      path: "activeSubscriptionId",
+      populate: { path: "planCatalog", select: "key displayName creditsPerPeriod interval features sortOrder" }
+    }).lean();
+
+    const activeSub = user?.activeSubscriptionId;
+
+    if (!activeSub || !activeSub.planCatalog) {
+      return res.json({ currentPlan: null });
+    }
+
+    // 6. RECONCILIATION MECHANISM (Auto-fix missing callbacks)
+    const client = getDodoClient();
+    if (client && activeSub.dodoSubscriptionId && activeSub.status !== "cancelled" && activeSub.status !== "expired") {
+      try {
+        if (typeof client.subscriptions?.get === "function" || typeof client.subscriptions?.retrieve === "function") {
+          const fetcher = client.subscriptions.get || client.subscriptions.retrieve;
+          const liveDodoSub = await fetcher.call(client.subscriptions, activeSub.dodoSubscriptionId);
+          if (liveDodoSub && liveDodoSub.status) {
+            const liveStatus = String(liveDodoSub.status || "").toLowerCase();
+            const normalizedStatus = liveStatus === "canceled" ? "cancelled" : liveStatus;
+            
+            if (normalizedStatus && normalizedStatus !== activeSub.status && normalizedStatus !== "unknown") {
+              activeSub.status = normalizedStatus;
+              await UserSubscription.updateOne({ _id: activeSub._id }, { $set: { status: normalizedStatus } });
+            }
+          }
+        }
+      } catch (err) {
+        // Suppress network errors on dashboard load to prevent breaking UI
+      }
+    }
+
+    res.json({
+      currentPlan: {
+        planKey: activeSub.planCatalog.key,
+        displayName: activeSub.planCatalog.displayName,
+        creditsPerPeriod: activeSub.planCatalog.creditsPerPeriod,
+        interval: activeSub.planCatalog.interval,
+        features: activeSub.planCatalog.features || [],
+        sortOrder: activeSub.planCatalog.sortOrder || 0,
+        status: activeSub.status,
+        nextBillingDate: activeSub.nextBillingDate,
+        cancelAtNextBillingDate: activeSub.cancelAtNextBillingDate,
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -42,14 +97,28 @@ exports.createDodoCheckoutSession = async (req, res, next) => {
         .json({ message: "Plan not found or not available." });
     }
 
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.userId).populate({
+      path: "activeSubscriptionId",
+      populate: { path: "planCatalog" }
+    });
+
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+
     if (!String(user.email || "").trim()) {
-      return res
-        .status(422)
-        .json({ message: "User email is required for checkout." });
+      return res.status(422).json({ message: "User email is required for checkout." });
+    }
+
+    // 2. Strict Active Subscription Enforcement (Single Source of Truth)
+    if (user.activeSubscriptionId) {
+      const activeSub = user.activeSubscriptionId;
+      if (activeSub.planCatalog && activeSub.planCatalog.key === plan.key) {
+        return res.status(400).json({ message: "Already on this plan" });
+      }
+      if (activeSub.status === "pending_cancel") {
+        return res.status(409).json({ message: "You have a pending subscription change in progress." });
+      }
     }
 
     const client = getDodoClient();
@@ -59,8 +128,52 @@ exports.createDodoCheckoutSession = async (req, res, next) => {
         .json({ message: "DODO_PAYMENTS_API_KEY is not configured." });
     }
 
-    const returnUrl =
-      String(process.env.DODO_CHECKOUT_RETURN_URL || "").trim() || null;
+    const CheckoutLock = require("../models/CheckoutLock");
+    
+    // 1. Atomic User-Level Lock Setup
+    const now = new Date();
+    
+    // Clean up uniquely stale locks first to make room if needed
+    await CheckoutLock.deleteOne({ 
+      user: user._id, 
+      expiresAt: { $lt: now } 
+    });
+
+    const pendingId = "pending_" + Date.now();
+    
+    // Atomically claim lock strictly on the User level
+    const lock = await CheckoutLock.findOneAndUpdate(
+      { user: user._id },
+      { 
+        $setOnInsert: { 
+          planCatalogKey: plan.key,
+          sessionId: pendingId, 
+          checkoutUrl: "GENERATING", 
+          expiresAt: new Date(now.getTime() + 15 * 60 * 1000) 
+        } 
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // 2. Enforce global idemptotency and cross-plan blocking
+    if (lock.sessionId !== pendingId) {
+      if (lock.checkoutUrl === "GENERATING") {
+        return res.status(409).json({ message: "Checkout is currently generating. Please try again in a few seconds." });
+      }
+      if (lock.planCatalogKey !== plan.key) {
+        return res.status(409).json({ message: "You already have a pending checkout for a different plan. Please complete it or wait for it to expire." });
+      }
+      return res.status(200).json({
+        sessionId: lock.sessionId,
+        checkoutUrl: lock.checkoutUrl,
+        reused: true
+      });
+    }
+
+    let returnUrl = String(process.env.DODO_CHECKOUT_RETURN_URL || "").trim() || null;
+    if (returnUrl) {
+      returnUrl += (returnUrl.includes("?") ? "&" : "?") + "verifying=true";
+    }
 
     const session = await client.checkoutSessions.create({
       product_cart: [{ product_id: plan.dodoProductId, quantity: 1 }],
@@ -75,6 +188,17 @@ exports.createDodoCheckoutSession = async (req, res, next) => {
         planCatalogKey: plan.key,
       },
     });
+
+    // 3. Update the lock with the finalized Dodo checkout
+    await CheckoutLock.updateOne(
+      { _id: lock._id },
+      { 
+        $set: { 
+          sessionId: session.session_id, 
+          checkoutUrl: session.checkout_url 
+        } 
+      }
+    );
 
     res.status(201).json({
       sessionId: session.session_id,

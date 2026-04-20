@@ -8,6 +8,7 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { clearUserDetails } from "@/redux/slices/userSlice";
 import axiosInstance from "@/utils/axios";
+import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
 
 const NAV_ITEMS = [
   { icon: "dashboard", label: "Launchpad", href: "/dashboard" },
@@ -38,14 +39,17 @@ export default function DashboardSidebar() {
 
   const [credits, setCredits] = useState<number | null>(null);
   const [creditsLoading, setCreditsLoading] = useState(true);
+  const [currentPlan, setCurrentPlan] = useState<CurrentPlanResponse>(null);
 
-  // Fetch credits
+  // Fetch credits & plan
   useEffect(() => {
     axiosInstance
       .get<{ credits: number }>("/api/subtitles/credits")
       .then((res) => setCredits(res.data.credits))
       .catch(() => setCredits(null))
       .finally(() => setCreditsLoading(false));
+
+    fetchCurrentPlan().then((plan) => setCurrentPlan(plan));
   }, []);
 
   // Close popup on outside click
@@ -149,7 +153,10 @@ export default function DashboardSidebar() {
                   style={{ width: `${Math.min(100, Math.max(0, 100 - usedPercent))}%` }}
                 />
               </div>
-              <button className="w-full mt-1 py-1.5 bg-primary/10 text-primary text-[11px] font-headline font-bold rounded-xl hover:bg-primary/20 transition-colors">
+              <button 
+                onClick={() => router.push("/dashboard/billing")}
+                className="w-full mt-1 py-1.5 bg-primary/10 text-primary text-[11px] font-headline font-bold rounded-xl hover:bg-primary/20 transition-colors"
+               >
                 Upgrade Plan
               </button>
             </div>
@@ -224,7 +231,7 @@ export default function DashboardSidebar() {
             <div className="overflow-hidden text-left">
               <p className="text-xs font-bold text-on-surface truncate font-headline">{displayName}</p>
               <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-tight font-label">
-                {userInfo?.role === "admin" ? "Admin" : "Free Plan"}
+                {userInfo?.role === "admin" ? "Admin" : currentPlan?.displayName || "Free Plan"}
               </p>
             </div>
             <span className="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">

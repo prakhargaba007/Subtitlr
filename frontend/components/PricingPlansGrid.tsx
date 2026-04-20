@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { fetchPublicPlans, type PublicPlan } from "@/utils/plansApi";
+import { fetchPublicPlans, fetchCurrentPlan, type PublicPlan, type CurrentPlanResponse } from "@/utils/plansApi";
 import {
   type BillingMode,
   billingSubtext,
@@ -23,6 +23,7 @@ export type PricingPlansGridProps = {
 export default function PricingPlansGrid({ variant = "section" }: PricingPlansGridProps) {
   const router = useRouter();
   const [plans, setPlans] = useState<PublicPlan[]>([]);
+  const [currentPlan, setCurrentPlan] = useState<CurrentPlanResponse>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billing, setBilling] = useState<BillingMode>("monthly");
@@ -32,10 +33,16 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
     setLoading(true);
     setError(null);
     try {
-      setPlans(await fetchPublicPlans());
+      const [fetchedPlans, fetchedCurrent] = await Promise.all([
+        fetchPublicPlans(),
+        fetchCurrentPlan()
+      ]);
+      setPlans(fetchedPlans);
+      setCurrentPlan(fetchedCurrent);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Could not load plans");
       setPlans([]);
+      setCurrentPlan(null);
     } finally {
       setLoading(false);
     }
@@ -202,20 +209,27 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
                     size="md"
                     className="w-full rounded-xl"
                     onClick={() => router.push("/login")}
+                    disabled={currentPlan?.planKey === plan.key}
                   >
-                    Start free
+                    {currentPlan?.planKey === plan.key ? "Current Plan" : "Start free"}
                   </Button>
                 ) : (
                   <Button
                     type="button"
-                    variant={popular ? "primary" : "outline"}
+                    variant={popular && currentPlan?.planKey !== plan.key ? "primary" : "outline"}
                     size="md"
                     className={`w-full rounded-xl ${popular ? "hover:scale-[1.02]" : ""}`}
                     style={popular ? { boxShadow: "0 10px 30px -8px rgba(57,44,193,0.3)" } : undefined}
-                    disabled={checkoutPlanKey === plan.key}
+                    disabled={checkoutPlanKey === plan.key || currentPlan?.planKey === plan.key}
                     onClick={() => startDodoCheckout(plan.key)}
                   >
-                    {checkoutPlanKey === plan.key ? "Redirecting…" : "Get started"}
+                    {currentPlan?.planKey === plan.key
+                      ? "Current Plan"
+                      : currentPlan && (plan.sortOrder ?? 0) < currentPlan.sortOrder
+                        ? "Downgrade"
+                        : currentPlan && (plan.sortOrder ?? 0) > currentPlan.sortOrder
+                          ? "Upgrade"
+                          : checkoutPlanKey === plan.key ? "Redirecting…" : "Get started"}
                   </Button>
                 )}
               </article>

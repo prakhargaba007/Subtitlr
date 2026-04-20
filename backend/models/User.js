@@ -85,6 +85,12 @@ const UserSchema = new Schema(
       default: null,
       index: true,
     },
+    /** Master record of the SINGLE definitively active subscription. */
+    activeSubscriptionId: {
+      type: Schema.Types.ObjectId,
+      ref: "UserSubscription",
+      default: null,
+    },
     /** Manually flagged enterprise / custom billing (contact sales). */
     enterpriseManual: {
       type: Boolean,

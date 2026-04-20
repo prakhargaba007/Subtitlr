@@ -130,6 +130,50 @@ async function grantSubscriptionCredits(userId, amount, source, description, per
 
 async function handleSubscriptionActive(dodo) {
   const sub = await syncUserSubscriptionFromDodo(dodo, { setPlanVersionOnCreate: true });
+
+  const { getDodoClient } = require("../utils/dodoClient");
+  const CheckoutLock = require("../models/CheckoutLock");
+  const client = getDodoClient();
+
+  // Clear successful checkout lock
+  const planKeyStr = dodo.metadata?.planCatalogKey || "";
+  if (planKeyStr) {
+    await CheckoutLock.deleteOne({ user: sub.user });
+  }
+
+  // Enforce Single Source of Truth for Subscriptions
+  const user = await User.findById(sub.user);
+  if (user) {
+    // If there is an existing active sub that differs from this newly activated one
+    if (user.activeSubscriptionId && user.activeSubscriptionId.toString() !== sub._id.toString()) {
+      const oldSub = await UserSubscription.findById(user.activeSubscriptionId);
+      if (oldSub && oldSub.status !== "cancelled" && oldSub.status !== "expired") {
+        if (client && oldSub.dodoSubscriptionId) {
+          try {
+            if (typeof client.subscriptions?.cancel === "function") {
+              await client.subscriptions.cancel(oldSub.dodoSubscriptionId);
+            } else if (typeof client.subscriptions?.update === "function") {
+              await client.subscriptions.update(oldSub.dodoSubscriptionId, { status: "cancelled" });
+            }
+          } catch (err) {
+            console.error(`[Dodo] Failed cancelling old subscription ${oldSub.dodoSubscriptionId}:`, err);
+          }
+        }
+        oldSub.status = "pending_cancel";
+        await oldSub.save();
+      }
+    }
+    // Update Single Source of Truth
+    user.activeSubscriptionId = sub._id;
+    await user.save();
+  }
+
+  // Sync any remaining rogue active subscriptions
+  await UserSubscription.updateMany(
+    { user: sub.user, status: "active", _id: { $ne: sub._id } },
+    { $set: { status: "cancelled" } }
+  );
+
   const periodKey = billingPeriodKey(dodo);
   const credits = sub.creditsPerRenewal;
   const r = await grantSubscriptionCredits(
@@ -215,6 +259,44 @@ async function processDodoWebhookEvent(event) {
     throw err;
   }
 
+  // 4. STRICT WEBHOOK VALIDATION & SINGLE SOURCE OF TRUTH
+  // Prevents reactivating old subscriptions or overlapping billing by validating activeSubscriptionId
+  if (
+    type === "subscription.renewed" || 
+    type === "subscription.updated" ||
+    type === "subscription.plan_changed" ||
+    type === "payment.succeeded"
+  ) {
+    const dodoSubId = data.subscription_id || data.id;
+    if (dodoSubId) {
+      const existing = await UserSubscription.findOne({ dodoSubscriptionId: dodoSubId }).lean();
+      if (existing) {
+        if (existing.status === "cancelled" || existing.status === "pending_cancel") {
+          console.log(`[Webhook] Dropping ${type} for cancelled/pending_cancel subscription ${dodoSubId}`);
+          return;
+        }
+
+        const user = await User.findById(existing.user).lean();
+        if (user && user.activeSubscriptionId && user.activeSubscriptionId.toString() !== existing._id.toString()) {
+          console.log(`[Webhook] CRITICAL DROP: ${type} for ${dodoSubId} failed activeSubscriptionId validation.`);
+          
+          // Forcefully cancel the rogue subscription recursively
+          const { getDodoClient } = require("../utils/dodoClient");
+          const client = getDodoClient();
+          if (client) {
+            try {
+              if (typeof client.subscriptions?.cancel === "function") {
+                await client.subscriptions.cancel(dodoSubId);
+              }
+            } catch (err) {}
+          }
+          await UserSubscription.updateOne({ _id: existing._id }, { $set: { status: "cancelled" } });
+          return;
+        }
+      }
+    }
+  }
+
   switch (type) {
     case "subscription.active":
       await handleSubscriptionActive(data);
@@ -254,6 +336,8 @@ async function processDodoWebhookEvent(event) {
     default:
       break;
   }
+
+  // (Removed createdAt-based cleanup. System now relies purely on user.activeSubscriptionId structural validation and aggressive hook drops.)
 }
 
 module.exports = {
