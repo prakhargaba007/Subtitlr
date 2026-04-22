@@ -1,8 +1,0 @@
-# Silero VAD (subtitle pipeline). Install in a venv, e.g.:
-#   cd backend && python3 -m venv .venv-vad && .venv-vad/bin/pip install -r requirements-vad.txt
-# Point SILERO_PYTHON at .venv-vad/bin/python
-numpy>=1.26.0
-packaging>=23.0
-silero-vad>=6.0
-torch>=2.1.0
-torchaudio>=2.1.0
