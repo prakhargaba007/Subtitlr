@@ -34,6 +34,10 @@ export type CurrentPlanResponse = {
 } | null;
 
 export async function fetchCurrentPlan(): Promise<CurrentPlanResponse> {
+  if (typeof window !== "undefined" && !localStorage.getItem("token")) {
+    return null;
+  }
+
   try {
     const res = await axios.get<{ currentPlan: CurrentPlanResponse }>("/api/billing/current-plan");
     return res.data?.currentPlan ?? null;

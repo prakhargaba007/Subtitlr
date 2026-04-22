@@ -43,6 +43,12 @@ export default function DashboardSidebar() {
 
   // Fetch credits & plan
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setCreditsLoading(false);
+      return;
+    }
+
     axiosInstance
       .get<{ credits: number }>("/api/subtitles/credits")
       .then((res) => setCredits(res.data.credits))
