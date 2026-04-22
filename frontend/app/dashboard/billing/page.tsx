@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
 import PricingPlansGrid from "@/components/PricingPlansGrid";
 import { Button } from "@/components/ui/Button";
 
-export default function BillingPage() {
+function BillingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isVerifying = searchParams.get("verifying") === "true";
@@ -127,5 +127,17 @@ export default function BillingPage() {
         <PricingPlansGrid variant="section" />
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-6xl mx-auto p-4 sm:p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary/20 border-t-primary" />
+      </div>
+    }>
+      <BillingContent />
+    </Suspense>
   );
 }
