@@ -39,10 +39,11 @@ export async function fetchCurrentPlan(): Promise<CurrentPlanResponse> {
   }
 
   try {
-    const res = await axios.get<{ currentPlan: CurrentPlanResponse }>("/api/billing/current-plan");
+    const res = await axios.get<{ currentPlan: CurrentPlanResponse }>(
+      "/api/billing/current-plan",
+    );
     return res.data?.currentPlan ?? null;
   } catch (e) {
     return null;
   }
 }
-

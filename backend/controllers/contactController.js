@@ -15,14 +15,14 @@ exports.submitContact = async (req, res) => {
       });
     }
 
-    const { 
-      name, 
-      email, 
-      phone, 
-      message, 
-      typeOfService, 
-      brandName = "Resume OS",
-      ownerEmail = process.env.OWNER_EMAIL || "prakhargaba@gmail.com"
+    const {
+      name,
+      email,
+      phone,
+      message,
+      typeOfService,
+      brandName = "Kili Labs",
+      ownerEmail = process.env.OWNER_EMAIL || "prakhargaba@gmail.com",
     } = req.body;
 
     const newContact = new Contact({
@@ -42,7 +42,7 @@ exports.submitContact = async (req, res) => {
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Phone:</strong> ${phone}</p>
-      <p><strong>Type of Service:</strong> ${typeOfService ? typeOfService.join(', ') : 'Not specified'}</p>
+      <p><strong>Type of Service:</strong> ${typeOfService ? typeOfService.join(", ") : "Not specified"}</p>
       <p><strong>Message:</strong></p>
       <p>${message}</p>
     `;
@@ -79,11 +79,11 @@ exports.submitContact = async (req, res) => {
       await sendEmail(
         ownerEmail,
         `New Contact Form Submission - ${brandName}`,
-        `New contact from ${name}. Email: ${email}, Phone: ${phone}, Type of Service: ${typeOfService ? typeOfService.join(', ') : 'Not specified'}, Message: ${message}`,
+        `New contact from ${name}. Email: ${email}, Phone: ${phone}, Type of Service: ${typeOfService ? typeOfService.join(", ") : "Not specified"}, Message: ${message}`,
         ownerHtml,
         [],
         3,
-        brandName
+        brandName,
       );
       // console.log(5);
       // Send confirmation email to user
@@ -94,7 +94,7 @@ exports.submitContact = async (req, res) => {
         userHtml,
         [],
         3,
-        brandName
+        brandName,
       );
       // console.log(6);
       // console.log("Contact emails sent successfully");

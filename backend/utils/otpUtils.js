@@ -10,11 +10,11 @@ const sendEmail = require("./mailer");
 const generateOTP = (length = 6) => {
   const digits = "0123456789";
   let otp = "";
-  
+
   for (let i = 0; i < length; i++) {
     otp += digits[Math.floor(Math.random() * 10)];
   }
-  
+
   return otp;
 };
 
@@ -26,7 +26,12 @@ const generateOTP = (length = 6) => {
  * @param {number} expiryMinutes - OTP expiry time in minutes (default: 10)
  * @returns {Promise<Object>} - Created OTP object
  */
-const createOTP = async (userId, email, purpose = "password_reset", expiryMinutes = 10) => {
+const createOTP = async (
+  userId,
+  email,
+  purpose = "password_reset",
+  expiryMinutes = 10,
+) => {
   try {
     // Delete any existing unused OTPs for this user and purpose
     await OTP.deleteMany({
@@ -98,7 +103,7 @@ const verifyOTP = async (email, otp, purpose = "password_reset") => {
       // Increment attempts
       otpDoc.attempts += 1;
       await otpDoc.save();
-      
+
       return {
         success: false,
         message: `Invalid OTP. ${3 - otpDoc.attempts} attempts remaining`,
@@ -128,23 +133,28 @@ const verifyOTP = async (email, otp, purpose = "password_reset") => {
  * @param {string} userName - User's name for personalization
  * @returns {Promise<boolean>} - Email sending result
  */
-const sendOTPEmail = async (email, otp, purpose = "password_reset", userName = "") => {
+const sendOTPEmail = async (
+  email,
+  otp,
+  purpose = "password_reset",
+  userName = "",
+) => {
   try {
     let subject, htmlContent;
 
     switch (purpose) {
       case "password_reset":
-        subject = "Password Reset OTP - Resume OS";
+        subject = "Password Reset OTP - Kili Labs";
         htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #333; margin-bottom: 10px;">Resume OS</h1>
+              <h1 style="color: #333; margin-bottom: 10px;">Kili Labs</h1>
               <h2 style="color: #666; font-weight: normal;">Password Reset Request</h2>
             </div>
             
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
-                ${userName ? `Hello ${userName},` : 'Hello,'}
+                ${userName ? `Hello ${userName},` : "Hello,"}
               </p>
               <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
                 We received a request to reset your password. Use the following OTP to reset your password:
@@ -166,24 +176,24 @@ const sendOTPEmail = async (email, otp, purpose = "password_reset", userName = "
             
             <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
               <p>This is an automated email. Please do not reply to this email.</p>
-              <p>&copy; 2025 Resume OS. All rights reserved.</p>
+              <p>&copy; 2025 Kili Labs. All rights reserved.</p>
             </div>
           </div>
         `;
         break;
 
       case "email_verification":
-        subject = "Email Verification OTP - Resume OS";
+        subject = "Email Verification OTP - Kili Labs";
         htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #333; margin-bottom: 10px;">Resume OS</h1>
+              <h1 style="color: #333; margin-bottom: 10px;">Kili Labs</h1>
               <h2 style="color: #666; font-weight: normal;">Email Verification</h2>
             </div>
             
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
-                ${userName ? `Hello ${userName},` : 'Hello,'}
+                ${userName ? `Hello ${userName},` : "Hello,"}
               </p>
               <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
                 Please verify your email address using the following OTP:
@@ -202,24 +212,24 @@ const sendOTPEmail = async (email, otp, purpose = "password_reset", userName = "
             
             <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
               <p>This is an automated email. Please do not reply to this email.</p>
-              <p>&copy; 2025 Resume OS. All rights reserved.</p>
+              <p>&copy; 2025 Kili Labs. All rights reserved.</p>
             </div>
           </div>
         `;
         break;
 
       default:
-        subject = "Verification OTP - Resume OS";
+        subject = "Verification OTP - Kili Labs";
         htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #333; margin-bottom: 10px;">Resume OS</h1>
+              <h1 style="color: #333; margin-bottom: 10px;">Kili Labs</h1>
               <h2 style="color: #666; font-weight: normal;">Verification Required</h2>
             </div>
             
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
-                ${userName ? `Hello ${userName},` : 'Hello,'}
+                ${userName ? `Hello ${userName},` : "Hello,"}
               </p>
               <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
                 Your verification OTP is:
@@ -238,7 +248,7 @@ const sendOTPEmail = async (email, otp, purpose = "password_reset", userName = "
             
             <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
               <p>This is an automated email. Please do not reply to this email.</p>
-              <p>&copy; 2025 Resume OS. All rights reserved.</p>
+              <p>&copy; 2025 Kili Labs. All rights reserved.</p>
             </div>
           </div>
         `;
@@ -249,7 +259,7 @@ const sendOTPEmail = async (email, otp, purpose = "password_reset", userName = "
       email,
       subject,
       `Your OTP is: ${otp}. This OTP will expire in 10 minutes.`,
-      htmlContent
+      htmlContent,
     );
 
     return true;

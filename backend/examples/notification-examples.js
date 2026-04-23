@@ -8,8 +8,8 @@ const notifications = require("../utils/notifications");
 // Example 1: Send notification to a specific user
 async function sendWelcomeNotification(userId) {
   const result = await notifications.sendToUser(userId, {
-    title: "Welcome to Resume OS!",
-    body: "Thank you for joining our platform. Start exploring Resume OS now!",
+    title: "Welcome to Kili Labs!",
+    body: "Thank you for joining our platform. Start exploring Kili Labs now!",
   });
 
   console.log("Welcome notification result:", result);

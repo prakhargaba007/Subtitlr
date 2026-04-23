@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport({
   port: process.env.SMTP_PORT || 465,
   secure: process.env.SECURE,
   auth: {
-    user: process.env.SMTP_USER || "founder.resumeos@prakhargaba.com",
+    user: process.env.SMTP_USER || "founder.kililabs@prakhargaba.com",
     pass: process.env.SMTP_PASS,
   },
 });
@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
  * @param {string} html - HTML email body
  * @param {Array} attachments - Array of email attachments
  * @param {number} maxRetries - Maximum number of retry attempts
- * @param {string} brandName - Brand name for the email (defaults to "Resume OS")
+ * @param {string} brandName - Brand name for the email (defaults to "Kili Labs")
  * @returns {Promise<boolean>} - Returns true if email sent successfully
  * @throws {Error} - Throws error if all retry attempts fail
  */
@@ -31,15 +31,14 @@ const sendEmail = async (
   html,
   attachments = [],
   maxRetries = 3,
-  brandName = "Resume OS"
+  brandName = "Kili Labs",
 ) => {
   let attempts = 0;
 
   while (attempts < maxRetries) {
     try {
-
       const mailOptions = {
-        from: `${brandName} <founder.resumeos@prakhargaba.com>`,
+        from: `${brandName} <founder.kililabs@prakhargaba.com>`,
         to,
         subject,
         text: body,
@@ -61,7 +60,7 @@ const sendEmail = async (
         await new Promise((resolve) => setTimeout(resolve, attempts * 1000));
       } else {
         throw new Error(
-          `Failed to send email after ${maxRetries} attempts: ${error.message}`
+          `Failed to send email after ${maxRetries} attempts: ${error.message}`,
         );
       }
     }
