@@ -64,6 +64,8 @@ instance.interceptors.response.use(
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
       localStorage.removeItem("userData");
+      // Also clear the token cookie
+      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
       window.location.href = "/?error=session_expired";
     }
     return Promise.reject(error);

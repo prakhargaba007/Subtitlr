@@ -159,10 +159,10 @@ export default function DashboardSidebar() {
                   style={{ width: `${Math.min(100, Math.max(0, 100 - usedPercent))}%` }}
                 />
               </div>
-              <button 
+              <button
                 onClick={() => router.push("/dashboard/billing")}
                 className="w-full mt-1 py-1.5 bg-primary/10 text-primary text-[11px] font-headline font-bold rounded-xl hover:bg-primary/20 transition-colors"
-               >
+              >
                 Upgrade Plan
               </button>
             </div>

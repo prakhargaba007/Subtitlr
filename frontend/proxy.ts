@@ -15,7 +15,8 @@ export function proxy(request: NextRequest) {
   }
 
   // If already logged in and visiting /login, redirect to dashboard
-  if (pathname === "/login" && token) {
+  // But don't redirect if there's an error param (e.g., session expired)
+  if (pathname === "/login" && token && !request.nextUrl.searchParams.has("error")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
