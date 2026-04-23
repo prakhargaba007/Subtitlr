@@ -25,7 +25,10 @@ const parseGeminiJsonResponse = (response) => {
   } else {
     throw new Error("Unexpected Gemini response format");
   }
-  const clean = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim();
+  const clean = text
+    .replace(/^```(?:json)?\n?/i, "")
+    .replace(/\n?```$/i, "")
+    .trim();
   return JSON.parse(clean);
 };
 
@@ -75,12 +78,14 @@ const transcribeFileWithWhisper = async (filePath, languageCode) => {
 
 /** ASR for a single extracted clip (VAD pipeline). Extend when adding non-Whisper providers. */
 const transcribeSpeechClip = async (filePath, languageCode) => {
-  const p = (process.env.SUBTITLE_ASR_PROVIDER || "whisper").toLowerCase().trim();
+  const p = (process.env.SUBTITLE_ASR_PROVIDER || "whisper")
+    .toLowerCase()
+    .trim();
   if (p === "whisper" || p === "") {
     return transcribeFileWithWhisper(filePath, languageCode);
   }
   throw new Error(
-    `SUBTITLE_ASR_PROVIDER="${p}" is not supported yet. Use whisper or omit.`
+    `SUBTITLE_ASR_PROVIDER="${p}" is not supported yet. Use whisper or omit.`,
   );
 };
 
@@ -102,8 +107,8 @@ const HINGLISH_SYSTEM_PROMPT =
   "Rules: " +
   "1. Transliterate pronunciation — do NOT translate the meaning. " +
   "2. Keep English words exactly as-is. " +
-  "3. Keep brand names, proper nouns, and URLs as-is (e.g. 'AI' stays 'AI', 'gharwale.AI' stays 'gharwale.AI'). " +
-  "4. Return ONLY a JSON object: { \"results\": [\"...\", \"...\"] } with one entry per input.";
+  "3. Keep brand names, proper nouns, and URLs as-is (e.g. 'AI' stays 'AI', 'Kili Labs' stays 'Kili Labs'). " +
+  '4. Return ONLY a JSON object: { "results": ["...", "..."] } with one entry per input.';
 
 const transliterateToHinglish = async (segments) => {
   if (!segments.length) return segments;
@@ -115,7 +120,8 @@ const transliterateToHinglish = async (segments) => {
   const gemini = getGemini();
   if (gemini) {
     const model =
-      process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview";
+      process.env.SUBTITLE_TRANSLITERATION_MODEL ||
+      "gemini-3.1-flash-lite-preview";
     const response = await gemini.models.generateContent({
       model,
       contents: `${HINGLISH_SYSTEM_PROMPT}\n\n${userPayload}`,
@@ -178,7 +184,7 @@ const generateSRT = (segments) =>
   segments
     .map(
       (seg, i) =>
-        `${i + 1}\n${formatSRTTime(seg.start)} --> ${formatSRTTime(seg.end)}\n${seg.text.trim()}`
+        `${i + 1}\n${formatSRTTime(seg.start)} --> ${formatSRTTime(seg.end)}\n${seg.text.trim()}`,
     )
     .join("\n\n");
 
@@ -212,7 +218,7 @@ const generateASS = (segments) => {
   const dialogues = segments
     .map(
       (seg) =>
-        `Dialogue: 0,${formatASSTime(seg.start)},${formatASSTime(seg.end)},Default,,0,0,0,,${seg.text.trim()}`
+        `Dialogue: 0,${formatASSTime(seg.start)},${formatASSTime(seg.end)},Default,,0,0,0,,${seg.text.trim()}`,
     )
     .join("\n");
 

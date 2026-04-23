@@ -303,7 +303,7 @@ export default function NavbarNested({ opened, onClose }: NavbarNestedProps) {
                   height={100}
                   priority
                 />
-                <span className="text-2xl font-bold">GharWale.ai</span>
+                <span className="text-2xl font-bold">Kili Labs</span>
               </div>
             </Link>
           </div>

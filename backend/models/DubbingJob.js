@@ -97,6 +97,22 @@ const dubbingJobSchema = new mongoose.Schema(
     fileType: { type: String, enum: ["video", "audio"], required: true },
     sourceLanguage: { type: String, default: "auto" },
     targetLanguage: { type: String, required: true },
+    /**
+     * Client-supplied idempotency key. If a request arrives with the same key
+     * as an existing job for this user, the existing job is returned immediately
+     * without creating a new job or reserving usage again.
+     */
+    idempotencyKey: { type: String, default: null, index: true },
+    /** Seconds reserved against the user quota when the job was accepted. */
+    reservedSeconds: { type: Number, default: 0 },
+    /**
+     * Actual seconds of content processed before the job completed or failed.
+     * Set by the controller at the end of the pipeline. Used for partial refunds:
+     *   refund = reservedSeconds - processedSeconds
+     */
+    processedSeconds: { type: Number, default: null },
+    /** UTC timestamp when the job transitioned from pending → active processing. */
+    processingStartedAt: { type: Date, default: null },
     status: {
       type: String,
       enum: [
@@ -152,5 +168,8 @@ const dubbingJobSchema = new mongoose.Schema(
 
 // Allow clients to poll for status updates efficiently
 dubbingJobSchema.index({ user: 1, createdAt: -1 });
+// Idempotency: enforce uniqueness of (user, idempotencyKey) for non-null keys.
+// sparse: true means documents without idempotencyKey are excluded from the index.
+dubbingJobSchema.index({ user: 1, idempotencyKey: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("DubbingJob", dubbingJobSchema);

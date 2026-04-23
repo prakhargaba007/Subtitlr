@@ -6,7 +6,7 @@ exports.listPublicPlans = async (req, res, next) => {
     const plans = await PlanCatalog.find({ isActivePublic: true })
       .sort({ sortOrder: 1, version: -1 })
       .select(
-        "key displayName priceDisplay discountDisplay interval dodoProductId creditsPerPeriod version featureFlags sortOrder"
+        "key displayName priceDisplay discountDisplay originalPrice interval dodoProductId creditsPerPeriod version featureFlags sortOrder"
       )
       .lean();
 

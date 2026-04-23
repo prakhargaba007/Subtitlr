@@ -9,7 +9,7 @@ import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { ClientProviders } from "./providers";
 
 export const metadata = {
-  title: "GharWale.ai Admin Portal",
+  title: "Kili Labs Admin Portal",
   robots: {
     index: false,
     follow: false,

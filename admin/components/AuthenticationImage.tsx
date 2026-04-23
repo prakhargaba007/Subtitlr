@@ -108,7 +108,7 @@ export function AuthenticationImage() {
             height={200}
             style={{ width: "30%", height: "auto" }}
           />
-          <span className="text-2xl font-bold">GharWale.AI</span>
+          <span className="text-2xl font-bold">Kili Labs</span>
         </div>
 
         <Title order={2} className={classes.title} ta="center" mt="md" mb={50}>

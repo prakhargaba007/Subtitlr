@@ -176,7 +176,7 @@ const sendOTPEmail = async (
             
             <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
               <p>This is an automated email. Please do not reply to this email.</p>
-              <p>&copy; 2025 Kili Labs. All rights reserved.</p>
+              <p>&copy; 2026 Kili Labs. All rights reserved.</p>
             </div>
           </div>
         `;
@@ -212,7 +212,7 @@ const sendOTPEmail = async (
             
             <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
               <p>This is an automated email. Please do not reply to this email.</p>
-              <p>&copy; 2025 Kili Labs. All rights reserved.</p>
+              <p>&copy; 2026 Kili Labs. All rights reserved.</p>
             </div>
           </div>
         `;
@@ -248,7 +248,7 @@ const sendOTPEmail = async (
             
             <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
               <p>This is an automated email. Please do not reply to this email.</p>
-              <p>&copy; 2025 Kili Labs. All rights reserved.</p>
+              <p>&copy; 2026 Kili Labs. All rights reserved.</p>
             </div>
           </div>
         `;

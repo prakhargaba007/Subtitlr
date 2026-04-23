@@ -378,7 +378,7 @@ function page() {
                 Dashboard Overview
               </h1>
               <p className="text-gray-600">
-                Welcome back! Here's what's happening with GharWale.ai
+                Welcome back! Here's what's happening with Kili Labs
               </p>
             </div>
             <button

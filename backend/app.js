@@ -172,6 +172,11 @@ mongoose
     } catch (e) {
       console.warn("[plan catalog seed]", e.message);
     }
+    // Start the stuck-job reaper (cleans up crashed jobs + refunds reserved usage).
+    // Only run in persistent server environments, not in serverless.
+    if (!isServerlessEnvironment) {
+      require("./workers/stuckJobReaper").startReaper();
+    }
     app.listen(port);
     console.log(`App listening on port ${port}!`);
   })

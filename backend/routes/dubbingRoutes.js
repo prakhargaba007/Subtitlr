@@ -3,6 +3,7 @@ const multer = require("multer");
 const router = express.Router();
 
 const isAuth = require("../middleware/is-auth");
+const checkDubbingLimits = require("../middleware/checkDubbingLimits");
 const {
   startDubbingJob,
   startDubbingFromYoutube,
@@ -68,13 +69,15 @@ const upload = multer({
 //   - file: audio or video file
 //   - targetLanguage: e.g. "french", "spanish", "hindi"
 //   - sourceLanguage: (optional) e.g. "english" — auto-detected if omitted
-router.post("/start", isAuth, upload.single("file"), startDubbingJob);
+router.post("/start", isAuth, upload.single("file"), checkDubbingLimits, startDubbingJob);
 
 // POST /api/dubbing/start-youtube
 // Body: application/json
 //   - youtubeUrl: full YouTube video URL
 //   - targetLanguage: e.g. "french", "spanish", "hindi"
 //   - sourceLanguage: (optional) e.g. "english" — auto-detected if omitted
+// Note: youtube route buffers the video internally; limit check runs inside the controller
+// after the download completes (see dubbingController.startDubbingFromYoutube).
 router.post("/start-youtube", isAuth, express.json(), startDubbingFromYoutube);
 
 // GET /api/dubbing/voices/local-inworld — curated Inworld IDs from backend/voices (must be before /:id)

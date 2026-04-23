@@ -33,7 +33,7 @@ function normalizeMoney(s: string): string {
   if (/[%]/.test(t)) return t;
   const n = parseFirstNumber(t);
   if (n == null) return t;
-  const dollar = `$${n % 1 === 0 ? String(Math.round(n)) : n.toFixed(2)}`;
+  const dollar = `$${Math.round(n)}`;
   const slash = t.indexOf("/");
   if (slash >= 0) {
     return dollar + t.slice(slash);
@@ -67,8 +67,7 @@ export type PriceBlock =
   | { type: "sale"; original: string; sale: string; percent: number };
 
 function formatMoneyNumber(n: number): string {
-  const v = n % 1 === 0 ? String(Math.round(n)) : n.toFixed(2);
-  return `$${v}`;
+  return `$${Math.round(n)}`;
 }
 
 export function billingSubtext(
@@ -83,7 +82,7 @@ export function billingSubtext(
   }
 
   // Yearly view: pricing is shown per-month (derived from annual), but billed yearly.
-  return { line1: "Billed yearly" };
+  return { line1: "Billed " + plan.priceDisplay };
 }
 
 function parsePercent(s: string): number | null {
@@ -117,7 +116,28 @@ export function getPriceBlock(
     return { type: "single", text: line };
   }
 
-  // Percent discount mode (requested behavior):
+  // Explicit originalPrice vs final price mode (new structured data)
+  if (plan.originalPrice != null && priceDisplay) {
+    const saleN = parseFirstNumber(priceDisplay);
+    if (saleN != null && plan.originalPrice > saleN) {
+      const o = plan.originalPrice;
+      const percent = Math.round((1 - saleN / o) * 100);
+      return {
+        type: "sale",
+        original: withBillingSuffix(
+          formatMoneyNumber(o / divisor),
+          suffixBilling,
+        ),
+        sale: withBillingSuffix(
+          formatMoneyNumber(saleN / divisor),
+          suffixBilling,
+        ),
+        percent: Math.max(0, percent),
+      };
+    }
+  }
+
+  // Percent discount mode (legacy/fallback):
   // priceDisplay = original/list (e.g. "$10"), discountDisplay = "10%" => sale becomes "$9".
   if (priceDisplay && discountDisplay) {
     const pct = parsePercent(discountDisplay);
@@ -222,32 +242,66 @@ export function featuredPlanIndex(count: number): number {
   return Math.floor(count / 2);
 }
 
-export function featureBullets(plan: PublicPlan): string[] {
-  const f = (plan.featureFlags || {}) as Record<string, unknown>;
+export function featureBullets(plan: PublicPlan, lowerPlan?: PublicPlan): string[] {
+  const f = plan.featureFlags || {};
+  const lf = lowerPlan?.featureFlags || {};
   const out: string[] = [];
-  if (plan.creditsPerPeriod > 0) {
-    out.push(`${plan.creditsPerPeriod} credits per billing period`);
-    out.push("1 credit = 1 minute of dubbing processing");
-  } else {
-    out.push("Starter credits included");
-    out.push("1 credit = 1 minute of dubbing processing");
+
+  if (lowerPlan) {
+    out.push(`Everything in ${lowerPlan.displayName} plan`);
   }
-  if (typeof f.maxInputMinutes === "number") {
-    if (isFreePlan(plan) && f.maxInputMinutes < 10) {
-      // out.push(`Up to 10 min per video`);
-      out.push(`Get 30 credits free`);
+
+  // 1. Credits
+  if (plan.creditsPerPeriod > (lowerPlan?.creditsPerPeriod || 0)) {
+    out.push(`${plan.creditsPerPeriod} credits per month`);
+  } else if (!lowerPlan) {
+    if (plan.creditsPerPeriod > 0) {
+      out.push(`${plan.creditsPerPeriod} credits per month`);
     } else {
-      out.push(`Up to ${f.maxInputMinutes} min per file`);
+      out.push("Starter credits included");
     }
   }
-  if (f.lipSync === true) {
+
+  // 2. Processing Rate (only for first plan)
+  if (!lowerPlan) {
+    out.push("1 credit = 1 second processing");
+  }
+
+  // 3. Max Duration
+  if (f.maxInputMinutes && f.maxInputMinutes !== lf.maxInputMinutes) {
+    out.push(`Up to ${f.maxInputMinutes} min per file`);
+  }
+
+  // 4. Max File Size
+  if (f.maxFileSizeMB && f.maxFileSizeMB !== lf.maxFileSizeMB) {
+    out.push(`Up to ${f.maxFileSizeMB} MB file size`);
+  }
+
+  // 5. Features that become enabled
+  if (f.allowSpeakerDiarization && !lf.allowSpeakerDiarization) {
+    out.push("Multi-speaker detection");
+  }
+  if (f.lipSync && !lf.lipSync) {
     out.push("Lip-sync dubbing");
   }
-  if (Array.isArray(f.exportFormats) && f.exportFormats.length) {
-    out.push(`Exports: ${(f.exportFormats as string[]).join(", ")}`);
+  if (f.watermark === false && lf.watermark !== false) {
+    out.push("No watermark");
   }
-  if (typeof f.maxConcurrentJobs === "number") {
-    out.push(`${f.maxConcurrentJobs} concurrent job(s)`);
+
+  // 6. Support level upgrade
+  if (f.supportLevel && f.supportLevel !== lf.supportLevel) {
+    if (f.supportLevel !== "email") {
+      const level = f.supportLevel.replace(/_/g, " ");
+      out.push(`${level.charAt(0).toUpperCase() + level.slice(1)} support`);
+    }
   }
-  return out.slice(0, 6);
+
+  // 7. Export formats
+  const currFmt = JSON.stringify([...(f.exportFormats || [])].sort());
+  const prevFmt = JSON.stringify([...(lf.exportFormats || [])].sort());
+  if (currFmt !== prevFmt && (f.exportFormats?.length ?? 0) > 0) {
+    out.push(`Exports: ${f.exportFormats?.join(", ")}`);
+  }
+
+  return out.slice(0, 8);
 }

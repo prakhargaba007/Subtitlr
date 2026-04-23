@@ -30,6 +30,7 @@ exports.createPlan = async (req, res, next) => {
     const displayName = String(req.body?.displayName || "").trim();
     const priceDisplay = String(req.body?.priceDisplay || "").trim();
     const discountDisplay = String(req.body?.discountDisplay || "").trim();
+    const originalPrice = req.body?.originalPrice !== undefined && req.body?.originalPrice !== null ? Number(req.body.originalPrice) : null;
     const interval = String(req.body?.interval || "").trim();
     const dodoProductId = String(req.body?.dodoProductId || "").trim();
     const creditsPerPeriod = Math.max(0, Number(req.body?.creditsPerPeriod) || 0);
@@ -55,6 +56,7 @@ exports.createPlan = async (req, res, next) => {
       displayName,
       priceDisplay,
       discountDisplay,
+      originalPrice,
       interval,
       dodoProductId,
       creditsPerPeriod,
@@ -93,6 +95,10 @@ exports.patchPlan = async (req, res, next) => {
     setStr("discountDisplay");
     setStr("interval");
     setStr("dodoProductId");
+
+    if (req.body?.originalPrice !== undefined) {
+      patch.originalPrice = req.body.originalPrice !== null ? Number(req.body.originalPrice) : null;
+    }
 
     if (req.body?.creditsPerPeriod !== undefined) {
       patch.creditsPerPeriod = Math.max(0, Math.floor(Number(req.body.creditsPerPeriod) || 0));

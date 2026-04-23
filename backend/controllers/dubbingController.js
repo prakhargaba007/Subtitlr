@@ -14,6 +14,7 @@ const {
   assertEnoughCredits,
   deductCredits,
 } = require("../utils/creditUtils");
+const { confirmDubbingUsage, refundDubbingUsage } = require("../utils/usageService");
 
 const {
   getFileDuration,
@@ -448,6 +449,10 @@ async function runDubbingPipelineFromInput(
     duration,
     creditsUsed: creditsNeeded,
     status: "extracting",
+    // Limit-system fields
+    idempotencyKey:     req.dubbingIdempotencyKey   ?? null,
+    reservedSeconds:    req.dubbingDurationSeconds   ?? duration,
+    processingStartedAt: new Date(),
   });
 
   await createProjectForDubbingJob(req.userId, job._id);
@@ -1347,8 +1352,24 @@ exports.startDubbingJob = async (req, res) => {
     );
     const finalUrl = await storage.getPublicUrl(finalKey);
 
-    // ── Step 10: Deduct credits + finalise job ────────────────────────────────
+    // ── Step 10: Confirm usage reservation + Deduct credits + finalise job ────
     emit({ stage: "saving", message: "Saving results…" });
+
+    // Confirm the usage reservation made by checkDubbingLimits middleware.
+    // Passes the actual job duration as both reservedDur and actualDur (full confirm).
+    if (req.dubbingUsageReserved) {
+      await confirmDubbingUsage(
+        req.userId,
+        job._id,
+        req.dubbingDurationSeconds ?? duration,
+        duration, // actual processed duration = file duration (full pipeline ran)
+      ).catch((e) =>
+        console.warn("[dubbing] Usage confirm failed (non-fatal):", e.message)
+      );
+    }
+
+    // Record processedSeconds on the job for audit / stuck-job reaper.
+    await DubbingJob.findByIdAndUpdate(job._id, { processedSeconds: duration }).catch(() => {});
 
     await deductCredits(
       req.userId,
@@ -1415,6 +1436,24 @@ exports.startDubbingJob = async (req, res) => {
     res.end();
   } catch (err) {
     console.error("Dubbing pipeline error:", err);
+
+    // Atomically refund the usage reservation.
+    // Only refunds the unused portion: reserved - processed.
+    // processedSeconds is null until the pipeline stamps it, so failed early-stage
+    // jobs (transcription, separation) get a full refund (processedSeconds = 0).
+    if (req.dubbingUsageReserved && req.dubbingDurationSeconds) {
+      const processedSec = (job && job.processedSeconds != null)
+        ? job.processedSeconds
+        : 0; // no partial processing tracked → full refund
+      await refundDubbingUsage(
+        req.userId,
+        job?._id ?? "unknown",
+        req.dubbingDurationSeconds,
+        processedSec,
+      ).catch((e) =>
+        console.warn("[dubbing] Usage refund failed (non-fatal):", e.message)
+      );
+    }
 
     if (job) {
       await DubbingJob.findByIdAndUpdate(job._id, {

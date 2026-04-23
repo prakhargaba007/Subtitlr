@@ -8,11 +8,37 @@ export type PublicPlan = {
   displayName: string;
   priceDisplay?: string;
   discountDisplay?: string;
+  originalPrice?: number;
   interval: PlanInterval;
   dodoProductId: string;
   creditsPerPeriod: number;
   version: number;
-  featureFlags?: Record<string, unknown>;
+  featureFlags?: {
+    maxInputMinutes?: number | null;
+    maxFileSizeMB?: number | null;
+    maxConcurrentJobs?: number | null;
+    dailyLimitSeconds?: number | null;
+    monthlyLimitSeconds?: number | null;
+    overageAllowed?: boolean;
+    dailySafetyCapSeconds?: number | null;
+    dailyCostCapUSD?: number | null;
+    ratePerSecondUSD?: number | null;
+    ttsProviders?: string[];
+    allowLibraryVoices?: boolean;
+    allowVoiceCloning?: boolean;
+    allowSpeakerDiarization?: boolean;
+    allowSourceSeparation?: boolean;
+    sourceSeparationMethods?: string[];
+    lipSync?: boolean;
+    allowBackgroundMixControl?: boolean;
+    exportFormats?: string[];
+    watermark?: boolean;
+    retentionDays?: number | null;
+    supportedTargetLanguages?: string[];
+    queuePriority?: "normal" | "high" | "highest";
+    uiBadges?: string[];
+    supportLevel?: string;
+  };
   sortOrder?: number;
 };
 

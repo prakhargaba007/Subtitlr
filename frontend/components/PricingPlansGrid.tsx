@@ -61,7 +61,7 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
   async function startDodoCheckout(planKey: string) {
     if (typeof window === "undefined") return;
     if (checkoutPlanKey) return; // Strict lock to prevent multi-click spam
-    
+
     const token = localStorage.getItem("token");
     if (!token) {
       // login page does not support redirect params yet; keep it simple
@@ -151,7 +151,7 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
             const free = isFreePlan(plan);
             const popular = index === popularIndex;
             const price = getPriceBlock(plan, billing, free);
-            const bullets = featureBullets(plan);
+            const bullets = featureBullets(plan, index > 0 ? visible[index - 1] : undefined);
             const bill = billingSubtext(plan, billing, free);
 
             const cardClass = popular
@@ -163,11 +163,22 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
                 key={plan._id}
                 className={`bg-surface-container-lowest p-10 rounded-4xl border relative flex flex-col ${cardClass}`}
               >
-                {popular && (
+                {(plan.featureFlags?.uiBadges?.length ?? 0) > 0 ? (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    {plan.featureFlags?.uiBadges?.map((badge) => (
+                      <div
+                        key={badge}
+                        className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg"
+                      >
+                        {badge.replace(/_/g, " ")}
+                      </div>
+                    ))}
+                  </div>
+                ) : popular ? (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full">
                     Most popular
                   </div>
-                )}
+                ) : null}
 
                 <h3 className="font-headline text-h4 font-bold mb-2">{plan.displayName}</h3>
 
@@ -177,11 +188,22 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
                       <div className="flex items-center gap-2">
                         <p className="text-body text-on-surface-variant line-through">{price.original}</p>
                         <p className="font-bold text-h3 text-primary">{price.sale}</p>
+                        {price.percent > 0 && (
+                          <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded ml-2 uppercase tracking-wide">
+                            Save {price.percent}%
+                          </span>
+                        )}
                       </div>
-
                     </div>
                   ) : (
-                    <p className="font-bold text-h3">{price.text}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-h3">{price.text}</p>
+                      {promoBadge(plan, price) && (
+                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded ml-2 uppercase tracking-wide">
+                          {promoBadge(plan, price)}
+                        </span>
+                      )}
+                    </div>
                   )}
                   <div className="flex items-center gap-1 mt-2">
                     {bill ? (
