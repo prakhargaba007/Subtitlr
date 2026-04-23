@@ -1,12 +1,13 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const User = require("../models/User.js");
 const SubtitleJob = require("../models/Subtitle.js");
 const { createOTP, sendOTPEmail, verifyOTP } = require("../utils/otpUtils");
 const { OAuth2Client } = require("google-auth-library");
 const { addCredits, DEFAULT_CREDITS, SIGNUP_CREDITS } = require("../utils/creditUtils");
-
+const { generateTokens } = require("../utils/authTokens");
+const RefreshToken = require("../models/RefreshToken");
+const crypto = require("crypto");
 
 exports.optGenerte = async (req, res, next) => {
   try {
@@ -139,35 +140,23 @@ exports.signup = async (req, res, next) => {
     await user.save();
     await addCredits(user._id, SIGNUP_CREDITS, "signup_bonus", "Welcome credits");
 
-    const payload = {
+    await generateTokens(user, req, res);
+
+    res.json({
+      success: true,
+      message: "User created successfully",
+      userId: user._id,
       user: {
-        id: user._id,
-        // role: user.role,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        userName: user.userName,
+        role: user.role,
+        accessPermissions: user.accessPermissions || [],
       },
-    };
-
-    jwt.sign(payload, process.env.JWT_SECRET, (err, token) => {
-      if (err) {
-        next(err); // Pass error to error handling middleware
-      } else {
-        res.json({
-          message: "User created successfully",
-          token,
-          userId: user._id,
-          user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            userName: user.userName,
-            // role: user.role,
-          },
-        });
-      }
     });
-
-    // res.status(200).json(user);
   } catch (err) {
-    next(err); // Pass error to error handling middleware
+    next(err);
   }
 };
 
@@ -242,41 +231,23 @@ exports.login = async (req, res, next) => {
       }
     }
 
-    // Create and return a JWT token
-    const payload = {
+    await generateTokens(user, req, res);
+
+    res.json({
+      success: true,
+      userId: user._id,
       user: {
-        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        userName: user.userName,
+        profilePicture: user.profilePicture,
         role: user.role,
         accessPermissions: user.accessPermissions || [],
       },
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      // { expiresIn: "1h" },
-      (err, token) => {
-        if (err) {
-          next(err); // Pass error to error handling middleware
-        } else {
-          res.json({
-            token,
-            userId: user._id,
-            user: {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              userName: user.userName,
-              profilePicture: user.profilePicture,
-              role: user.role,
-              accessPermissions: user.accessPermissions || [],
-            },
-          });
-        }
-      }
-    );
+    });
   } catch (err) {
-    next(err); // Pass error to error handling middleware
+    next(err);
   }
 };
 
@@ -510,41 +481,23 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
       user.credits = SIGNUP_CREDITS;
     }
 
-    // Create and return a JWT token
-    const payload = {
+    await generateTokens(user, req, res);
+
+    res.json({
+      success: true,
+      message: "OTP verified successfully",
+      userId: user._id,
       user: {
-        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        userName: user.userName,
+        profilePicture: user.profilePicture,
         role: user.role,
         accessPermissions: user.accessPermissions || [],
+        tempUser: false,
       },
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      (err, token) => {
-        if (err) {
-          next(err); // Pass error to error handling middleware
-        } else {
-          res.json({
-            success: true,
-            message: "OTP verified successfully",
-            token,
-            userId: user._id,
-            user: {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              userName: user.userName,
-              profilePicture: user.profilePicture,
-              role: user.role,
-              accessPermissions: user.accessPermissions || [],
-              tempUser: false,
-            },
-          });
-        }
-      }
-    );
+    });
   } catch (err) {
     console.error("Error in verify OTP for sign-in:", err);
     next(err);
@@ -730,41 +683,137 @@ exports.googleExchange = async (req, res, next) => {
       }
     }
 
-    // Issue app JWT
-    const payload = {
+    await generateTokens(user, req, res);
+
+    res.json({
+      success: true,
+      userId: user._id,
       user: {
-        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        userName: user.userName,
+        profilePicture: user.profilePicture,
         role: user.role,
         accessPermissions: user.accessPermissions || [],
       },
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      (err, token) => {
-        if (err) {
-          next(err);
-        } else {
-          res.json({
-            token,
-            userId: user._id,
-            user: {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              userName: user.userName,
-              profilePicture: user.profilePicture,
-              role: user.role,
-              accessPermissions: user.accessPermissions || [],
-            },
-            // Optionally return Google tokens if needed on client (usually not necessary)
-            // googleTokens: tokenResponse.tokens,
-          });
-        }
-      }
-    );
+    });
   } catch (err) {
     next(err);
+  }
+};
+
+exports.refresh = async (req, res, next) => {
+  try {
+    const rawToken = req.cookies?.refreshToken;
+    if (!rawToken) return res.status(401).json({ message: "No refresh token" });
+
+    // Hash token to query DB
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    
+    // ATOMIC OPERATION: Claim the unrevoked token
+    const tokenDoc = await RefreshToken.findOneAndUpdate(
+      { tokenHash, isRevoked: false },
+      { isRevoked: true }, // Atomically mark it as used
+      { new: false } // Return the original document
+    ).populate('user');
+
+    if (!tokenDoc) {
+      // It didn't exist OR it was already revoked (Reuse)
+      const existingToken = await RefreshToken.findOne({ tokenHash });
+      
+      if (existingToken && existingToken.isRevoked) {
+        console.warn(`[CRITICAL] Refresh Token Reuse Detected! Family: ${existingToken.familyId}, IP: ${req.ip}`);
+        
+        // 1. Revoke the entire token family
+        await RefreshToken.updateMany({ familyId: existingToken.familyId }, { isRevoked: true });
+        
+        // 2. Increment user tokenVersion to kill all active access tokens
+        if (existingToken.user) {
+           await User.findByIdAndUpdate(existingToken.user, { $inc: { tokenVersion: 1 } });
+        }
+
+        res.clearCookie("accessToken"); res.clearCookie("refreshToken"); res.clearCookie("csrfToken");
+        return res.status(401).json({ message: "Security violation detected. Please log in again." });
+      }
+
+      // Token doesn't exist at all
+      res.clearCookie("accessToken"); res.clearCookie("refreshToken"); res.clearCookie("csrfToken");
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // 2. ENFORCE DEVICE / IP VALIDATION & 8. ANOMALY DETECTION
+    if (tokenDoc.ipAddress !== req.ip || tokenDoc.userAgent !== req.get('User-Agent')) {
+      console.warn(`[ANOMALY] IP or Device change detected for user ${tokenDoc.user._id}. Old IP: ${tokenDoc.ipAddress}, New: ${req.ip}`);
+      // Stub for notification system
+      console.log(`[Notification Stub] Alerting user ${tokenDoc.user._id} about new login location/device.`);
+    }
+
+    // Generate new tokens using the SAME familyId
+    await generateTokens(tokenDoc.user, req, res, tokenDoc.familyId);
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.logout = async (req, res, next) => {
+  try {
+    const rawToken = req.cookies?.refreshToken;
+    if (rawToken) {
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenDoc = await RefreshToken.findOne({ tokenHash });
+      if (tokenDoc) {
+        // Revoke entire device family on logout
+        await RefreshToken.updateMany({ familyId: tokenDoc.familyId }, { isRevoked: true });
+      }
+    }
+
+    // Clear all cookies
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken", { path: "/api/auth" });
+    res.clearCookie("csrfToken");
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.logoutAllDevices = async (req, res, next) => {
+  try {
+    // Revoke all refresh tokens for user
+    await RefreshToken.updateMany({ user: req.userId }, { isRevoked: true });
+    // Invalidate all access tokens
+    await User.findByIdAndUpdate(req.userId, { $inc: { tokenVersion: 1 } });
+    
+    res.clearCookie("accessToken"); res.clearCookie("refreshToken", { path: "/api/auth" }); res.clearCookie("csrfToken");
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getSessions = async (req, res, next) => {
+  try {
+    const sessions = await RefreshToken.find({ user: req.userId, isRevoked: false })
+      .select('ipAddress userAgent createdAt lastUsedAt familyId');
+    res.status(200).json({ success: true, sessions });
+  } catch (err) { 
+    next(err); 
+  }
+};
+
+exports.revokeSession = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    await RefreshToken.findOneAndUpdate(
+      { _id: sessionId, user: req.userId },
+      { isRevoked: true }
+    );
+    res.status(200).json({ success: true, message: "Session revoked" });
+  } catch (err) { 
+    next(err); 
   }
 };

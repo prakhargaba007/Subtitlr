@@ -5,6 +5,7 @@ const instance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Crucial: Sends HttpOnly cookies automatically
 });
 
 /** Base URL for S3-hosted assets (profile pictures, uploaded files, etc.) */
@@ -22,54 +23,78 @@ export function s3Url(keyOrUrl: string | null | undefined): string {
   return `${S3_BASE_URL}/${keyOrUrl.replace(/^\//, "")}`;
 }
 
+// Helper to read non-HttpOnly CSRF cookie
+const getCsrfToken = () => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(^|;)\s*csrfToken\s*=\s*([^;]+)/);
+  return match ? match[2] : null;
+};
+
 // Request interceptor
-instance.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage on client side only
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+instance.interceptors.request.use((config) => {
+  if (config.method && ['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      config.headers['X-CSRF-Token'] = csrfToken;
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+  }
+  return config;
+});
 
-// JWT errors that indicate the token is invalid - should log out user
-const JWT_INVALID_MESSAGES = [
-  "invalid signature",
-  "jwt expired",
-  "jwt malformed",
-  "invalid token",
-  "not authenticated",
-];
+// Response Interceptor: Auto-refresh on 401
+let isRefreshing = false;
+let failedQueue: any[] = [];
 
-function shouldLogOut(error: {
-  response?: { status?: number; data?: { message?: string } };
-}) {
-  if (error.response?.status === 401) return true;
-  const msg = error.response?.data?.message?.toLowerCase() ?? "";
-  return JWT_INVALID_MESSAGES.some((m) => msg.includes(m));
-}
+const processQueue = (error: any) => {
+  failedQueue.forEach(prom => {
+    if (error) prom.reject(error);
+    else prom.resolve();
+  });
+  failedQueue = [];
+};
 
-// Response interceptor
 instance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (typeof window !== "undefined" && shouldLogOut(error)) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("userData");
-      // Also clear the token cookie
-      document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
-      window.location.href = "/?error=session_expired";
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Prevent infinite loops on the refresh endpoint itself
+    if (originalRequest.url?.includes("/api/auth/refresh")) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(() => {
+          // Retry original request (cookies are sent automatically)
+          return instance(originalRequest);
+        }).catch(err => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Call refresh endpoint
+        await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/refresh`, {}, { withCredentials: true });
+        
+        processQueue(null);
+        return instance(originalRequest);
+      } catch (err) {
+        processQueue(err);
+        // If refresh fails, redirect to login
+        if (typeof window !== "undefined") {
+          window.location.href = "/?error=session_expired";
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export default instance;

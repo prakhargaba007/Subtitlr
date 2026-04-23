@@ -3,20 +3,49 @@ const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const cors = require("cors"); // Import the CORS package
+const cors = require("cors");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Configure the CORS middleware
-app.use(cors());
+// Security Headers with Strict CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+}));
+// Parse Cookies
+app.use(cookieParser());
+
+// Configure the CORS middleware for cookies
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+      "https://www.kililabs.io",
+      "https://admin.kililabs.io",
+      process.env.FRONTEND_URL,
+      process.env.ADMIN_URL,
+    ].filter(Boolean),
+    credentials: true,
+  }),
+);
 
 // Dodo webhooks need raw body for signature verification (must run before JSON parser)
 app.use(
   "/api/webhooks/dodo",
   express.raw({ type: "application/json", limit: "1mb" }),
-  require("./routes/dodoWebhookRoutes")
+  require("./routes/dodoWebhookRoutes"),
 );
 
 // Increase body size limits to handle resume/PDF uploads
@@ -24,45 +53,53 @@ app.use(bodyParser.json({ limit: "5mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 
 // Create necessary directories if not in a serverless environment
-const fs = require('fs');
+const fs = require("fs");
 
 // Check if we're running in a Vercel serverless environment
-const isServerlessEnvironment = process.env.VERCEL === '1';
+const isServerlessEnvironment = process.env.VERCEL === "1";
 
 if (!isServerlessEnvironment) {
   try {
     // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(__dirname, 'public', 'uploads');
+    const uploadsDir = path.join(__dirname, "public", "uploads");
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
     // Create images directory if it doesn't exist
-    const imagesDir = path.join(__dirname, 'images');
+    const imagesDir = path.join(__dirname, "images");
     if (!fs.existsSync(imagesDir)) {
       fs.mkdirSync(imagesDir, { recursive: true });
     }
 
     // Create certificates directory if it doesn't exist
-    const certificatesDir = path.join(__dirname, 'public', 'certificates');
+    const certificatesDir = path.join(__dirname, "public", "certificates");
     if (!fs.existsSync(certificatesDir)) {
       fs.mkdirSync(certificatesDir, { recursive: true });
     }
 
     // Create processed videos directories if they don't exist
-    const processedDirs = ['1080p', '720p', '480p'];
-    const processedBaseDir = path.join(__dirname, 'public', 'uploads', 'processed');
+    const processedDirs = ["1080p", "720p", "480p"];
+    const processedBaseDir = path.join(
+      __dirname,
+      "public",
+      "uploads",
+      "processed",
+    );
     if (!fs.existsSync(processedBaseDir)) {
       fs.mkdirSync(processedBaseDir, { recursive: true });
     }
-    processedDirs.forEach(dir => {
+    processedDirs.forEach((dir) => {
       const fullDir = path.join(processedBaseDir, dir);
       if (!fs.existsSync(fullDir)) {
         fs.mkdirSync(fullDir, { recursive: true });
       }
     });
   } catch (error) {
-    console.warn('Warning: Could not create directories. This is expected in some environments:', error.message);
+    console.warn(
+      "Warning: Could not create directories. This is expected in some environments:",
+      error.message,
+    );
   }
 }
 
@@ -97,16 +134,7 @@ app.use("/certificates", (req, res, next) => {
   }
 });
 
-// Set CORS headers manually if needed
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, DELETE, PATCH"
-  );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-});
+// Set CORS headers manually if needed (Removed in favor of robust cors package above)
 
 // Setup Bull Board queue dashboard
 // const queueDashboard = require('./utils/queueDashboard');
@@ -155,11 +183,14 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/coming-soon", comingSoonRoutes);
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.log(error);
+  console.error("[Global Error Logger]", error); // Log full error internally
+  
   const status = error.statusCode || 500;
-  const message = error.message;
-  const data = error.data;
-  res.status(status).send({ message: message, data: data });
+  // Mask generic 500 errors to prevent leakage, but allow custom error messages
+  const message = status === 500 ? "Something went wrong" : error.message;
+  const data = status === 500 ? null : error.data;
+  
+  res.status(status).send({ success: false, message: message, data: data });
 });
 
 mongoose
@@ -168,7 +199,8 @@ mongoose
     try {
       const { seedPlanCatalogFromEnv } = require("./utils/planCatalogSeed");
       const out = await seedPlanCatalogFromEnv();
-      if (out.seeded) console.log(`[plan catalog] upserted ${out.seeded} row(s) from env`);
+      if (out.seeded)
+        console.log(`[plan catalog] upserted ${out.seeded} row(s) from env`);
     } catch (e) {
       console.warn("[plan catalog seed]", e.message);
     }

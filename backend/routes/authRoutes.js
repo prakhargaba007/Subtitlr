@@ -3,11 +3,29 @@ const { body } = require("express-validator");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const isAuth = require("../middleware/is-auth");
+const rateLimit = require("express-rate-limit");
+
+const userRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, // 5 attempts
+  keyGenerator: (req) => {
+    // Rate limit per email or fallback to IP
+    return req.body.email || req.body.id || req.ip;
+  },
+  message: { success: false, message: "Too many attempts. Please try again later." }
+});
+
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20,
+  message: { success: false, message: "Too many refresh attempts." }
+});
 
 
 // Route: POST /api/auth/opt-generate
 router.post(
   "/opt-generate",
+  userRateLimiter,
   [
     body("email")
       .isEmail()
@@ -20,6 +38,7 @@ router.post(
 // Route: POST /api/auth/signup
 router.post(
   "/signup",
+  userRateLimiter,
   [
     // Validate inputs
     body("name")
@@ -54,6 +73,7 @@ router.post(
 // Route: POST /api/auth/login
 router.post(
   "/login",
+  userRateLimiter,
   [
     // Validate inputs
     body("id").notEmpty().withMessage("Valid userName or email is required"),
@@ -77,6 +97,7 @@ router.post("/google-exchange", authController.googleExchange);
 // Route: POST /api/auth/forgot-password
 router.post(
   "/forgot-password",
+  userRateLimiter,
   [
     body("email")
       .isEmail()
@@ -94,13 +115,14 @@ router.put(
       .isLength({ min: 6 })
       .withMessage("Password must be at least 6 characters long"),
   ],
-  // isAuth,
+  isAuth,
   authController.resetPassword
 );
 
 // Route: POST /api/auth/verify-otp-reset-password
 router.post(
   "/verify-otp-reset-password",
+  userRateLimiter,
   [
     body("email")
       .isEmail()
@@ -119,6 +141,7 @@ router.post(
 // Route: POST /api/auth/verify-otp
 router.post(
   "/verify-otp",
+  userRateLimiter,
   [
     body("email")
       .isEmail()
@@ -132,5 +155,20 @@ router.post(
 );
 
 router.get("/verify", isAuth, authController.verify);
+
+// Route: POST /api/auth/refresh
+router.post("/refresh", refreshLimiter, authController.refresh);
+
+// Route: POST /api/auth/logout
+router.post("/logout", authController.logout);
+
+// Route: POST /api/auth/logout-all
+router.post("/logout-all", isAuth, authController.logoutAllDevices);
+
+// Route: GET /api/auth/sessions
+router.get("/sessions", isAuth, authController.getSessions);
+
+// Route: POST /api/auth/logout-session/:sessionId
+router.post("/logout-session/:sessionId", isAuth, authController.revokeSession);
 
 module.exports = router;

@@ -54,6 +54,30 @@ export const fetchUser = createAsyncThunk(
   }
 );
 
+// Thunk to logout user
+export const logoutUser = createAsyncThunk(
+  "user/logout",
+  async (_, thunkAPI) => {
+    try {
+      await axiosInstance.post(`/api/auth/logout`);
+      
+      // Clear localStorage legacy items if they exist
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userData");
+      }
+      
+      return true;
+    } catch (error: unknown) {
+      console.log(error);
+      return thunkAPI.rejectWithValue(
+        error instanceof Error ? error.message : 'Failed to logout'
+      );
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -82,6 +106,11 @@ const userSlice = createSlice({
       .addCase(fetchUser.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload as string;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.userInfo = null;
+        state.status = "idle";
+        state.error = null;
       });
   },
 });

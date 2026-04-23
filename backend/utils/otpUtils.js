@@ -8,14 +8,7 @@ const sendEmail = require("./mailer");
  * @returns {string} - Generated OTP
  */
 const generateOTP = (length = 6) => {
-  const digits = "0123456789";
-  let otp = "";
-
-  for (let i = 0; i < length; i++) {
-    otp += digits[Math.floor(Math.random() * 10)];
-  }
-
-  return otp;
+  return crypto.randomInt(0, Math.pow(10, length)).toString().padStart(length, "0");
 };
 
 /**
@@ -30,7 +23,7 @@ const createOTP = async (
   userId,
   email,
   purpose = "password_reset",
-  expiryMinutes = 10,
+  expiryMinutes = 5,
 ) => {
   try {
     // Delete any existing unused OTPs for this user and purpose
@@ -40,19 +33,20 @@ const createOTP = async (
       isUsed: false,
     });
 
-    const otp = generateOTP();
+    const plainOtp = generateOTP();
+    const otpHash = crypto.createHash('sha256').update(plainOtp).digest('hex');
     const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
 
     const otpDoc = new OTP({
       userId,
       email: email.toLowerCase(),
-      otp,
+      otp: otpHash,
       purpose,
       expiresAt,
     });
 
     await otpDoc.save();
-    return otpDoc;
+    return { otp: plainOtp };
   } catch (error) {
     throw new Error(`Failed to create OTP: ${error.message}`);
   }
@@ -65,7 +59,7 @@ const createOTP = async (
  * @param {string} purpose - Purpose of OTP
  * @returns {Promise<Object>} - Verification result with success status and user info
  */
-const verifyOTP = async (email, otp, purpose = "password_reset") => {
+const verifyOTP = async (email, plainOtp, purpose = "password_reset") => {
   try {
     const otpDoc = await OTP.findOne({
       email: email.toLowerCase(),
@@ -90,7 +84,7 @@ const verifyOTP = async (email, otp, purpose = "password_reset") => {
     }
 
     // Check attempts limit
-    if (otpDoc.attempts >= 3) {
+    if (otpDoc.attempts >= 5) {
       await OTP.deleteOne({ _id: otpDoc._id });
       return {
         success: false,
@@ -98,21 +92,22 @@ const verifyOTP = async (email, otp, purpose = "password_reset") => {
       };
     }
 
+    const otpHash = crypto.createHash('sha256').update(plainOtp).digest('hex');
+
     // Verify OTP
-    if (otpDoc.otp !== otp) {
+    if (otpDoc.otp !== otpHash) {
       // Increment attempts
       otpDoc.attempts += 1;
       await otpDoc.save();
 
       return {
         success: false,
-        message: `Invalid OTP. ${3 - otpDoc.attempts} attempts remaining`,
+        message: `Invalid OTP. ${5 - otpDoc.attempts} attempts remaining`,
       };
     }
 
-    // Mark OTP as used
-    otpDoc.isUsed = true;
-    await otpDoc.save();
+    // Delete OTP after successful use
+    await OTP.deleteOne({ _id: otpDoc._id });
 
     return {
       success: true,
@@ -167,7 +162,7 @@ const sendOTPEmail = async (
               </div>
               
               <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-                This OTP will expire in 10 minutes for security reasons.
+                This OTP will expire in 5 minutes for security reasons.
               </p>
               <p style="color: #666; font-size: 14px;">
                 If you didn't request this password reset, please ignore this email or contact support if you have concerns.
@@ -206,7 +201,7 @@ const sendOTPEmail = async (
               </div>
               
               <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-                This OTP will expire in 10 minutes.
+                This OTP will expire in 5 minutes.
               </p>
             </div>
             
@@ -242,7 +237,7 @@ const sendOTPEmail = async (
               </div>
               
               <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-                This OTP will expire in 10 minutes.
+                This OTP will expire in 5 minutes.
               </p>
             </div>
             
@@ -258,7 +253,7 @@ const sendOTPEmail = async (
     await sendEmail(
       email,
       subject,
-      `Your OTP is: ${otp}. This OTP will expire in 10 minutes.`,
+      `Your OTP is: ${otp}. This OTP will expire in 5 minutes.`,
       htmlContent,
     );
 
