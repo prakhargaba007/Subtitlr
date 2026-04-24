@@ -38,6 +38,7 @@ const downloadFile = (url, destPath) =>
         file.on("finish", () => file.close(resolve));
       })
       .on("error", (err) => {
+        console.error(`[sourceSeparation] downloadFile failed for ${url}:`, err);
         fs.unlink(destPath, () => {});
         reject(err);
       });
@@ -78,6 +79,7 @@ const separateViaReplicate = async (audioPath) => {
 
   if (!createResponse.ok) {
     const err = await createResponse.text();
+    console.error("[sourceSeparation] Replicate create prediction failed:", err);
     throw new Error(`Replicate create prediction failed: ${err}`);
   }
 
@@ -101,6 +103,7 @@ const separateViaReplicate = async (audioPath) => {
     );
 
     if (!pollResponse.ok) {
+      console.error(`[sourceSeparation] Replicate poll failed with status ${pollResponse.status}`);
       throw new Error(`Replicate poll failed with status ${pollResponse.status}`);
     }
 
@@ -116,6 +119,7 @@ const separateViaReplicate = async (audioPath) => {
     }
 
     if (status.status === "failed" || status.status === "canceled") {
+      console.error(`[sourceSeparation] Replicate prediction ${status.status}:`, status.error);
       throw new Error(`Replicate prediction ${status.status}: ${status.error || "unknown error"}`);
     }
 

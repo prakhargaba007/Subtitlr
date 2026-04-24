@@ -86,7 +86,10 @@ const layerSpeechOverBackground = (timedSegments, backgroundPath, outputPath, to
       .duration(totalDuration)
       .output(outputPath)
       .on("end", resolve)
-      .on("error", reject)
+      .on("error", (err) => {
+        console.error(`[audioMergeUtils] layerSpeechOverBackground failed: ${backgroundPath} -> ${outputPath}`, err);
+        reject(err);
+      })
       .run();
   });
 
@@ -114,7 +117,10 @@ const muxWithVideo = (videoPath, audioPath, outputPath) =>
       ])
       .output(outputPath)
       .on("end", resolve)
-      .on("error", reject)
+      .on("error", (err) => {
+        console.error(`[audioMergeUtils] muxWithVideo failed: ${videoPath} + ${audioPath} -> ${outputPath}`, err);
+        reject(err);
+      })
       .run();
   });
 

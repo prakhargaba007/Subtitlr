@@ -247,6 +247,7 @@ async function waitForFileActive(fileManager, fileName) {
     file = await fileManager.getFile(fileName);
   }
   if (file.state !== FileState.ACTIVE) {
+    console.error(`[transcribe] Gemini file upload failed. State: ${file.state}`, file);
     throw new Error(`Uploaded file is not usable (state: ${file.state})`);
   }
   return file;
@@ -286,8 +287,8 @@ async function deleteUploadedFile(fileManager, uploadName) {
   if (!uploadName) return;
   try {
     await fileManager.deleteFile(uploadName);
-  } catch {
-    /* ignore */
+  } catch (err) {
+    console.warn(`[transcribe] deleteUploadedFile failed for ${uploadName}:`, err.message);
   }
 }
 
@@ -454,6 +455,7 @@ const calibrateSegmentTimestampsWithVocals = (segments, vocalsPath) => {
     onset = detectLeadingSpeechOnsetSec(vocalsPath, { noiseDb, minSilenceSec });
   } catch (e) {
     console.warn("[transcribe] Timeline calibration: silencedetect failed:", e.message);
+    console.error("[transcribe] Calibration error details:", e);
     return segments;
   }
   const sorted = [...segments].sort((a, b) => a.start - b.start);

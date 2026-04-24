@@ -150,6 +150,7 @@ const selectBestVoice = async (voiceDescription, availableVoices, options = {}) 
       return matched.voiceId;
     }
   } catch (err) {
+    console.error("[ttsUtils] selectBestVoice failed:", err);
     console.warn("[ttsUtils] Voice matching failed, using fallback:", err.message);
   }
 
@@ -205,6 +206,7 @@ const selectBestOpenAIVoice = async (voiceDescription, options = {}) => {
       return v;
     }
   } catch (err) {
+    console.error("[ttsUtils] selectBestOpenAIVoice failed:", err);
     console.warn("[ttsUtils] OpenAI voice matching failed, using default:", err.message);
   }
 
@@ -220,17 +222,20 @@ const selectBestOpenAIVoice = async (voiceDescription, options = {}) => {
 const generateSpeech = async (text, voiceId, options = {}) => {
   const { stability = 0.5, similarityBoost = 0.75, style = 0.0 } = options;
 
-  const audioStream = await getElevenLabs().textToSpeech.convert(voiceId, {
-    text,
-    modelId: TTS_MODEL,
-    outputFormat: "mp3_44100_128",
-    voiceSettings: {
-      stability,
-      style,
-      similarityBoost,
-      useSpeakerBoost: true,
-    },
-  });
+    const audioStream = await getElevenLabs().textToSpeech.convert(voiceId, {
+      text,
+      modelId: TTS_MODEL,
+      outputFormat: "mp3_44100_128",
+      voiceSettings: {
+        stability,
+        style,
+        similarityBoost,
+        useSpeakerBoost: true,
+      },
+    }).catch(err => {
+      console.error(`[ttsUtils] ElevenLabs TTS conversion failed for voice ${voiceId}:`, err);
+      throw err;
+    });
 
   const chunks = [];
   for await (const chunk of audioStream) {
@@ -263,12 +268,15 @@ const generateSpeechOpenAI = async (text, voiceName) => {
     input = input.slice(0, OPENAI_TTS_INPUT_MAX);
   }
 
-  const response = await getOpenAI().audio.speech.create({
-    model,
-    voice: voiceName,
-    input,
-    response_format: "mp3",
-  });
+    const response = await getOpenAI().audio.speech.create({
+      model,
+      voice: voiceName,
+      input,
+      response_format: "mp3",
+    }).catch(err => {
+      console.error(`[ttsUtils] OpenAI TTS generation failed for voice ${voiceName}:`, err);
+      throw err;
+    });
 
   const buf = Buffer.from(await response.arrayBuffer());
   const outputPath = path.join(os.tmpdir(), `tts_openai_${uuidv4()}.mp3`);

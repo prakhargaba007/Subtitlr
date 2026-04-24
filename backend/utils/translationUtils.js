@@ -161,6 +161,8 @@ ${jsonShape}`;
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
     parsed = JSON.parse(text);
   } catch (err) {
+    console.error("[translation] Translation response parse failed:", err.message);
+    console.error("[translation] Raw response content:", response.choices[0].message.content);
     throw new Error(`Translation response parse failed: ${err.message}`);
   }
 

@@ -105,6 +105,7 @@ class LocalStorageAdapter extends StorageAdapter {
         });
         
         writeStream.on('error', (err) => {
+          console.error(`[storage] Local saveFile stream error for ${filePath}:`, err);
           reject(err);
         });
       }
@@ -193,20 +194,35 @@ class S3StorageAdapter extends StorageAdapter {
       Body: body,
       ContentType: contentType
     });
-    await this.client.send(command);
+    try {
+      await this.client.send(command);
+    } catch (err) {
+      console.error(`[storage] S3 saveFile failed for ${filePath}:`, err);
+      throw err;
+    }
     return filePath;
   }
 
   async getFile(filePath) {
     const command = new GetObjectCommand({ Bucket: this.bucket, Key: filePath });
-    const res = await this.client.send(command);
-    return res.Body; // stream
+    try {
+      const res = await this.client.send(command);
+      return res.Body; // stream
+    } catch (err) {
+      console.error(`[storage] S3 getFile failed for ${filePath}:`, err);
+      throw err;
+    }
   }
 
   async deleteFile(filePath) {
     const command = new DeleteObjectCommand({ Bucket: this.bucket, Key: filePath });
-    await this.client.send(command);
-    return true;
+    try {
+      await this.client.send(command);
+      return true;
+    } catch (err) {
+      console.error(`[storage] S3 deleteFile failed for ${filePath}:`, err);
+      throw err;
+    }
   }
 
   async fileExists(filePath) {

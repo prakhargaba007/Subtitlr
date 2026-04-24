@@ -76,6 +76,7 @@ function runProcess(cmd, args, { cwd, timeoutMs }) {
       err.code = code;
       err.stdout = stdout;
       err.stderr = stderr;
+      console.error(`[lipSyncRunner] Process failed (exit ${code}). Stderr:`, stderr);
       reject(err);
     });
   });
@@ -150,7 +151,12 @@ exports.lipSyncVideo = async ({ inputVideoPath, inputAudioPath, outputVideoPath 
 
   const timeoutMs = parseOptionalInt(process.env.LIPSYNC_TIMEOUT_MS) ?? 30 * 60 * 1000;
 
-  await runProcess(pythonBin, args, { cwd: wav2lipDir, timeoutMs });
-  return outputVideoPath;
+  try {
+    await runProcess(pythonBin, args, { cwd: wav2lipDir, timeoutMs });
+    return outputVideoPath;
+  } catch (err) {
+    console.error("[lipSyncRunner] lipSyncVideo execution failed:", err);
+    throw err;
+  }
 };
 

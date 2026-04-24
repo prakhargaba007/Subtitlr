@@ -14,7 +14,10 @@ ffmpeg.setFfprobePath(ffprobeStatic.path);
 const getFileDuration = (filePath) =>
   new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
-      if (err) return reject(err);
+      if (err) {
+        console.error(`[audioUtils] ffprobe failed for ${filePath}:`, err);
+        return reject(err);
+      }
       resolve(metadata.format.duration || 0);
     });
   });
@@ -26,7 +29,10 @@ const getFileDuration = (filePath) =>
 const getMediaStreamSummary = (filePath) =>
   new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
-      if (err) return reject(err);
+      if (err) {
+        console.error(`[audioUtils] ffprobe failed for ${filePath}:`, err);
+        return reject(err);
+      }
       const streams = (metadata.streams || []).map((s) => ({
         index: s.index,
         codec_type: String(s.codec_type || ""),
@@ -85,7 +91,10 @@ const splitAudioIntoChunks = (inputPath, outputDir, segmentSeconds) =>
           .map((f) => path.join(outputDir, f));
         resolve(files);
       })
-      .on("error", reject)
+      .on("error", (err) => {
+        console.error(`[audioUtils] splitAudioIntoChunks failed: ${inputPath}`, err);
+        reject(err);
+      })
       .run();
   });
 
@@ -134,6 +143,7 @@ const concatMp3Files = (inputPaths, outputPath) =>
         resolve();
       })
       .on("error", (err) => {
+        console.error("[audioUtils] concatMp3Files failed:", err);
         try {
           fs.unlinkSync(listPath);
         } catch (_) {}
@@ -154,7 +164,9 @@ const cleanupPath = (p) => {
     } else {
       fs.unlinkSync(p);
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn(`[audioUtils] cleanupPath failed for ${p}:`, err.message);
+  }
 };
 
 /** Seconds tolerance when comparing durations (MP3 frame / probe jitter). */
@@ -214,7 +226,10 @@ const ensureMinAudioDuration = async (inputPath, minSeconds, outputPath) => {
       .audioBitrate(192)
       .output(outputPath)
       .on("end", resolve)
-      .on("error", reject)
+      .on("error", (err) => {
+        console.error(`[audioUtils] ensureMinAudioDuration failed for ${inputPath}:`, err);
+        reject(err);
+      })
       .run();
   });
   const after = await getFileDuration(outputPath);

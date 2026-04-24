@@ -206,8 +206,9 @@ async function pipelineTtsSyncUploadForDubbing({
   let firstSyncEmitted = false;
   let uploadMsgEmitted = false;
   let completed = 0;
-  let pipelineError = null;
   let nextK = 0;
+
+  console.log(`[dubbing] pipelineTtsSyncUploadForDubbing started. Rows: ${n}, Concurrency: ${limit}`);
 
   const processOne = async (k) => {
     const row = ttsRows[k];
@@ -227,6 +228,7 @@ async function pipelineTtsSyncUploadForDubbing({
       voiceKey,
       targetLanguage,
     );
+    console.log(`[dubbing] [segment ${k + 1}/${n}] Synthesized. Provider: ${synthesizeProvider}, Length: ${row.text.length} chars`);
     tmpPaths.push(audioPath);
     rawDubbedPaths[k] = audioPath;
     wordTsForRows[k] = wordTimestamps;
@@ -277,6 +279,7 @@ async function pipelineTtsSyncUploadForDubbing({
           "audio/mpeg",
         );
         segmentAudioKeys.set(row.parentIndex, segKey);
+        console.log(`[dubbing] [segment ${k + 1}/${n}] Uploaded to S3: ${segKey}`);
       } catch (segUploadErr) {
         console.warn(
           `[dubbing] Segment ${row.parentIndex} audio upload failed:`,
@@ -314,6 +317,7 @@ async function pipelineTtsSyncUploadForDubbing({
   if (pipelineError) throw pipelineError;
 
   emit({ stage: "syncing", message: "Timing sync complete." });
+  console.log(`[dubbing] pipelineTtsSyncUploadForDubbing complete.`);
 
   return { rawDubbedPaths, wordTsForRows, syncedBuffers };
 }
@@ -349,6 +353,8 @@ async function runDubbingPipelineFromInput(
     originalFileName,
   },
 ) {
+  console.log(`[dubbing] runDubbingPipelineFromInput started. User: ${req.userId}, File: ${originalFileName}, Mime: ${inputMimeType}`);
+  console.log(`[dubbing] Env check: OPENAI_API_KEY=${!!process.env.OPENAI_API_KEY}, GOOGLE_API_KEY=${!!(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY)}, ELEVENLABS_API_KEY=${!!process.env.ELEVENLABS_API_KEY}, REPLICATE_API_TOKEN=${!!process.env.REPLICATE_API_TOKEN}`);
   const targetLanguage = (req.body.targetLanguage || "").trim();
   if (!targetLanguage) {
     const err = new Error("targetLanguage is required.");
@@ -439,6 +445,8 @@ async function runDubbingPipelineFromInput(
     throw err;
   }
 
+  console.log(`[dubbing] Validation passed. Duration: ${duration}s, Credits needed: ${creditsNeeded}, TTS Provider: ${ttsProvider}`);
+
   // Create a DB record immediately so the client can poll by ID
   const job = await DubbingJob.create({
     user: req.userId,
@@ -464,8 +472,9 @@ async function runDubbingPipelineFromInput(
   try {
     fs.mkdirSync(localOutputPath, { recursive: true });
   } catch (mkdirErr) {
-    console.warn("Could not create dubbing local output dir:", mkdirErr.message);
+    console.warn("[dubbing] Could not create dubbing local output dir:", mkdirErr.message);
   }
+  console.log(`[dubbing] Output directory created: ${localOutputPath}`);
   saveArtifact(jobIdStr, `00_input${ext}`, tmpInput);
 
   // Generate a thumbnail for video inputs (best-effort)
@@ -502,8 +511,9 @@ async function runDubbingPipelineFromInput(
     await storage.saveFile(inputBuffer, videoKey, inputMimeType);
     job.originalVideoKey = videoKey;
     await job.save();
+    console.log(`[dubbing] Original file uploaded to S3: ${videoKey}`);
   } catch (uploadErr) {
-    console.warn("Original file S3 upload failed:", uploadErr.message);
+    console.warn("[dubbing] Original file S3 upload failed:", uploadErr.message);
   }
 
   // ── Step 2: Source separation ─────────────────────────────────────────────
@@ -526,6 +536,7 @@ async function runDubbingPipelineFromInput(
     stage: "separating",
     message: `Audio separated (${separationMethod === "replicate" ? "Demucs" : "ElevenLabs fallback"}).`,
   });
+  console.log(`[dubbing] Source separation complete. Method: ${separationMethod}`);
 
   saveArtifact(jobIdStr, "02_vocals.mp3", vocalsPath);
   saveArtifact(jobIdStr, "03_background.mp3", backgroundPath);
@@ -553,8 +564,9 @@ async function runDubbingPipelineFromInput(
       backgroundKey,
       separationMethod,
     });
+    console.log(`[dubbing] Stems uploaded to S3. Vocals: ${vocalsKey}, Background: ${backgroundKey}`);
   } catch (uploadErr) {
-    console.warn("Stems S3 upload failed:", uploadErr.message);
+    console.warn("[dubbing] Stems S3 upload failed:", uploadErr.message);
   }
 
   // The rest of the pipeline remains unchanged; it relies on:
@@ -580,6 +592,7 @@ async function runDubbingPipelineFromInput(
     speakerCount: speaker_profiles.length,
     segmentCount: rawSegments.length,
   });
+  console.log(`[dubbing] Transcription complete. Segments: ${rawSegments.length}, Speakers: ${speaker_profiles.length}`);
 
   emit({
     stage: "transcribing",
@@ -606,6 +619,7 @@ async function runDubbingPipelineFromInput(
   );
 
   emit({ stage: "translating", message: "Translation complete." });
+  console.log(`[dubbing] Translation complete. Target: ${targetLanguage}`);
 
   // ── Step 5+: keep existing implementation by jumping into original code path
   // (below is the original file content; we return values needed later)
@@ -639,7 +653,7 @@ async function runDubbingPipelineFromInput(
  * Streams progress back via SSE and persists the job to MongoDB.
  */
 exports.startDubbingJob = async (req, res) => {
-  console.log("startDubbingJob endpoint called");
+  console.log(`[dubbing] startDubbingJob endpoint called. User: ${req.userId}`);
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -1261,6 +1275,7 @@ exports.startDubbingJob = async (req, res) => {
       mixedAudioPath,
       duration,
     );
+    console.log(`[dubbing] Layering complete. Mixed audio path: ${mixedAudioPath}`);
 
     const mixTargetSec = Math.max(
       duration,
@@ -1283,6 +1298,7 @@ exports.startDubbingJob = async (req, res) => {
       );
     }
     const mixedAudioForOutput = mixResult.path;
+    console.log(`[dubbing] Mixed audio ready for output: ${mixedAudioForOutput}`);
 
     saveArtifact(jobIdStr, "dubbed_mix.mp3", mixedAudioForOutput);
 
@@ -1312,6 +1328,7 @@ exports.startDubbingJob = async (req, res) => {
         );
         if (strict) throw lipErr;
       }
+      console.log(`[dubbing] Lip-sync step finished. Success: ${!!lipsyncedPath}`);
 
       if (lipsyncedPath) {
         saveArtifact(jobIdStr, "final_dubbed_lipsynced.mp4", finalOutputPath);
@@ -1351,6 +1368,7 @@ exports.startDubbingJob = async (req, res) => {
       finalMimeType,
     );
     const finalUrl = await storage.getPublicUrl(finalKey);
+    console.log(`[dubbing] Final output uploaded to S3: ${finalKey}`);
 
     // ── Step 10: Confirm usage reservation + Deduct credits + finalise job ────
     emit({ stage: "saving", message: "Saving results…" });
@@ -1435,7 +1453,15 @@ exports.startDubbingJob = async (req, res) => {
 
     res.end();
   } catch (err) {
-    console.error("Dubbing pipeline error:", err);
+    console.error("[dubbing] Dubbing pipeline error CRITICAL:", err);
+    console.error("[dubbing] Error details:", {
+      message: err.message,
+      stack: err.stack,
+      statusCode: err.statusCode,
+      userId: req.userId,
+      jobId: job?._id,
+      jobStatus: job?.status,
+    });
 
     // Atomically refund the usage reservation.
     // Only refunds the unused portion: reserved - processed.
