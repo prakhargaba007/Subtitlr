@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const RefreshToken = require("../models/RefreshToken");
 
-const getCookieDomain = () => process.env.NODE_ENV === "production" ? ".kililabs.io" : undefined;
+const getCookieDomain = () => process.env.NODE_ENV === "production" || (process.env.FRONTEND_URL || "").startsWith("https://") ? ".kililabs.io" : undefined;
 
 const generateTokens = async (user, req, res, familyId = null) => {
   const jti = crypto.randomUUID();
@@ -47,14 +47,17 @@ const generateTokens = async (user, req, res, familyId = null) => {
   const csrfToken = crypto.randomBytes(20).toString("hex");
 
   // 4. Set Cookies
-  // Temporarily simplified for debugging across local environments
-  const isProd = false; // Force false for debugging
-  const domain = undefined; // Force undefined to bind to request host
-  
+  const isProd = process.env.NODE_ENV === "production" || (process.env.FRONTEND_URL || "").startsWith("https://");
+  // In production: cross-origin requests (www.kililabs.io → api.kililabs.io)
+  // require sameSite:"none" + secure:true for cookies to be sent by browser.
+  // In development: sameSite:"lax" works fine since both run on localhost.
+  const sameSite = isProd ? "none" : "lax";
+  const domain = getCookieDomain(); // ".kililabs.io" in prod, undefined in dev
+
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: "lax",
+    sameSite,
     maxAge: 15 * 60 * 1000, // 15 mins
     path: "/",
     domain
@@ -63,16 +66,16 @@ const generateTokens = async (user, req, res, familyId = null) => {
   res.cookie("refreshToken", rawRefreshToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: "lax",
+    sameSite,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/api/auth", // Only sent to auth routes
     domain
   });
 
   res.cookie("csrfToken", csrfToken, {
-    httpOnly: false, // Must be readable by JS Axios
+    httpOnly: false, // Must be readable by JS for CSRF header
     secure: isProd,
-    sameSite: "lax",
+    sameSite,
     path: "/",
     domain
   });
