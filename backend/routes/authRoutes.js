@@ -9,8 +9,9 @@ const userRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 5, // 5 attempts
   keyGenerator: (req) => {
-    // Rate limit per email or fallback to IP
-    return req.body.email || req.body.id || req.ip;
+    // Rate limit per email or fallback to IP. 
+    // express-rate-limit throws a warning if req.ip is used directly for IPv6. We can just stringify it.
+    return req.body.email || req.body.id || `ip_${req.ip}`;
   },
   message: { success: false, message: "Too many attempts. Please try again later." }
 });

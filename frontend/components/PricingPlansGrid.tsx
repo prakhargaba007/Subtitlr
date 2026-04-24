@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import axios from "@/utils/axios";
 import { fetchPublicPlans, fetchCurrentPlan, type PublicPlan, type CurrentPlanResponse } from "@/utils/plansApi";
 import {
   type BillingMode,
@@ -62,32 +63,18 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
     if (typeof window === "undefined") return;
     if (checkoutPlanKey) return; // Strict lock to prevent multi-click spam
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // login page does not support redirect params yet; keep it simple
-      router.push("/login");
-      return;
-    }
-
     setCheckoutPlanKey(planKey);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/billing/dodo/checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ planKey }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(json?.message || `Checkout failed (${res.status})`);
-      }
-      const url = json?.checkoutUrl as string | undefined;
+      const res = await axios.post("/api/billing/dodo/checkout-session", { planKey });
+      const url = res.data?.checkoutUrl as string | undefined;
       if (!url) throw new Error("Missing checkoutUrl from backend.");
       window.location.href = url;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Checkout failed";
+    } catch (e: any) {
+      if (e.response?.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const msg = e.response?.data?.message || e.message || "Checkout failed";
       setError(msg);
       setCheckoutPlanKey(null);
     }

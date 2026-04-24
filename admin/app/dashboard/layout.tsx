@@ -20,8 +20,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole");
-    const token = localStorage.getItem("token");
-    if (!userRole || !token) {
+    if (!userRole) {
       router.push("/");
     }
     checkAdmin();

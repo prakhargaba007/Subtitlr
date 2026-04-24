@@ -743,11 +743,12 @@ exports.refresh = async (req, res, next) => {
     }
 
     // 2. ENFORCE DEVICE / IP VALIDATION & 8. ANOMALY DETECTION
-    if (tokenDoc.ipAddress !== req.ip || tokenDoc.userAgent !== req.get('User-Agent')) {
-      console.warn(`[ANOMALY] IP or Device change detected for user ${tokenDoc.user._id}. Old IP: ${tokenDoc.ipAddress}, New: ${req.ip}`);
-      // Stub for notification system
-      console.log(`[Notification Stub] Alerting user ${tokenDoc.user._id} about new login location/device.`);
-    }
+    // Temporarily disabled at user request
+    // if (tokenDoc.ipAddress !== req.ip || tokenDoc.userAgent !== req.get('User-Agent')) {
+    //   console.warn(`[ANOMALY] IP or Device change detected for user ${tokenDoc.user._id}. Old IP: ${tokenDoc.ipAddress}, New: ${req.ip}`);
+    //   // Stub for notification system
+    //   console.log(`[Notification Stub] Alerting user ${tokenDoc.user._id} about new login location/device.`);
+    // }
 
     // Generate new tokens using the SAME familyId
     await generateTokens(tokenDoc.user, req, res, tokenDoc.familyId);
