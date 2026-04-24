@@ -194,7 +194,7 @@ export default function ProcessingView() {
           setPendingFile(null);
           setTimeout(() => {
             if (mode === "dubbing") {
-              router.push(`${exportBase}/dubbing/editor?jobId=${event.job!._id}`);
+              router.push(`${exportBase}/dubbing/export?jobId=${event.job!._id}`);
             } else {
               router.push(`${exportBase}/export?jobId=${event.job!._id}`);
             }

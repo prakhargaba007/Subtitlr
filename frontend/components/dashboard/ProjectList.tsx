@@ -242,7 +242,7 @@ export default function ProjectList({
 
     if (action === "open") {
       if (project.type === "dubbing") {
-        router.push(`/dashboard/dubbing/editor?jobId=${project.jobId}`);
+        router.push(`/dashboard/dubbing/export?jobId=${project.jobId}`);
       } else {
         router.push(`/dashboard/export?jobId=${project.jobId}`);
       }
@@ -252,7 +252,7 @@ export default function ProjectList({
     if (action === "copyLink") {
       const href =
         project.type === "dubbing"
-          ? `${window.location.origin}/dashboard/dubbing/editor?jobId=${project.jobId}`
+          ? `${window.location.origin}/dashboard/dubbing/export?jobId=${project.jobId}`
           : `${window.location.origin}/dashboard/export?jobId=${project.jobId}`;
       try {
         await navigator.clipboard.writeText(href);
@@ -393,7 +393,7 @@ export default function ProjectList({
               if (!project.jobId) return;
               router.push(
                 project.type === "dubbing"
-                  ? `/dashboard/dubbing/editor?jobId=${project.jobId}`
+                  ? `/dashboard/dubbing/export?jobId=${project.jobId}`
                   : `/dashboard/export?jobId=${project.jobId}`
               );
             }}

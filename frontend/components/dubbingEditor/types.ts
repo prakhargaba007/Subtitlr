@@ -24,10 +24,15 @@ export type EditorJob = {
   duration: number;
   sourceLanguage: string;
   targetLanguage: string;
+  originalVideoKey?: string | null;
+  originalAudioKey?: string | null;
+  dubbedVideoKey?: string | null;
+  dubbedAudioKey?: string | null;
   dubbedVideoUrl?: string | null;
   dubbedAudioUrl?: string | null;
   speakerProfiles: SpeakerProfile[];
   segments: DubbingSegment[];
+  error?: string | null;
 };
 
 export function fmtTime(secs: number) {

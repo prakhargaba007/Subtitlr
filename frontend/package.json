@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@videojs/react": "^10.0.0-beta.22",
     "axios": "^1.14.0",
     "lucide-react": "^1.7.0",
     "material-symbols": "^0.44.1",
@@ -18,6 +19,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-redux": "^9.2.0",
+    "video.js": "^8.23.7",
     "wavesurfer.js": "^7.12.5"
   },
   "devDependencies": {
