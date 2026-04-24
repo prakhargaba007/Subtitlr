@@ -86,7 +86,11 @@ instance.interceptors.response.use(
         processQueue(err);
         // If refresh fails, redirect to login
         if (typeof window !== "undefined") {
-          window.location.href = "/?error=session_expired";
+          localStorage.removeItem("userData");
+          const path = window.location.pathname;
+          if (path.startsWith("/dashboard") || path.startsWith("/processing") || path.startsWith("/export") || path.startsWith("/billing")) {
+            window.location.href = "/?error=session_expired";
+          }
         }
         return Promise.reject(err);
       } finally {
