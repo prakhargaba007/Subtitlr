@@ -48,6 +48,7 @@ import { useViewportSize } from "@mantine/hooks";
 import { IconLogout } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { assets } from "@/assets/assets";
+import axiosInstance from "@/utils/axios";
 
 // Define the icon type
 type IconName =
@@ -281,7 +282,12 @@ export default function NavbarNested({ opened, onClose }: NavbarNestedProps) {
     />
   ));
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/api/auth/logout");
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userData");

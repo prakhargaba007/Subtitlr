@@ -43,8 +43,8 @@ export default function DashboardSidebar() {
 
   // Fetch credits & plan
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const userData = localStorage.getItem("userData");
+    if (!userData) {
       setCreditsLoading(false);
       return;
     }
@@ -69,11 +69,14 @@ export default function DashboardSidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/api/auth/logout");
+    } catch (e) {
+      console.error(e);
+    }
     localStorage.removeItem("userData");
     localStorage.removeItem("isTempUser");
-    document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
     dispatch(clearUserDetails());
     router.push("/");
   };

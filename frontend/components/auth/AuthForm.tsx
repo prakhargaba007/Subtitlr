@@ -85,9 +85,7 @@ export default function AuthForm({
           tempUserId: isTempUser && tempUserId ? tempUserId : undefined,
         });
 
-        localStorage.setItem("token", res.data.token);
         localStorage.setItem("userData", JSON.stringify(res.data.user));
-        document.cookie = `token=${res.data.token}; path=/; max-age=86400; SameSite=Lax`;
         if (isTempUser) localStorage.removeItem("isTempUser");
 
         dispatch(setUserDetails(res.data.user));
@@ -222,9 +220,7 @@ export default function AuthForm({
       });
 
       if (response.data.success) {
-        localStorage.setItem("token", response.data.token);
         localStorage.setItem("userData", JSON.stringify(response.data.user));
-        document.cookie = `token=${response.data.token}; path=/; max-age=86400; SameSite=Lax`;
         if (isTempUser) localStorage.removeItem("isTempUser");
 
         dispatch(setUserDetails(response.data.user));

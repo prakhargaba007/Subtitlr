@@ -51,8 +51,7 @@ export function AuthenticationImage() {
         password: values.password,
       });
 
-      // Store the token in localStorage
-      localStorage.setItem("token", response.data.token);
+      // Store user role and data
       console.log("response.data.role", response.data.user.role);
 
       // Store user role and other relevant data

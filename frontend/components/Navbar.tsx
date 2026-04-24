@@ -15,9 +15,8 @@ export default function Navbar() {
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
-      const token = localStorage.getItem("token");
       const userDataStr = localStorage.getItem("userData");
-      if (token && userDataStr) {
+      if (userDataStr) {
         try {
           const userData = JSON.parse(userDataStr);
           setIsRealUser(!userData.tempUser);
