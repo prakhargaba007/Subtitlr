@@ -7,7 +7,10 @@ const getOpenAI = () => {
   return _openai;
 };
 
-const norm = (s) => String(s || "").toLowerCase().trim();
+const norm = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .trim();
 
 /** Gemini Native Audio / controllable TTS transcript style (audio tags in English). */
 const GEMINI_TTS_TRANSCRIPT_BLOCK = `
@@ -28,7 +31,8 @@ const inferTranslationMode = (sourceLanguage, targetLanguage) => {
   const src = norm(sourceLanguage);
   const tgt = norm(targetLanguage);
 
-  const englishSource = src === "english" || src === "en" || src === "" || src === "auto";
+  const englishSource =
+    src === "english" || src === "en" || src === "" || src === "auto";
   const hindiSource = src === "hindi" || src === "hi" || src.includes("hindi");
   const englishTarget = tgt === "english" || tgt === "en";
 
@@ -52,7 +56,12 @@ const inferTranslationMode = (sourceLanguage, targetLanguage) => {
  * @param {'default'|'hinglish_concise'|'split_for_timing'|'auto'} [options.translationMode]
  * @returns {Promise<Array<{start, end, speaker_id, originalText, translatedText, subSegments?: Array<{relStart, relEnd, translatedText}>}>>}
  */
-const translateToSpeechReady = async (segments, targetLanguage, speakerProfiles = [], options = {}) => {
+const translateToSpeechReady = async (
+  segments,
+  targetLanguage,
+  speakerProfiles = [],
+  options = {},
+) => {
   if (!segments.length) return [];
 
   const mode =
@@ -128,7 +137,8 @@ Speaker profiles for register/tone matching:
 ${
   Object.entries(speakerRegisterMap)
     .map(([id, desc]) => `- ${id}: ${desc}`)
-    .join("\n") || "Not available — match the general spoken register of each segment."
+    .join("\n") ||
+  "Not available — match the general spoken register of each segment."
 }
 
 ${modeRules}
@@ -150,7 +160,10 @@ ${jsonShape}`;
       { role: "system", content: systemPrompt },
       {
         role: "user",
-        content: JSON.stringify({ segments_to_translate: inputItems, translation_mode: mode }),
+        content: JSON.stringify({
+          segments_to_translate: inputItems,
+          translation_mode: mode,
+        }),
       },
     ],
   });
@@ -161,8 +174,6 @@ ${jsonShape}`;
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
     parsed = JSON.parse(text);
   } catch (err) {
-    console.error("[translation] Translation response parse failed:", err.message);
-    console.error("[translation] Raw response content:", response.choices[0].message.content);
     throw new Error(`Translation response parse failed: ${err.message}`);
   }
 

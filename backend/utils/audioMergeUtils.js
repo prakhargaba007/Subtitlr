@@ -29,7 +29,12 @@ const BACKGROUND_DUCK_DB = -8;
  * @param {number} totalDuration - Total video duration in seconds
  * @returns {Promise<void>}
  */
-const layerSpeechOverBackground = (timedSegments, backgroundPath, outputPath, totalDuration) =>
+const layerSpeechOverBackground = (
+  timedSegments,
+  backgroundPath,
+  outputPath,
+  totalDuration,
+) =>
   new Promise((resolve, reject) => {
     if (!timedSegments.length) {
       // No speech — just use the background directly
@@ -74,7 +79,7 @@ const layerSpeechOverBackground = (timedSegments, backgroundPath, outputPath, to
     const totalInputs = timedSegments.length + 1; // background + speech segments
 
     filters.push(
-      `[bg]${speechLabels}amix=inputs=${totalInputs}:duration=longest:dropout_transition=0:normalize=0[out]`
+      `[bg]${speechLabels}amix=inputs=${totalInputs}:duration=longest:dropout_transition=0:normalize=0[out]`,
     );
 
     const filterComplex = filters.join("; ");
@@ -86,10 +91,7 @@ const layerSpeechOverBackground = (timedSegments, backgroundPath, outputPath, to
       .duration(totalDuration)
       .output(outputPath)
       .on("end", resolve)
-      .on("error", (err) => {
-        console.error(`[audioMergeUtils] layerSpeechOverBackground failed: ${backgroundPath} -> ${outputPath}`, err);
-        reject(err);
-      })
+      .on("error", reject)
       .run();
   });
 
@@ -108,19 +110,16 @@ const muxWithVideo = (videoPath, audioPath, outputPath) =>
       .input(videoPath)
       .input(audioPath)
       .outputOptions([
-        "-map 0:v:0",      // take video from first input
-        "-map 1:a:0",      // take audio from second input
-        "-c:v copy",       // copy video stream without re-encoding
-        "-c:a aac",        // encode audio as AAC for maximum compatibility
+        "-map 0:v:0", // take video from first input
+        "-map 1:a:0", // take audio from second input
+        "-c:v copy", // copy video stream without re-encoding
+        "-c:a aac", // encode audio as AAC for maximum compatibility
         "-b:a 192k",
-        "-shortest",       // end when the shorter stream ends
+        "-shortest", // end when the shorter stream ends
       ])
       .output(outputPath)
       .on("end", resolve)
-      .on("error", (err) => {
-        console.error(`[audioMergeUtils] muxWithVideo failed: ${videoPath} + ${audioPath} -> ${outputPath}`, err);
-        reject(err);
-      })
+      .on("error", reject)
       .run();
   });
 
@@ -135,8 +134,18 @@ const muxWithVideo = (videoPath, audioPath, outputPath) =>
  * @param {number} totalDuration
  * @returns {Promise<void>}
  */
-const mergeAudioOnly = async (timedSegments, backgroundPath, outputPath, totalDuration) => {
-  await layerSpeechOverBackground(timedSegments, backgroundPath, outputPath, totalDuration);
+const mergeAudioOnly = async (
+  timedSegments,
+  backgroundPath,
+  outputPath,
+  totalDuration,
+) => {
+  await layerSpeechOverBackground(
+    timedSegments,
+    backgroundPath,
+    outputPath,
+    totalDuration,
+  );
 };
 
 module.exports = {

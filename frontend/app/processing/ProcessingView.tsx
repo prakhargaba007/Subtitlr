@@ -138,8 +138,6 @@ export default function ProcessingView() {
     const targetLanguage = getPendingTargetLanguage();
     const sourceLanguage = getPendingSourceLanguage();
 
-    console.log(`[ProcessingView] Initializing... Mode: ${mode}, File: ${file?.name}, YoutubeUrl: ${youtubeUrl}, Target: ${targetLanguage}, Source: ${sourceLanguage}`);
-
     const body =
       mode === "dubbing" && youtubeUrl
         ? { youtubeUrl, targetLanguage, sourceLanguage }
@@ -171,9 +169,7 @@ export default function ProcessingView() {
         let event: SSEEvent;
         try {
           event = JSON.parse(line.slice(5).trim()) as SSEEvent;
-          console.log(`[ProcessingView] SSE event received:`, event);
-        } catch (e) {
-          console.warn(`[ProcessingView] Failed to parse SSE line: ${line}`, e);
+        } catch {
           continue;
         }
 
@@ -181,7 +177,6 @@ export default function ProcessingView() {
           if (event.statusCode === 402) {
             setOutOfCredits(true);
           }
-          console.error(`[ProcessingView] Pipeline error stage:`, event);
           setErrorMsg(event.message ?? "An error occurred.");
           setStageLabel("Error");
           return;
@@ -196,7 +191,6 @@ export default function ProcessingView() {
         setStageLabel(event.message ?? "");
 
         if (event.stage === "done" && event.job) {
-          console.log(`[ProcessingView] Processing done. Job ID: ${event.job._id}. Redirecting...`);
           setPendingFile(null);
           setTimeout(() => {
             if (mode === "dubbing") {
@@ -218,20 +212,19 @@ export default function ProcessingView() {
           : "/api/subtitles/generate",
         body as any,
         {
-        responseType: "text",
-        signal: controller.signal,
-        headers: { "Content-Type": youtubeUrl ? "application/json" : undefined },
-        onDownloadProgress: (progressEvent) => {
-          if (cancelled) return;
-          const responseText =
-            (progressEvent.event?.target as XMLHttpRequest | undefined)?.responseText ?? "";
-          handleSSEText(responseText);
+          responseType: "text",
+          signal: controller.signal,
+          headers: { "Content-Type": youtubeUrl ? "application/json" : undefined },
+          onDownloadProgress: (progressEvent) => {
+            if (cancelled) return;
+            const responseText =
+              (progressEvent.event?.target as XMLHttpRequest | undefined)?.responseText ?? "";
+            handleSSEText(responseText);
+          },
         },
-      },
       )
       .catch((err) => {
         if (cancelled || axios.isCancel(err) || err?.code === "ERR_CANCELED") return;
-        console.error(`[ProcessingView] Axios catch block error:`, err);
         const status = err?.response?.status;
         const msg: string =
           err?.response?.data?.message ?? err?.message ?? "Unexpected error.";
@@ -246,7 +239,7 @@ export default function ProcessingView() {
       cancelled = true;
       controller.abort();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Derive current step from progress

@@ -3,7 +3,10 @@ const path = require("path");
 const os = require("os");
 const { v4: uuidv4 } = require("uuid");
 const { GoogleGenerativeAI, SchemaType } = require("@google/generative-ai");
-const { GoogleAIFileManager, FileState } = require("@google/generative-ai/server");
+const {
+  GoogleAIFileManager,
+  FileState,
+} = require("@google/generative-ai/server");
 const {
   getFileDuration,
   splitAudioIntoChunks,
@@ -17,7 +20,10 @@ const {
   isDubbingSileroRefineAfterGeminiEnabled,
   getDubbingVadMinSpeechOverlap,
 } = require("./dubbingConfig");
-const { detectSileroVadTimeline, refineSegmentsWithVadTimeline } = require("./sileroVadUtils");
+const {
+  detectSileroVadTimeline,
+  refineSegmentsWithVadTimeline,
+} = require("./sileroVadUtils");
 const { LANGUAGE_MAP } = require("./languageCatalog");
 
 /** Gemini inline audio limit is ~20 MB; stay under to avoid forced upload. */
@@ -73,10 +79,23 @@ const NATIVE_SCRIPT_LANGS = new Set([
 
 const ARABIC_SCRIPT_LANGS = new Set(["ar", "fa", "ps", "ur", "sd"]);
 const DEVANAGARI_LANGS = new Set(["hi", "mr", "ne", "sa"]);
-const CYRILLIC_LANGS = new Set(["ru", "uk", "be", "bg", "mk", "sr", "kk", "mn"]);
+const CYRILLIC_LANGS = new Set([
+  "ru",
+  "uk",
+  "be",
+  "bg",
+  "mk",
+  "sr",
+  "kk",
+  "mn",
+]);
 
 function resolveDubbingTranscribeLanguage(raw) {
-  if (raw == null || String(raw).trim() === "" || String(raw).trim().toLowerCase() === "auto") {
+  if (
+    raw == null ||
+    String(raw).trim() === "" ||
+    String(raw).trim().toLowerCase() === "auto"
+  ) {
     return { langKey: "auto", isoCode: null, isAuto: true };
   }
   const key = String(raw).trim().toLowerCase();
@@ -190,17 +209,20 @@ const transcriptItemSchema = {
   properties: {
     start_us: {
       type: SchemaType.NUMBER,
-      description: "Segment start time in microseconds from the beginning of the audio",
+      description:
+        "Segment start time in microseconds from the beginning of the audio",
     },
     end_us: {
       type: SchemaType.NUMBER,
-      description: "Segment end time in microseconds from the beginning of the audio",
+      description:
+        "Segment end time in microseconds from the beginning of the audio",
     },
     speaker: { type: SchemaType.STRING },
     captions: { type: SchemaType.STRING },
     speaker_gender: {
       type: SchemaType.STRING,
-      description: "Perceived gender of the speaker: \"male\", \"female\", or \"unknown\"",
+      description:
+        'Perceived gender of the speaker: "male", "female", or "unknown"',
     },
     voice_description: {
       type: SchemaType.STRING,
@@ -236,7 +258,9 @@ const transcriptResponseSchema = {
 };
 
 function getGeminiApiKey() {
-  const k = String(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim();
+  const k = String(
+    process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "",
+  ).trim();
   return k || null;
 }
 
@@ -247,7 +271,6 @@ async function waitForFileActive(fileManager, fileName) {
     file = await fileManager.getFile(fileName);
   }
   if (file.state !== FileState.ACTIVE) {
-    console.error(`[transcribe] Gemini file upload failed. State: ${file.state}`, file);
     throw new Error(`Uploaded file is not usable (state: ${file.state})`);
   }
   return file;
@@ -287,8 +310,8 @@ async function deleteUploadedFile(fileManager, uploadName) {
   if (!uploadName) return;
   try {
     await fileManager.deleteFile(uploadName);
-  } catch (err) {
-    console.warn(`[transcribe] deleteUploadedFile failed for ${uploadName}:`, err.message);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -359,14 +382,21 @@ function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
     const start = parseFloat(
       ((Number.isFinite(start_us) ? start_us : 0) / 1e6 + off).toFixed(3),
     );
-    const end = parseFloat(((Number.isFinite(end_us) ? end_us : 0) / 1e6 + off).toFixed(3));
+    const end = parseFloat(
+      ((Number.isFinite(end_us) ? end_us : 0) / 1e6 + off).toFixed(3),
+    );
     const text = String(row.captions ?? row.text ?? "").trim();
-    const rawHint = String(row.tts_performance_hint ?? row.ttsPerformanceHint ?? "").trim();
+    const rawHint = String(
+      row.tts_performance_hint ?? row.ttsPerformanceHint ?? "",
+    ).trim();
     const tts_performance_hint =
-      rawHint ||
-      (text ? `[conversational] ${text}` : "");
-    const rawGender = String(row.speaker_gender ?? "").trim().toLowerCase();
-    const speaker_gender = ["male", "female"].includes(rawGender) ? rawGender : "unknown";
+      rawHint || (text ? `[conversational] ${text}` : "");
+    const rawGender = String(row.speaker_gender ?? "")
+      .trim()
+      .toLowerCase();
+    const speaker_gender = ["male", "female"].includes(rawGender)
+      ? rawGender
+      : "unknown";
     const voice_description = String(row.voice_description ?? "").trim();
     return {
       start,
@@ -422,7 +452,9 @@ const mergeSpeakerProfiles = (profileArrays) => {
         seen.set(id, {
           speaker_id: id,
           speaker_gender: p.speaker_gender ?? "unknown",
-          voice_description: String(p.voice_description || "").trim() || "Unknown speaker; neutral delivery.",
+          voice_description:
+            String(p.voice_description || "").trim() ||
+            "Unknown speaker; neutral delivery.",
         });
       }
     }
@@ -445,7 +477,11 @@ const deduplicateSegments = (segments) => {
 };
 
 const calibrateSegmentTimestampsWithVocals = (segments, vocalsPath) => {
-  if (!isDubbingTimelineCalibrateEnabled() || !segments.length || !fs.existsSync(vocalsPath)) {
+  if (
+    !isDubbingTimelineCalibrateEnabled() ||
+    !segments.length ||
+    !fs.existsSync(vocalsPath)
+  ) {
     return segments;
   }
   const noiseDb = getDubbingTimelineSilenceNoiseDb();
@@ -454,8 +490,10 @@ const calibrateSegmentTimestampsWithVocals = (segments, vocalsPath) => {
   try {
     onset = detectLeadingSpeechOnsetSec(vocalsPath, { noiseDb, minSilenceSec });
   } catch (e) {
-    console.warn("[transcribe] Timeline calibration: silencedetect failed:", e.message);
-    console.error("[transcribe] Calibration error details:", e);
+    console.warn(
+      "[transcribe] Timeline calibration: silencedetect failed:",
+      e.message,
+    );
     return segments;
   }
   const sorted = [...segments].sort((a, b) => a.start - b.start);
@@ -489,59 +527,87 @@ const resolveDubbingVadIntervals = async (vocalsPath) => {
     const { intervals } = await detectSileroVadTimeline(vocalsPath, tmp);
     return Array.isArray(intervals) ? intervals : null;
   } catch (e) {
-    console.warn("[transcribe] Dubbing Silero VAD failed (skipping refine):", e.message);
+    console.warn(
+      "[transcribe] Dubbing Silero VAD failed (skipping refine):",
+      e.message,
+    );
     return null;
   } finally {
     cleanupPath(tmp);
   }
 };
 
-const finalizeTranscription = (segmentList, profileArrays, vocalsPath, opts = {}) => {
-  console.log(`[transcribe] finalizeTranscription called with: segmentList.length=${segmentList.length}, profileArrays.length=${profileArrays.length}, vocalsPath=${vocalsPath}, opts=${JSON.stringify(opts)}`);
+const finalizeTranscription = (
+  segmentList,
+  profileArrays,
+  vocalsPath,
+  opts = {},
+) => {
+  console.log(
+    `[transcribe] finalizeTranscription called with: segmentList.length=${segmentList.length}, profileArrays.length=${profileArrays.length}, vocalsPath=${vocalsPath}, opts=${JSON.stringify(opts)}`,
+  );
   const profiles = mergeSpeakerProfiles(profileArrays);
   let segs = deduplicateSegments(segmentList);
 
   if (segs.length) {
     const a = segs[0];
     console.log(
-      `[transcribe] Segments after dedupe: count=${segs.length} first=${a.start}s–${a.end}s (${String(a.text).slice(0, 48)}…)`
+      `[transcribe] Segments after dedupe: count=${segs.length} first=${a.start}s–${a.end}s (${String(a.text).slice(0, 48)}…)`,
     );
   } else {
-    console.log('[transcribe] No segments found after deduplication.');
+    console.log("[transcribe] No segments found after deduplication.");
   }
 
   segs = calibrateSegmentTimestampsWithVocals(segs, vocalsPath);
 
   if (segs.length) {
     const b = segs[0];
-    console.log(`[transcribe] First segment after calibration: ${b.start}s–${b.end}s`);
+    console.log(
+      `[transcribe] First segment after calibration: ${b.start}s–${b.end}s`,
+    );
   } else {
-    console.log('[transcribe] No segments remain after calibration.');
+    console.log("[transcribe] No segments remain after calibration.");
   }
 
   const { vadIntervals } = opts;
   if (vadIntervals != null && Array.isArray(vadIntervals)) {
-    console.log(`[transcribe] VAD intervals provided: vadIntervals.length=${vadIntervals.length}`);
+    console.log(
+      `[transcribe] VAD intervals provided: vadIntervals.length=${vadIntervals.length}`,
+    );
     const before = segs.length;
     segs = refineSegmentsWithVadTimeline(segs, vadIntervals, {
       minOverlap: getDubbingVadMinSpeechOverlap(),
       preserveSegmentFields: true,
     });
     console.log(
-      `[transcribe] Silero VAD refine: ${before} → ${segs.length} segments (dubbing overlap ≥ ${getDubbingVadMinSpeechOverlap()})`
+      `[transcribe] Silero VAD refine: ${before} → ${segs.length} segments (dubbing overlap ≥ ${getDubbingVadMinSpeechOverlap()})`,
     );
   } else {
-    console.log("[transcribe] No VAD intervals provided or vadIntervals is not an array.");
+    console.log(
+      "[transcribe] No VAD intervals provided or vadIntervals is not an array.",
+    );
   }
 
-  console.log(`[transcribe] Final segments count: ${segs.length}, speaker_profiles count: ${Object.keys(profiles).length}`);
+  console.log(
+    `[transcribe] Final segments count: ${segs.length}, speaker_profiles count: ${Object.keys(profiles).length}`,
+  );
   return { segments: segs, speaker_profiles: profiles };
 };
 
-async function transcribeGeminiChunk(audioPath, langKey, isoCode, isAuto, isFirstChunk, chunkIndex, timeOffsetSec) {
+async function transcribeGeminiChunk(
+  audioPath,
+  langKey,
+  isoCode,
+  isAuto,
+  isFirstChunk,
+  chunkIndex,
+  timeOffsetSec,
+) {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
-    throw new Error("Set GOOGLE_API_KEY (or GEMINI_API_KEY) for dubbing transcription.");
+    throw new Error(
+      "Set GOOGLE_API_KEY (or GEMINI_API_KEY) for dubbing transcription.",
+    );
   }
 
   const modelName = "gemini-3.1-pro-preview";
@@ -571,43 +637,75 @@ async function transcribeGeminiChunk(audioPath, langKey, isoCode, isAuto, isFirs
 
   try {
     const stat = fs.statSync(audioPath);
-    console.log(`[transcribeGeminiChunk] Audio file: ${audioPath} (${(stat.size / 1e6).toFixed(2)} MB)`);
+    console.log(
+      `[transcribeGeminiChunk] Audio file: ${audioPath} (${(stat.size / 1e6).toFixed(2)} MB)`,
+    );
     if (stat.size <= INLINE_AUDIO_MAX_BYTES) {
-      console.log(`[transcribeGeminiChunk] Sending audio inline to ${modelName}`);
+      console.log(
+        `[transcribeGeminiChunk] Sending audio inline to ${modelName}`,
+      );
     } else {
       console.log(`[transcribeGeminiChunk] Uploading audio for ${modelName}`);
     }
 
-    const { mediaPart, uploadName: up } = await buildGeminiMediaPart(fileManager, audioPath, mimeType);
+    const { mediaPart, uploadName: up } = await buildGeminiMediaPart(
+      fileManager,
+      audioPath,
+      mimeType,
+    );
     uploadName = up;
 
-    console.log(`[transcribeGeminiChunk] Media part prepared, uploadName=${uploadName}`);
-    console.log(`[transcribeGeminiChunk] Prompt: ${prompt.length > 1200 ? prompt.slice(0, 1200) + '…' : prompt}`);
+    console.log(
+      `[transcribeGeminiChunk] Media part prepared, uploadName=${uploadName}`,
+    );
+    console.log(
+      `[transcribeGeminiChunk] Prompt: ${prompt.length > 1200 ? prompt.slice(0, 1200) + "…" : prompt}`,
+    );
 
     console.log("[transcribeGeminiChunk] Gemini transcribing…");
     const result = await model.generateContent([mediaPart, { text: prompt }]);
     const text = result.response.text();
-    console.log(`[transcribeGeminiChunk] Gemini response received, length=${text.length}`);
+    console.log(
+      `[transcribeGeminiChunk] Gemini response received, length=${text.length}`,
+    );
     const parsed = parseJsonFromModelText(text);
     if (!Array.isArray(parsed.transcript)) {
-      console.error("[transcribeGeminiChunk] Gemini response missing transcript array:", parsed);
+      console.error(
+        "[transcribeGeminiChunk] Gemini response missing transcript array:",
+        parsed,
+      );
       throw new Error("Gemini response missing transcript array");
     }
-    const segments = mapGeminiTranscriptToSegments(parsed.transcript, timeOffsetSec);
-    console.log(`[transcribeGeminiChunk] Segments mapped: count=${segments.length}, timeOffsetSec=${timeOffsetSec}`);
+    const segments = mapGeminiTranscriptToSegments(
+      parsed.transcript,
+      timeOffsetSec,
+    );
+    console.log(
+      `[transcribeGeminiChunk] Segments mapped: count=${segments.length}, timeOffsetSec=${timeOffsetSec}`,
+    );
     const speaker_profiles = buildSyntheticSpeakerProfiles(segments);
-    console.log(`[transcribeGeminiChunk] Speaker profiles built: count=${Object.keys(speaker_profiles).length}`);
+    console.log(
+      `[transcribeGeminiChunk] Speaker profiles built: count=${Object.keys(speaker_profiles).length}`,
+    );
     return { segments, speaker_profiles };
   } catch (err) {
-    console.error("[transcribeGeminiChunk] Error during Gemini chunk transcription:", err);
+    console.error(
+      "[transcribeGeminiChunk] Error during Gemini chunk transcription:",
+      err,
+    );
     throw err;
   } finally {
     try {
       await deleteUploadedFile(fileManager, uploadName);
-      console.log(`[transcribeGeminiChunk] Uploaded file cleaned up: ${uploadName}`);
+      console.log(
+        `[transcribeGeminiChunk] Uploaded file cleaned up: ${uploadName}`,
+      );
     } catch (cleanupErr) {
       if (uploadName) {
-        console.warn(`[transcribeGeminiChunk] Could not clean up uploaded file: ${uploadName}`, cleanupErr);
+        console.warn(
+          `[transcribeGeminiChunk] Could not clean up uploaded file: ${uploadName}`,
+          cleanupErr,
+        );
       }
     }
   }
@@ -618,7 +716,11 @@ const fileSize = (p) => fs.statSync(p).size;
 const writeTranscriptionOutputJson = (payload) => {
   const outputPath = path.resolve(process.cwd(), "output.json");
   try {
-    fs.writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+    fs.writeFileSync(
+      outputPath,
+      `${JSON.stringify(payload, null, 2)}\n`,
+      "utf8",
+    );
     console.log(`[transcribe] Wrote ${outputPath}`);
   } catch (e) {
     console.warn("[transcribe] Could not write output.json:", e.message);
@@ -632,7 +734,8 @@ const writeTranscriptionOutputJson = (payload) => {
  */
 const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
   const vadIntervals = await resolveDubbingVadIntervals(vocalsPath);
-  const { langKey, isoCode, isAuto } = resolveDubbingTranscribeLanguage(sourceLanguage);
+  const { langKey, isoCode, isAuto } =
+    resolveDubbingTranscribeLanguage(sourceLanguage);
 
   const vocalsSize = fileSize(vocalsPath);
   const duration = await getFileDuration(vocalsPath);
@@ -643,19 +746,30 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
   let finalized;
   if (vocalsSize <= INLINE_AUDIO_MAX_BYTES) {
     const r = await runSingleShot();
-    finalized = finalizeTranscription(r.segments, [r.speaker_profiles], vocalsPath, { vadIntervals });
+    finalized = finalizeTranscription(
+      r.segments,
+      [r.speaker_profiles],
+      vocalsPath,
+      { vadIntervals },
+    );
     console.log("finalized", finalized);
-    
   } else {
     const bytesPerSecond = vocalsSize / duration;
-    const chunkSeconds = Math.max(30, Math.floor(CHUNK_TARGET_BYTES / bytesPerSecond));
+    const chunkSeconds = Math.max(
+      30,
+      Math.floor(CHUNK_TARGET_BYTES / bytesPerSecond),
+    );
 
     const chunkDir = path.join(os.tmpdir(), `dub_transcribe_${uuidv4()}`);
     fs.mkdirSync(chunkDir, { recursive: true });
 
     let chunkFiles;
     try {
-      chunkFiles = await splitAudioIntoChunks(vocalsPath, chunkDir, chunkSeconds);
+      chunkFiles = await splitAudioIntoChunks(
+        vocalsPath,
+        chunkDir,
+        chunkSeconds,
+      );
     } catch (err) {
       cleanupPath(chunkDir);
       throw err;
@@ -686,11 +800,12 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
     console.log("allSegments", allSegments);
     console.log("allProfiles", allProfiles);
     console.log("chunkDir", chunkDir);
-    
 
     cleanupPath(chunkDir);
 
-    finalized = finalizeTranscription(allSegments, allProfiles, vocalsPath, { vadIntervals });
+    finalized = finalizeTranscription(allSegments, allProfiles, vocalsPath, {
+      vadIntervals,
+    });
   }
 
   // writeTranscriptionOutputJson({

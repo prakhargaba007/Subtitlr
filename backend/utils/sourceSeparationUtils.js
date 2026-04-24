@@ -9,13 +9,17 @@ const { cleanupPath } = require("./audioUtils");
 
 let _elevenlabs = null;
 const getElevenLabs = () => {
-  if (!_elevenlabs) _elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
+  if (!_elevenlabs)
+    _elevenlabs = new ElevenLabsClient({
+      apiKey: process.env.ELEVENLABS_API_KEY,
+    });
   return _elevenlabs;
 };
 
 // Replicate model for Demucs 2-stem separation — latest version as of Apr 2026
 // htdemucs with stem=vocals splits into: vocals + no_vocals (background)
-const REPLICATE_MODEL = "ryan5453/demucs:5a7041cc9b82e5a558fea6b3d7b12dea89625e89da33f0447bd727c2d0ab9e77";
+const REPLICATE_MODEL =
+  "ryan5453/demucs:5a7041cc9b82e5a558fea6b3d7b12dea89625e89da33f0447bd727c2d0ab9e77";
 
 // How long to wait between Replicate polling requests (ms)
 const REPLICATE_POLL_INTERVAL_MS = 3000;
@@ -32,13 +36,16 @@ const downloadFile = (url, destPath) =>
     client
       .get(url, (response) => {
         if (response.statusCode !== 200) {
-          return reject(new Error(`Download failed with status ${response.statusCode}: ${url}`));
+          return reject(
+            new Error(
+              `Download failed with status ${response.statusCode}: ${url}`,
+            ),
+          );
         }
         response.pipe(file);
         file.on("finish", () => file.close(resolve));
       })
       .on("error", (err) => {
-        console.error(`[sourceSeparation] downloadFile failed for ${url}:`, err);
         fs.unlink(destPath, () => {});
         reject(err);
       });
@@ -60,26 +67,28 @@ const separateViaReplicate = async (audioPath) => {
   const audioBase64 = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
 
   // Create prediction
-  const createResponse = await fetch("https://api.replicate.com/v1/predictions", {
-    method: "POST",
-    headers: {
-      Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      version: REPLICATE_MODEL,
-      input: {
-        audio: audioBase64,
-        stem: "vocals",
-        model: "htdemucs",
-        output_format: "mp3",
+  const createResponse = await fetch(
+    "https://api.replicate.com/v1/predictions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify({
+        version: REPLICATE_MODEL,
+        input: {
+          audio: audioBase64,
+          stem: "vocals",
+          model: "htdemucs",
+          output_format: "mp3",
+        },
+      }),
+    },
+  );
 
   if (!createResponse.ok) {
     const err = await createResponse.text();
-    console.error("[sourceSeparation] Replicate create prediction failed:", err);
     throw new Error(`Replicate create prediction failed: ${err}`);
   }
 
@@ -99,12 +108,13 @@ const separateViaReplicate = async (audioPath) => {
       `https://api.replicate.com/v1/predictions/${predictionId}`,
       {
         headers: { Authorization: `Token ${process.env.REPLICATE_API_TOKEN}` },
-      }
+      },
     );
 
     if (!pollResponse.ok) {
-      console.error(`[sourceSeparation] Replicate poll failed with status ${pollResponse.status}`);
-      throw new Error(`Replicate poll failed with status ${pollResponse.status}`);
+      throw new Error(
+        `Replicate poll failed with status ${pollResponse.status}`,
+      );
     }
 
     const status = await pollResponse.json();
@@ -119,8 +129,9 @@ const separateViaReplicate = async (audioPath) => {
     }
 
     if (status.status === "failed" || status.status === "canceled") {
-      console.error(`[sourceSeparation] Replicate prediction ${status.status}:`, status.error);
-      throw new Error(`Replicate prediction ${status.status}: ${status.error || "unknown error"}`);
+      throw new Error(
+        `Replicate prediction ${status.status}: ${status.error || "unknown error"}`,
+      );
     }
 
     // status is "starting" or "processing" — keep polling
@@ -136,7 +147,9 @@ const separateViaReplicate = async (audioPath) => {
  * @returns {Promise<{vocalsPath:string, backgroundPath:string}>}
  */
 const separateViaElevenLabs = async (audioPath, outputDir) => {
-  console.warn("[sourceSeparation] Using ElevenLabs fallback — background track = original audio");
+  console.warn(
+    "[sourceSeparation] Using ElevenLabs fallback — background track = original audio",
+  );
 
   const audioStream = fs.createReadStream(audioPath);
   const isolatedStream = await getElevenLabs().audioIsolation.convert({
@@ -167,8 +180,10 @@ const separateViaElevenLabs = async (audioPath, outputDir) => {
  * @returns {{vocalsPath:string, backgroundPath:string}}
  */
 const separateNoOp = (audioPath, outputDir) => {
-  console.warn("[sourceSeparation] No separation available — using original audio for both stems");
-  const vocalsPath     = path.join(outputDir, `vocals_${uuidv4()}.mp3`);
+  console.warn(
+    "[sourceSeparation] No separation available — using original audio for both stems",
+  );
+  const vocalsPath = path.join(outputDir, `vocals_${uuidv4()}.mp3`);
   const backgroundPath = path.join(outputDir, `background_${uuidv4()}.mp3`);
   fs.copyFileSync(audioPath, vocalsPath);
   fs.copyFileSync(audioPath, backgroundPath);
@@ -195,7 +210,8 @@ const separateVocalsAndBackground = async (audioPath, outputDir) => {
   // Try Replicate first
   if (process.env.REPLICATE_API_TOKEN) {
     try {
-      const { vocalsUrl, backgroundUrl } = await separateViaReplicate(audioPath);
+      const { vocalsUrl, backgroundUrl } =
+        await separateViaReplicate(audioPath);
 
       const vocalsPath = path.join(outputDir, `vocals_${uuidv4()}.mp3`);
       const backgroundPath = path.join(outputDir, `background_${uuidv4()}.mp3`);
@@ -208,23 +224,26 @@ const separateVocalsAndBackground = async (audioPath, outputDir) => {
       return { vocalsPath, backgroundPath, method: "replicate" };
     } catch (replicateErr) {
       console.warn(
-        `[sourceSeparation] Replicate failed (${replicateErr.message}), falling back to ElevenLabs`
+        `[sourceSeparation] Replicate failed (${replicateErr.message}), falling back to ElevenLabs`,
       );
     }
   } else {
     console.warn(
-      "[sourceSeparation] REPLICATE_API_TOKEN not set, falling back to ElevenLabs"
+      "[sourceSeparation] REPLICATE_API_TOKEN not set, falling back to ElevenLabs",
     );
   }
 
   // ElevenLabs fallback
   if (process.env.ELEVENLABS_API_KEY) {
     try {
-      const { vocalsPath, backgroundPath } = await separateViaElevenLabs(audioPath, outputDir);
+      const { vocalsPath, backgroundPath } = await separateViaElevenLabs(
+        audioPath,
+        outputDir,
+      );
       return { vocalsPath, backgroundPath, method: "elevenlabs_fallback" };
     } catch (elErr) {
       console.warn(
-        `[sourceSeparation] ElevenLabs fallback failed (${elErr.message}), using no-op separation`
+        `[sourceSeparation] ElevenLabs fallback failed (${elErr.message}), using no-op separation`,
       );
     }
   }

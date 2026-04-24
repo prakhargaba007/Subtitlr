@@ -76,7 +76,6 @@ function runProcess(cmd, args, { cwd, timeoutMs }) {
       err.code = code;
       err.stdout = stdout;
       err.stderr = stderr;
-      console.error(`[lipSyncRunner] Process failed (exit ${code}). Stderr:`, stderr);
       reject(err);
     });
   });
@@ -88,7 +87,11 @@ function runProcess(cmd, args, { cwd, timeoutMs }) {
  * V1 multi-face: Wav2Lip will naturally pick a dominant face in the frame. We expose
  * env knobs for future improvements (face selection/tracking), but keep behavior simple.
  */
-exports.lipSyncVideo = async ({ inputVideoPath, inputAudioPath, outputVideoPath }) => {
+exports.lipSyncVideo = async ({
+  inputVideoPath,
+  inputAudioPath,
+  outputVideoPath,
+}) => {
   const enabled = envFlag("LIPSYNC_ENABLED", "0");
   if (!enabled) return null;
 
@@ -110,7 +113,9 @@ exports.lipSyncVideo = async ({ inputVideoPath, inputAudioPath, outputVideoPath 
   const checkpoint = envStr("WAV2LIP_CHECKPOINT", "");
 
   if (!wav2lipDir || !checkpoint) {
-    const err = new Error("Lip-sync is enabled but WAV2LIP_DIR / WAV2LIP_CHECKPOINT are not set.");
+    const err = new Error(
+      "Lip-sync is enabled but WAV2LIP_DIR / WAV2LIP_CHECKPOINT are not set.",
+    );
     err.statusCode = 500;
     throw err;
   }
@@ -145,18 +150,16 @@ exports.lipSyncVideo = async ({ inputVideoPath, inputAudioPath, outputVideoPath 
 
   // Keep v1 behavior simple; env is reserved for later upgrades.
   const targetFace = envStr("LIPSYNC_TARGET_FACE", "auto_largest");
-  const multiFaceBehavior = envStr("LIPSYNC_MULTI_FACE_BEHAVIOR", "single_target");
+  const multiFaceBehavior = envStr(
+    "LIPSYNC_MULTI_FACE_BEHAVIOR",
+    "single_target",
+  );
   void targetFace;
   void multiFaceBehavior;
 
-  const timeoutMs = parseOptionalInt(process.env.LIPSYNC_TIMEOUT_MS) ?? 30 * 60 * 1000;
+  const timeoutMs =
+    parseOptionalInt(process.env.LIPSYNC_TIMEOUT_MS) ?? 30 * 60 * 1000;
 
-  try {
-    await runProcess(pythonBin, args, { cwd: wav2lipDir, timeoutMs });
-    return outputVideoPath;
-  } catch (err) {
-    console.error("[lipSyncRunner] lipSyncVideo execution failed:", err);
-    throw err;
-  }
+  await runProcess(pythonBin, args, { cwd: wav2lipDir, timeoutMs });
+  return outputVideoPath;
 };
-

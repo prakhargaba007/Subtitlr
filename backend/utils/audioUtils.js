@@ -14,10 +14,7 @@ ffmpeg.setFfprobePath(ffprobeStatic.path);
 const getFileDuration = (filePath) =>
   new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
-      if (err) {
-        console.error(`[audioUtils] ffprobe failed for ${filePath}:`, err);
-        return reject(err);
-      }
+      if (err) return reject(err);
       resolve(metadata.format.duration || 0);
     });
   });
@@ -29,10 +26,7 @@ const getFileDuration = (filePath) =>
 const getMediaStreamSummary = (filePath) =>
   new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
-      if (err) {
-        console.error(`[audioUtils] ffprobe failed for ${filePath}:`, err);
-        return reject(err);
-      }
+      if (err) return reject(err);
       const streams = (metadata.streams || []).map((s) => ({
         index: s.index,
         codec_type: String(s.codec_type || ""),
@@ -91,10 +85,7 @@ const splitAudioIntoChunks = (inputPath, outputDir, segmentSeconds) =>
           .map((f) => path.join(outputDir, f));
         resolve(files);
       })
-      .on("error", (err) => {
-        console.error(`[audioUtils] splitAudioIntoChunks failed: ${inputPath}`, err);
-        reject(err);
-      })
+      .on("error", reject)
       .run();
   });
 
@@ -129,7 +120,9 @@ const concatMp3Files = (inputPaths, outputPath) =>
       return resolve();
     }
     const listPath = `${outputPath}.concat.txt`;
-    const body = inputPaths.map((p) => `file '${p.replace(/'/g, "'\\''")}'`).join("\n");
+    const body = inputPaths
+      .map((p) => `file '${p.replace(/'/g, "'\\''")}'`)
+      .join("\n");
     fs.writeFileSync(listPath, body);
     ffmpeg()
       .input(listPath)
@@ -143,7 +136,6 @@ const concatMp3Files = (inputPaths, outputPath) =>
         resolve();
       })
       .on("error", (err) => {
-        console.error("[audioUtils] concatMp3Files failed:", err);
         try {
           fs.unlinkSync(listPath);
         } catch (_) {}
@@ -164,9 +156,7 @@ const cleanupPath = (p) => {
     } else {
       fs.unlinkSync(p);
     }
-  } catch (err) {
-    console.warn(`[audioUtils] cleanupPath failed for ${p}:`, err.message);
-  }
+  } catch (_) {}
 };
 
 /** Seconds tolerance when comparing durations (MP3 frame / probe jitter). */
@@ -189,12 +179,14 @@ const DURATION_EPS = 0.12;
 const detectLeadingSpeechOnsetSec = (filePath, opts = {}) => {
   if (!filePath || !fs.existsSync(filePath)) return 0;
   const noiseDb = Number.isFinite(opts.noiseDb) ? opts.noiseDb : -35;
-  const minSilenceSec = Number.isFinite(opts.minSilenceSec) ? opts.minSilenceSec : 0.35;
+  const minSilenceSec = Number.isFinite(opts.minSilenceSec)
+    ? opts.minSilenceSec
+    : 0.35;
   const af = `silencedetect=noise=${noiseDb}dB:d=${minSilenceSec}`;
   const r = spawnSync(
     ffmpegStatic,
     ["-hide_banner", "-nostats", "-i", filePath, "-af", af, "-f", "null", "-"],
-    { encoding: "utf8", maxBuffer: 25 * 1024 * 1024 }
+    { encoding: "utf8", maxBuffer: 25 * 1024 * 1024 },
   );
   const combined = `${r.stderr || ""}\n${r.stdout || ""}`;
   const lines = combined.split(/\r?\n/);
@@ -226,10 +218,7 @@ const ensureMinAudioDuration = async (inputPath, minSeconds, outputPath) => {
       .audioBitrate(192)
       .output(outputPath)
       .on("end", resolve)
-      .on("error", (err) => {
-        console.error(`[audioUtils] ensureMinAudioDuration failed for ${inputPath}:`, err);
-        reject(err);
-      })
+      .on("error", reject)
       .run();
   });
   const after = await getFileDuration(outputPath);

@@ -8,7 +8,10 @@ const { getFileDuration } = require("./audioUtils");
 
 let _elevenlabs = null;
 const getElevenLabs = () => {
-  if (!_elevenlabs) _elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
+  if (!_elevenlabs)
+    _elevenlabs = new ElevenLabsClient({
+      apiKey: process.env.ELEVENLABS_API_KEY,
+    });
   return _elevenlabs;
 };
 
@@ -68,13 +71,18 @@ const isElevenLabsLibraryVoiceBlockedError = (err) => {
   if (!err || typeof err !== "object") return false;
   const status = /** @type {{ statusCode?: number }} */ (err).statusCode;
   if (status !== 402) return false;
-  const body = /** @type {{ body?: { detail?: { code?: string; message?: string } } }} */ (err).body;
+  const body =
+    /** @type {{ body?: { detail?: { code?: string; message?: string } } }} */ (
+      err
+    ).body;
   const code = body?.detail?.code;
   if (code === "paid_plan_required") return true;
   const msg = String(body?.detail?.message || "").toLowerCase();
-  if (msg.includes("library voices") || msg.includes("free users cannot")) return true;
+  if (msg.includes("library voices") || msg.includes("free users cannot"))
+    return true;
   const str = String(/** @type {Error} */ (err).message || "").toLowerCase();
-  if (str.includes("paid_plan_required") || str.includes("library voices")) return true;
+  if (str.includes("paid_plan_required") || str.includes("library voices"))
+    return true;
   return false;
 };
 
@@ -97,13 +105,19 @@ const fetchAvailableVoices = async () => {
  * @param {{ excludeVoiceIds?: string[] }} [options]
  * @returns {Promise<string>} ElevenLabs voiceId
  */
-const selectBestVoice = async (voiceDescription, availableVoices, options = {}) => {
+const selectBestVoice = async (
+  voiceDescription,
+  availableVoices,
+  options = {},
+) => {
   if (!availableVoices.length) return FALLBACK_VOICE_ID;
 
   const excludeSet = new Set((options.excludeVoiceIds || []).map(String));
   let pool = availableVoices.filter((v) => !excludeSet.has(v.voiceId));
   if (!pool.length) {
-    console.warn("[ttsUtils] ElevenLabs: all account voices already assigned; reusing pool.");
+    console.warn(
+      "[ttsUtils] ElevenLabs: all account voices already assigned; reusing pool.",
+    );
     pool = availableVoices;
   }
 
@@ -143,15 +157,21 @@ const selectBestVoice = async (voiceDescription, availableVoices, options = {}) 
     });
 
     const parsed = JSON.parse(response.choices[0].message.content);
-    const matched = pool.find((v) => v.voiceId === parsed.voiceId && !excludeSet.has(v.voiceId));
+    const matched = pool.find(
+      (v) => v.voiceId === parsed.voiceId && !excludeSet.has(v.voiceId),
+    );
 
     if (matched) {
-      console.log(`[ttsUtils] Voice match: "${matched.name}" — ${parsed.reason}`);
+      console.log(
+        `[ttsUtils] Voice match: "${matched.name}" — ${parsed.reason}`,
+      );
       return matched.voiceId;
     }
   } catch (err) {
-    console.error("[ttsUtils] selectBestVoice failed:", err);
-    console.warn("[ttsUtils] Voice matching failed, using fallback:", err.message);
+    console.warn(
+      "[ttsUtils] Voice matching failed, using fallback:",
+      err.message,
+    );
   }
 
   const firstUnused = availableVoices.find((v) => !excludeSet.has(v.voiceId));
@@ -166,10 +186,14 @@ const selectBestVoice = async (voiceDescription, availableVoices, options = {}) 
  * @returns {Promise<string>} One of alloy, echo, fable, onyx, nova, shimmer
  */
 const selectBestOpenAIVoice = async (voiceDescription, options = {}) => {
-  const excludeSet = new Set((options.excludeVoiceIds || []).map((x) => String(x).toLowerCase()));
+  const excludeSet = new Set(
+    (options.excludeVoiceIds || []).map((x) => String(x).toLowerCase()),
+  );
   let pool = OPENAI_TTS_VOICES.filter((v) => !excludeSet.has(v.voice));
   if (!pool.length) {
-    console.warn("[ttsUtils] OpenAI: all 6 preset voices already assigned; reusing presets.");
+    console.warn(
+      "[ttsUtils] OpenAI: all 6 preset voices already assigned; reusing presets.",
+    );
     pool = OPENAI_TTS_VOICES;
   }
   const names = pool.map((v) => v.voice);
@@ -206,8 +230,10 @@ const selectBestOpenAIVoice = async (voiceDescription, options = {}) => {
       return v;
     }
   } catch (err) {
-    console.error("[ttsUtils] selectBestOpenAIVoice failed:", err);
-    console.warn("[ttsUtils] OpenAI voice matching failed, using default:", err.message);
+    console.warn(
+      "[ttsUtils] OpenAI voice matching failed, using default:",
+      err.message,
+    );
   }
 
   const firstFree = OPENAI_TTS_VOICE_NAMES.find((n) => !excludeSet.has(n));
@@ -222,20 +248,17 @@ const selectBestOpenAIVoice = async (voiceDescription, options = {}) => {
 const generateSpeech = async (text, voiceId, options = {}) => {
   const { stability = 0.5, similarityBoost = 0.75, style = 0.0 } = options;
 
-    const audioStream = await getElevenLabs().textToSpeech.convert(voiceId, {
-      text,
-      modelId: TTS_MODEL,
-      outputFormat: "mp3_44100_128",
-      voiceSettings: {
-        stability,
-        style,
-        similarityBoost,
-        useSpeakerBoost: true,
-      },
-    }).catch(err => {
-      console.error(`[ttsUtils] ElevenLabs TTS conversion failed for voice ${voiceId}:`, err);
-      throw err;
-    });
+  const audioStream = await getElevenLabs().textToSpeech.convert(voiceId, {
+    text,
+    modelId: TTS_MODEL,
+    outputFormat: "mp3_44100_128",
+    voiceSettings: {
+      stability,
+      style,
+      similarityBoost,
+      useSpeakerBoost: true,
+    },
+  });
 
   const chunks = [];
   for await (const chunk of audioStream) {
@@ -263,20 +286,17 @@ const generateSpeechOpenAI = async (text, voiceName) => {
   let input = text;
   if (input.length > OPENAI_TTS_INPUT_MAX) {
     console.warn(
-      `[ttsUtils] Segment truncated from ${input.length} to ${OPENAI_TTS_INPUT_MAX} chars for OpenAI TTS`
+      `[ttsUtils] Segment truncated from ${input.length} to ${OPENAI_TTS_INPUT_MAX} chars for OpenAI TTS`,
     );
     input = input.slice(0, OPENAI_TTS_INPUT_MAX);
   }
 
-    const response = await getOpenAI().audio.speech.create({
-      model,
-      voice: voiceName,
-      input,
-      response_format: "mp3",
-    }).catch(err => {
-      console.error(`[ttsUtils] OpenAI TTS generation failed for voice ${voiceName}:`, err);
-      throw err;
-    });
+  const response = await getOpenAI().audio.speech.create({
+    model,
+    voice: voiceName,
+    input,
+    response_format: "mp3",
+  });
 
   const buf = Buffer.from(await response.arrayBuffer());
   const outputPath = path.join(os.tmpdir(), `tts_openai_${uuidv4()}.mp3`);

@@ -1,7 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const fs = require("fs");
+const path = require("path");
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 /**
  * Storage adapter interface
@@ -15,7 +21,7 @@ class StorageAdapter {
    * @returns {Promise<string>} - URL or path to the saved file
    */
   async saveFile(fileData, filePath) {
-    throw new Error('Method not implemented');
+    throw new Error("Method not implemented");
   }
 
   /**
@@ -24,7 +30,7 @@ class StorageAdapter {
    * @returns {Promise<Buffer|Stream>} - File data
    */
   async getFile(filePath) {
-    throw new Error('Method not implemented');
+    throw new Error("Method not implemented");
   }
 
   /**
@@ -33,7 +39,7 @@ class StorageAdapter {
    * @returns {Promise<boolean>} - True if deleted successfully
    */
   async deleteFile(filePath) {
-    throw new Error('Method not implemented');
+    throw new Error("Method not implemented");
   }
 
   /**
@@ -42,7 +48,7 @@ class StorageAdapter {
    * @returns {Promise<boolean>} - True if file exists
    */
   async fileExists(filePath) {
-    throw new Error('Method not implemented');
+    throw new Error("Method not implemented");
   }
 
   /**
@@ -51,7 +57,7 @@ class StorageAdapter {
    * @returns {Promise<string>} - Public URL
    */
   async getPublicUrl(filePath) {
-    throw new Error('Method not implemented');
+    throw new Error("Method not implemented");
   }
 }
 
@@ -59,7 +65,7 @@ class StorageAdapter {
  * Local file system storage adapter
  */
 class LocalStorageAdapter extends StorageAdapter {
-  constructor(basePath = '') {
+  constructor(basePath = "") {
     super();
     this.basePath = basePath;
   }
@@ -81,13 +87,13 @@ class LocalStorageAdapter extends StorageAdapter {
    */
   async saveFile(fileData, filePath) {
     const fullPath = this._getFullPath(filePath);
-    
+
     // Create directory if it doesn't exist
     const dir = path.dirname(fullPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     return new Promise((resolve, reject) => {
       if (Buffer.isBuffer(fileData)) {
         // If fileData is a Buffer
@@ -99,13 +105,12 @@ class LocalStorageAdapter extends StorageAdapter {
         // If fileData is a Stream
         const writeStream = fs.createWriteStream(fullPath);
         fileData.pipe(writeStream);
-        
-        writeStream.on('finish', () => {
+
+        writeStream.on("finish", () => {
           resolve(filePath);
         });
-        
-        writeStream.on('error', (err) => {
-          console.error(`[storage] Local saveFile stream error for ${filePath}:`, err);
+
+        writeStream.on("error", (err) => {
           reject(err);
         });
       }
@@ -129,12 +134,12 @@ class LocalStorageAdapter extends StorageAdapter {
    */
   async deleteFile(filePath) {
     const fullPath = this._getFullPath(filePath);
-    
+
     if (await this.fileExists(filePath)) {
       await fs.promises.unlink(fullPath);
       return true;
     }
-    
+
     return false;
   }
 
@@ -145,7 +150,7 @@ class LocalStorageAdapter extends StorageAdapter {
    */
   async fileExists(filePath) {
     const fullPath = this._getFullPath(filePath);
-    
+
     try {
       await fs.promises.access(fullPath, fs.constants.F_OK);
       return true;
@@ -176,58 +181,55 @@ class S3StorageAdapter extends StorageAdapter {
     super();
     this.bucket = process.env.S3_BUCKET;
     this.region = process.env.AWS_REGION;
-    this.publicBaseUrl = process.env.S3_PUBLIC_BASE_URL || '';
+    this.publicBaseUrl = process.env.S3_PUBLIC_BASE_URL || "";
     this.client = new S3Client({
       region: this.region,
-      credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-      } : undefined
+      credentials:
+        process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+          ? {
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            }
+          : undefined,
     });
   }
 
-  async saveFile(fileData, filePath, contentType = 'application/octet-stream') {
+  async saveFile(fileData, filePath, contentType = "application/octet-stream") {
     const body = Buffer.isBuffer(fileData) ? fileData : fileData;
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: filePath,
       Body: body,
-      ContentType: contentType
+      ContentType: contentType,
     });
-    try {
-      await this.client.send(command);
-    } catch (err) {
-      console.error(`[storage] S3 saveFile failed for ${filePath}:`, err);
-      throw err;
-    }
+    await this.client.send(command);
     return filePath;
   }
 
   async getFile(filePath) {
-    const command = new GetObjectCommand({ Bucket: this.bucket, Key: filePath });
-    try {
-      const res = await this.client.send(command);
-      return res.Body; // stream
-    } catch (err) {
-      console.error(`[storage] S3 getFile failed for ${filePath}:`, err);
-      throw err;
-    }
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: filePath,
+    });
+    const res = await this.client.send(command);
+    return res.Body; // stream
   }
 
   async deleteFile(filePath) {
-    const command = new DeleteObjectCommand({ Bucket: this.bucket, Key: filePath });
-    try {
-      await this.client.send(command);
-      return true;
-    } catch (err) {
-      console.error(`[storage] S3 deleteFile failed for ${filePath}:`, err);
-      throw err;
-    }
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: filePath,
+    });
+    await this.client.send(command);
+    return true;
   }
 
   async fileExists(filePath) {
     try {
-      const command = new HeadObjectCommand({ Bucket: this.bucket, Key: filePath });
+      const command = new HeadObjectCommand({
+        Bucket: this.bucket,
+        Key: filePath,
+      });
       await this.client.send(command);
       return true;
     } catch (err) {
@@ -237,38 +239,53 @@ class S3StorageAdapter extends StorageAdapter {
 
   async getPublicUrl(filePath) {
     if (this.publicBaseUrl) {
-      return `${this.publicBaseUrl.replace(/\/$/, '')}/${filePath}`;
+      return `${this.publicBaseUrl.replace(/\/$/, "")}/${filePath}`;
     }
     // Fallback to a signed GET URL if no public base URL configured
-    const command = new GetObjectCommand({ Bucket: this.bucket, Key: filePath });
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: filePath,
+    });
     const url = await getSignedUrl(this.client, command, { expiresIn: 3600 });
     return url;
   }
 }
 
 // Helper to create a presigned PUT URL for direct browser uploads
-const createPresignedPutUrl = async (key, contentType, expiresInSeconds = 900) => {
+const createPresignedPutUrl = async (
+  key,
+  contentType,
+  expiresInSeconds = 900,
+) => {
   const region = process.env.AWS_REGION;
   const bucket = process.env.S3_BUCKET;
   const client = new S3Client({ region });
-  const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType });
-  const uploadUrl = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
-  const publicBaseUrl = process.env.S3_PUBLIC_BASE_URL || '';
-  const publicUrl = publicBaseUrl ? `${publicBaseUrl.replace(/\/$/, '')}/${key}` : '';
+  const command = new PutObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+  });
+  const uploadUrl = await getSignedUrl(client, command, {
+    expiresIn: expiresInSeconds,
+  });
+  const publicBaseUrl = process.env.S3_PUBLIC_BASE_URL || "";
+  const publicUrl = publicBaseUrl
+    ? `${publicBaseUrl.replace(/\/$/, "")}/${key}`
+    : "";
   return { uploadUrl, key, publicUrl };
 };
 
 // Create and export the appropriate storage adapter based on the environment
 const createStorageAdapter = () => {
   // Use environment variable to determine which storage adapter to use
-  const storageType = process.env.STORAGE_TYPE || 'local';
-  
-  if (storageType === 's3') {
+  const storageType = process.env.STORAGE_TYPE || "local";
+
+  if (storageType === "s3") {
     // For production, use S3
     return new S3StorageAdapter();
   } else {
     // For development, use local storage
-    return new LocalStorageAdapter(path.join(__dirname, '..'));
+    return new LocalStorageAdapter(path.join(__dirname, ".."));
   }
 };
 
@@ -277,5 +294,5 @@ module.exports = {
   LocalStorageAdapter,
   S3StorageAdapter,
   storage: createStorageAdapter(),
-  createPresignedPutUrl
-}; 
+  createPresignedPutUrl,
+};
