@@ -19,8 +19,8 @@ const NAV_ITEMS = [
 const DIRECT_LINKS = [
   // { icon: "upload_file", label: "New Upload", href: "/dashboard" },
   // { icon: "folder_open", label: "All Projects", href: "/dashboard/projects" },
-  { icon: "toll", label: "Credit History", href: "/dashboard/credit-history" },
-  { icon: "help_outline", label: "Documentation", href: "/docs" },
+  // { icon: "toll", label: "Credit History", href: "/dashboard/credit-history" },
+  { icon: "rocket_launch", label: "Request a Feature", href: "/docs" },
 ];
 
 const MAX_CREDITS = 60;
@@ -88,16 +88,16 @@ export default function DashboardSidebar() {
     <aside className="h-screen w-20 lg:w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col py-8 px-4 z-50 transition-all duration-300">
 
       {/* Logo – wide */}
-      <div className="mb-10 px-4 hidden lg:block">
+      <div className="mb-10 px-4 hidden lg:block cursor-pointer" onClick={() => router.push("/dashboard")}>
         <div className="flex items-center gap-2">
-          <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={28} height={28} priority />
-          <h1 className="font-headline text-xl font-extrabold text-primary tracking-tight">
-            Kili
+          <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={60} height={60} priority />
+          <h1 className="font-headline text-3xl font-extrabold text-primary tracking-tight">
+            Kili Labs
           </h1>
         </div>
-        <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
+        {/* <p className="text-xl text-on-surface-variant font-bold uppercase tracking-widest mt-1">
           Workspace
-        </p>
+        </p> */}
       </div>
 
       {/* Logo – collapsed */}

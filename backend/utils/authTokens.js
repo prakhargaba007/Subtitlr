@@ -2,7 +2,11 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const RefreshToken = require("../models/RefreshToken");
 
-const getCookieDomain = () => process.env.NODE_ENV === "production" || (process.env.FRONTEND_URL || "").startsWith("https://") ? ".kililabs.io" : undefined;
+const isProdEnv = () =>
+  process.env.NODE_ENV === "production" ||
+  (process.env.NODE_ENV !== "development" && (process.env.FRONTEND_URL || "").startsWith("https://"));
+
+const getCookieDomain = () => isProdEnv() ? ".kililabs.io" : undefined;
 
 const generateTokens = async (user, req, res, familyId = null) => {
   const jti = crypto.randomUUID();
@@ -47,7 +51,7 @@ const generateTokens = async (user, req, res, familyId = null) => {
   const csrfToken = crypto.randomBytes(20).toString("hex");
 
   // 4. Set Cookies
-  const isProd = process.env.NODE_ENV === "production" || (process.env.FRONTEND_URL || "").startsWith("https://");
+  const isProd = isProdEnv();
   // In production: cross-origin requests (www.kililabs.io → api.kililabs.io)
   // require sameSite:"none" + secure:true for cookies to be sent by browser.
   // In development: sameSite:"lax" works fine since both run on localhost.
