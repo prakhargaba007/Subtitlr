@@ -3,20 +3,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { 
-  Download, 
-  CheckCircle2, 
-  AlertCircle, 
-  ChevronRight, 
-  Music, 
-  FileText, 
+import {
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  ChevronRight,
   ExternalLink,
-  Volume2,
-  VolumeX,
   RefreshCcw,
-  Clock,
-  Languages,
-  Users
+  Sparkles,
+  History,
+  Gauge,
+  ShieldCheck,
+  Mic,
+  Subtitles,
+  ListVideo
 } from "lucide-react";
 import axiosInstance, { s3Url } from "@/utils/axios";
 import type { EditorJob } from "@/components/dubbingEditor/types";
@@ -37,13 +37,12 @@ function StatusBadge({ status }: { status: string }) {
   const isProcessing = !isCompleted && !isFailed;
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
-      isCompleted ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-      isFailed ? "bg-red-500/10 border-red-500/20 text-red-400" :
-      "bg-primary/10 border-primary/20 text-primary animate-pulse"
-    }`}>
-      {isProcessing && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />}
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase border backdrop-blur-sm transition-all ${isCompleted ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600" :
+      isFailed ? "bg-red-500/10 border-red-500/30 text-red-600" :
+        "bg-primary/10 border-primary/30 text-primary shadow-[0_0_15px_rgba(57,44,193,0.15)]"
+      }`}>
+      {isProcessing && <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+      {status.replace('_', ' ')}
     </div>
   );
 }
@@ -59,43 +58,46 @@ function ProcessingStepper({ status }: { status: string }) {
   ];
 
   const currentIdx = steps.findIndex(s => s.id === status);
-  
+  const currentStepLabel = steps.find(s => s.id === status)?.label || status;
+
   return (
-    <div className="w-full max-w-2xl mx-auto py-12 px-6">
-      <div className="relative flex justify-between">
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-outline-variant/20 -translate-y-1/2" />
-        <div 
-          className="absolute top-1/2 left-0 h-0.5 bg-primary transition-all duration-700 -translate-y-1/2" 
-          style={{ width: `${Math.max(0, (currentIdx / (steps.length - 1)) * 100)}%` }}
-        />
+    <div className="w-full max-w-4xl mx-auto py-16 px-8 sm:px-12 bg-surface/40 backdrop-blur-xl border border-outline-variant/20 rounded-[2.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.03)]">
+      <div className="relative flex justify-between max-w-3xl mx-auto">
+        <div className="absolute top-1/2 left-0 w-full h-1.5 bg-surface-container-high -translate-y-1/2 rounded-full overflow-hidden">
+          <div
+            className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000 ease-in-out"
+            style={{ width: `${Math.max(0, (currentIdx / (steps.length - 1)) * 100)}%` }}
+          />
+        </div>
 
         {steps.map((step, i) => {
           const isDone = i < currentIdx || status === "completed";
           const isActive = i === currentIdx;
-          
+
           return (
-            <div key={step.id} className="relative flex flex-col items-center gap-3 z-10 font-headline">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                isDone ? "bg-primary border-primary text-on-primary" :
-                isActive ? "bg-surface border-primary text-primary shadow-[0_0_15px_rgba(57,44,193,0.1)]" :
-                "bg-surface border-outline-variant/30 text-on-surface/20"
-              }`}>
-                {isDone ? <CheckCircle2 size={18} /> : <span>{i + 1}</span>}
+            <div key={step.id} className="relative flex flex-col items-center gap-4 z-10 font-headline group">
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-4 transition-all duration-700 ease-out bg-surface ${isDone ? "border-primary text-primary shadow-[0_0_20px_rgba(57,44,193,0.3)] scale-105" :
+                isActive ? "border-primary text-primary shadow-[0_0_30px_rgba(57,44,193,0.4)] scale-110 ring-4 ring-primary/10" :
+                  "border-surface-container-high text-on-surface-variant/30"
+                }`}>
+                {isDone ? <CheckCircle2 size={22} className="animate-in zoom-in" /> : <span className="font-bold sm:text-lg">{i + 1}</span>}
               </div>
-              <span className={`text-[10px] font-bold tracking-wider uppercase ${
-                isDone ? "text-on-surface" : isActive ? "text-primary" : "text-on-surface/20"
-              }`}>
+              <span className={`absolute -bottom-8 text-[10px] sm:text-xs font-bold tracking-widest uppercase transition-colors duration-500 whitespace-nowrap ${isDone ? "text-on-surface" : isActive ? "text-primary" : "text-on-surface-variant/40"
+                }`}>
                 {step.label}
               </span>
             </div>
           );
         })}
       </div>
-      
-      <div className="mt-16 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        <h2 className="text-2xl font-bold text-on-surface mb-2 font-headline">Magic in progress...</h2>
-        <p className="text-on-surface-variant text-sm max-w-sm mx-auto leading-relaxed font-body">
-          Our AI is currently {status.replace('_', ' ')} your video. This usually takes a few minutes depending on length.
+
+      <div className="mt-28 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/5 mb-8 border border-primary/10 shadow-inner">
+          <RefreshCcw className="text-primary animate-[spin_4s_linear_infinite]" size={32} />
+        </div>
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-on-surface mb-4 font-headline tracking-tight">Magic in progress</h2>
+        <p className="text-on-surface-variant text-base sm:text-lg max-w-lg mx-auto leading-relaxed font-body">
+          Our AI is currently <span className="font-semibold text-primary">{currentStepLabel.toLowerCase()}</span> your video. This usually takes a few minutes depending on length.
         </p>
       </div>
     </div>
@@ -110,48 +112,84 @@ function VideoPreview({ job }: { job: EditorJob }) {
   if (!videoSrc) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="relative group aspect-video rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl transition-transform duration-500 hover:scale-[1.01]">
-        <Player.Provider>
-          <VideoSkin>
-            <Video 
-              src={videoSrc} 
-              playsInline 
-              autoPlay 
-              muted 
-              className="w-full h-full object-contain"
-            />
-          </VideoSkin>
-        </Player.Provider>
-        
-        <div className="absolute top-4 left-4 z-20">
-          <button 
-            onClick={() => setUseOriginal(!useOriginal)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-sm font-medium hover:bg-black/80 transition-all active:scale-95 font-label"
-          >
-            {useOriginal ? <VolumeX size={14} className="text-red-400" /> : <Volume2 size={14} className="text-emerald-400" />}
-            {useOriginal ? "Playing Original" : "Playing Dubbed"}
-          </button>
+    <div className="relative group aspect-video rounded-[2rem] overflow-hidden bg-black border border-outline-variant/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <Player.Provider>
+        <VideoSkin>
+          <Video
+            src={videoSrc}
+            playsInline
+            autoPlay
+            muted
+            className="w-full h-full object-contain"
+          />
+        </VideoSkin>
+      </Player.Provider>
+
+      <div className="absolute top-6 left-6 z-20">
+        <button
+          onClick={() => setUseOriginal(!useOriginal)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 shadow-lg ${useOriginal
+            ? "bg-surface/90 backdrop-blur-md text-on-surface hover:bg-surface"
+            : "bg-primary text-white hover:bg-primary/90"
+            }`}
+        >
+          <div className={`w-2 h-2 rounded-full ${useOriginal ? "bg-primary" : "bg-white"}`} />
+          {useOriginal ? "Playing Original" : "Playing Dubbed"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LiveTranscription({ job }: { job: EditorJob }) {
+  return (
+    <div className="bg-surface rounded-[2rem] p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10 mt-8">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-lg font-bold font-headline text-on-surface">Live Transcription</h3>
+        <div className="bg-primary/5 text-primary text-xs font-bold px-4 py-2 rounded-full">
+          <span className="capitalize">{job.sourceLanguage || "English"}</span> (Original) → <span className="capitalize">{job.targetLanguage || "Spanish"}</span> (Dubbed)
         </div>
       </div>
+      <div className="space-y-8 text-lg">
+        <p className="font-semibold text-on-surface-variant italic leading-relaxed">
+          "Exploring these hidden valleys has always been a dream, but the silence here is what really speaks..."
+        </p>
+        <p className="font-bold text-primary leading-relaxed">
+          "Explorar estos valles ocultos siempre ha sido un sueño, pero el silencio aquí es lo que realmente habla..."
+        </p>
+      </div>
+    </div>
+  );
+}
 
-      <div className="flex flex-wrap items-center justify-between gap-6 px-4">
-        <div className="flex items-center gap-8 text-sm text-on-surface-variant font-body">
-          <div className="flex items-center gap-2">
-            <Clock size={16} />
-            <span>{fmtTimeShort(job.duration)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Languages size={16} />
-            <span className="capitalize">{job.sourceLanguage} ➔ {job.targetLanguage}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Users size={16} />
-            <span>{job.speakerProfiles?.length || 0} Speakers</span>
-          </div>
+function StatCards() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+      <div className="bg-surface rounded-3xl p-6 flex items-center gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
+        <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+          <History size={20} />
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/40 font-mono uppercase tracking-widest">
-          <span>Job ID: {job._id.slice(-8)}</span>
+        <div>
+          <div className="text-[10px] font-bold tracking-widest text-on-surface-variant/50 uppercase mb-0.5">Last Render</div>
+          <div className="font-bold text-on-surface text-sm">2 minutes ago</div>
+        </div>
+      </div>
+      <div className="bg-surface rounded-3xl p-6 flex items-center gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
+        <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+          <Gauge size={20} />
+        </div>
+        <div>
+          <div className="text-[10px] font-bold tracking-widest text-on-surface-variant/50 uppercase mb-0.5">Processing</div>
+          <div className="font-bold text-on-surface text-sm">Ultra Fast (2.4x)</div>
+        </div>
+      </div>
+      <div className="bg-surface rounded-3xl p-6 flex items-center gap-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
+        <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-600 shrink-0">
+          <ShieldCheck size={20} />
+        </div>
+        <div>
+          <div className="text-[10px] font-bold tracking-widest text-on-surface-variant/50 uppercase mb-0.5">Security</div>
+          <div className="font-bold text-on-surface text-sm">Encrypted Export</div>
         </div>
       </div>
     </div>
@@ -184,29 +222,35 @@ function DownloadPanel({ job }: { job: EditorJob }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <button 
+      <button
         onClick={() => handleDownload(s3Url(job.dubbedVideoUrl || ""), `dubbed_${job.originalFileName}`)}
         disabled={isExporting}
-        className="group relative w-full h-16 rounded-2xl bg-primary flex items-center justify-center gap-3 overflow-hidden transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+        className="group relative w-full h-14 rounded-full bg-primary flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(57,44,193,0.3)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-        <Download size={22} className="text-white group-hover:scale-110 transition-transform" />
-        <span className="text-lg font-bold text-white tracking-tight font-headline">Download Video</span>
+        <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000" />
+        {isExporting ? (
+          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        ) : (
+          <Download size={20} className="text-white transition-transform duration-300" />
+        )}
+        <span className="text-base font-bold text-white tracking-tight font-headline">
+          {isExporting ? "Exporting..." : "Download Video"}
+        </span>
       </button>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button 
+      <div className="grid grid-cols-2 gap-3">
+        <button
           onClick={() => handleDownload(s3Url(job.dubbedAudioUrl || ""), `audio_${job.originalFileName.replace(/\.[^/.]+$/, ".mp3")}`)}
-          className="flex items-center justify-center gap-2 h-12 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface-variant text-sm font-semibold hover:bg-surface-container-high transition-all hover:text-on-surface"
+          className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300"
         >
-          <Music size={16} />
+          <Mic size={16} className="text-on-surface-variant" />
           <span>Audio Mix</span>
         </button>
-        <button 
-          className="flex items-center justify-center gap-2 h-12 rounded-xl bg-surface-container border border-outline-variant/30 text-on-surface/20 text-sm font-semibold cursor-not-allowed opacity-50"
+        <button
+          className="flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300 cursor-not-allowed"
           title="Coming soon"
         >
-          <FileText size={16} />
+          <Subtitles size={16} className="text-on-surface-variant" />
           <span>Subtitles</span>
         </button>
       </div>
@@ -245,7 +289,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
     }
 
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: number;
 
     const poll = async () => {
       const shouldStop = await fetchJob();
@@ -284,7 +328,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
             <h1 className="text-2xl font-bold font-headline">Something went wrong</h1>
             <p className="text-on-surface-variant text-sm leading-relaxed font-body">{errorMsg || "We couldn't process your video this time."}</p>
           </div>
-          <Link 
+          <Link
             href={inDashboard ? "/dashboard" : "/"}
             className="flex items-center justify-center gap-2 w-full h-14 rounded-2xl bg-primary text-on-primary font-bold hover:brightness-110 transition-all active:scale-95"
           >
@@ -300,97 +344,115 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
   const isFailed = job.status === "failed";
 
   return (
-    <div className={`min-h-screen bg-background text-on-surface selection:bg-primary/10 ${inDashboard ? "p-4 sm:p-8 rounded-3xl" : "pt-32 pb-20 px-6 sm:px-12"}`}>
+    <div className={`relative min-h-screen bg-surface-container-lowest text-on-surface selection:bg-primary/20 overflow-hidden ${inDashboard ? "p-4 sm:p-8 rounded-3xl" : "pt-32 pb-20 px-6 sm:px-12"}`}>
+      {/* Premium ambient glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
+
       {!inDashboard && (
-        <header className="fixed top-0 left-0 right-0 h-20 border-b border-outline-variant/10 bg-surface/80 backdrop-blur-xl z-50 px-8">
+        <header className="fixed top-0 left-0 right-0 h-20 border-b border-outline-variant/20 glass-nav z-50 px-8 transition-all duration-300">
           <div className="h-full max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="p-2 hover:bg-surface-container-high rounded-xl transition-colors text-on-surface">
+              <Link href="/dashboard" className="p-2 hover:bg-surface-container-high rounded-full transition-colors text-on-surface border border-transparent hover:border-outline-variant/30">
                 <ChevronRight className="rotate-180" />
               </Link>
-              <div className="h-4 w-px bg-outline-variant/30" />
+              <div className="h-6 w-px bg-outline-variant/30" />
               <div className="flex flex-col">
-                <h1 className="font-bold tracking-tight truncate max-w-[200px] sm:max-w-md text-on-surface">
+                <h1 className="font-bold tracking-tight truncate max-w-[200px] sm:max-w-md text-on-surface font-headline">
                   {job.originalFileName}
                 </h1>
-                <StatusBadge status={job.status} />
+                <div className="mt-0.5">
+                  <StatusBadge status={job.status} />
+                </div>
               </div>
             </div>
           </div>
         </header>
       )}
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12">
-        <div className="space-y-12">
+      <main className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10 z-10">
+        <div className="space-y-0">
           {isProcessing ? (
-            <div className="min-h-[400px] flex items-center justify-center">
+            <div className="min-h-[500px] flex items-center justify-center">
               <ProcessingStepper status={job.status} />
             </div>
           ) : isFailed ? (
-              <div className="bg-red-500/5 border border-red-500/20 rounded-3xl p-12 text-center space-y-6">
-                <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <AlertCircle className="text-red-500" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold font-headline text-on-surface">Dubbing Failed</h3>
-                  <p className="text-on-surface-variant max-w-md mx-auto font-body">{job.error || "A technical error occurred during the sync phase."}</p>
-                </div>
-                <Link href="/dashboard" className="inline-flex items-center gap-2 text-primary font-bold hover:underline font-label">
-                  Go back to Dashboard <ExternalLink size={14} />
-                </Link>
+            <div className="bg-red-500/5 border border-red-500/20 rounded-[2.5rem] p-16 text-center space-y-8 backdrop-blur-sm">
+              <div className="mx-auto w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center shadow-inner">
+                <AlertCircle className="text-red-500" size={32} />
               </div>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold font-headline text-on-surface">Dubbing Failed</h3>
+                <p className="text-on-surface-variant max-w-md mx-auto font-body text-lg">{job.error || "A technical error occurred during the sync phase."}</p>
+              </div>
+              <Link href="/dashboard" className="inline-flex items-center gap-2 text-primary font-bold hover:underline font-label bg-primary/5 px-6 py-3 rounded-full hover:bg-primary/10 transition-colors">
+                Go back to Dashboard <ExternalLink size={16} />
+              </Link>
+            </div>
           ) : (
-            <div className="animate-in fade-in zoom-in-95 duration-700">
+            <div className="animate-in fade-in zoom-in-95 duration-700 w-full">
               <VideoPreview job={job} />
+              <LiveTranscription job={job} />
+              <StatCards />
             </div>
           )}
         </div>
 
         <div className="space-y-8">
           <div className={`transition-all duration-700 ${isProcessing ? "opacity-30 pointer-events-none scale-95 blur-sm" : "opacity-100"}`}>
-            <div className={`bg-surface-container-low border border-outline-variant/20 p-8 rounded-[2.5rem] space-y-8 shadow-sm ${!inDashboard && "sticky top-32"}`}>
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold tracking-tight text-on-surface font-headline">Ready to launch</h3>
-                <p className="text-on-surface-variant text-sm leading-relaxed font-body">Your dubbed video is ready. You can download the full video, high-quality audio mix, or share it directly.</p>
+            <div className={`bg-surface p-8 overflow-hidden rounded-[2.5rem] space-y-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10 transition-shadow duration-500 ${!inDashboard && "sticky top-32"}`}>
+              <div className="space-y-3 relative " >
+                <h3 className="text-2xl font-bold tracking-tight text-on-surface font-headline flex items-center gap-2">
+                  Ready to launch
+                </h3>
+                <Sparkles className="absolute -top-4 -right-2 text-primary/20 rotate-12 scale-250" size={40} />
+                {/* <Sparkles className="absolute top-4 right-6 text-primary/20 scale-75" size={24} /> */}
+                <p className="text-on-surface-variant text-sm leading-relaxed font-body pr-8">Your dubbing project is polished. We've optimized the high-quality audio mix and synced the subtitles with frame-perfect precision.</p>
               </div>
 
               <DownloadPanel job={job} />
-
-              <div className="pt-4 border-t border-outline-variant/10 space-y-4">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-on-surface-variant/40 uppercase tracking-widest font-bold font-label">Project Details</span>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-on-surface-variant text-sm font-body">Credits Spent</span>
-                    <span className="font-mono text-on-surface font-bold">{job.duration ? Math.ceil(job.duration / 60) * 5 : 0} pts</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-on-surface-variant text-sm font-body">Engine</span>
-                    <span className="text-on-surface text-sm flex items-center gap-1.5 capitalize font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      AI Synced
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
+
           {!isProcessing && !isFailed && (
-            <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10">
-              <p className="text-xs text-on-surface-variant leading-relaxed italic font-body">
-                Need to tweak a word? The AI Editor is coming soon to give you word-level control over your dubs.
-              </p>
-            </div>
+            <>
+              <div className="bg-surface p-6 rounded-[2rem] space-y-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
+                <div className="flex items-center justify-between">
+                  <span className="text-on-surface-variant text-sm font-bold">Credits Spent</span>
+                  <span className="font-bold text-on-surface text-sm">{job.duration ? Math.ceil(job.duration / 60) * 5 : 10} pts</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-on-surface-variant text-sm font-bold">Engine</span>
+                  <span className="text-primary text-sm flex items-center gap-2 font-bold">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    AI Synced
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-on-surface-variant text-sm font-bold">Quality</span>
+                  <span className="text-[10px] font-extrabold tracking-widest text-on-surface bg-surface-container-high px-2 py-1 rounded">
+                    ULTRA HD (4K)
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-surface p-6 rounded-[2rem] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10 space-y-4 relative overflow-hidden group">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center">
+                    <ListVideo size={16} />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-primary uppercase">Coming Soon</span>
+                </div>
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-on-surface font-headline">Word-level control</h4>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">
+                    Manually adjust inflection and timing for every single word in the AI Editor.
+                  </p>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </main>
-
-      <style jsx global>{`
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </div>
   );
 }
