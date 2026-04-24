@@ -5,7 +5,7 @@ const SubtitleJob = require("../models/Subtitle.js");
 const { createOTP, sendOTPEmail, verifyOTP } = require("../utils/otpUtils");
 const { OAuth2Client } = require("google-auth-library");
 const { addCredits, DEFAULT_CREDITS, SIGNUP_CREDITS } = require("../utils/creditUtils");
-const { generateTokens } = require("../utils/authTokens");
+const { generateTokens, clearAuthCookies } = require("../utils/authTokens");
 const RefreshToken = require("../models/RefreshToken");
 const crypto = require("crypto");
 
@@ -733,12 +733,12 @@ exports.refresh = async (req, res, next) => {
            await User.findByIdAndUpdate(existingToken.user, { $inc: { tokenVersion: 1 } });
         }
 
-        res.clearCookie("accessToken"); res.clearCookie("refreshToken"); res.clearCookie("csrfToken");
+        clearAuthCookies(res);
         return res.status(401).json({ message: "Security violation detected. Please log in again." });
       }
 
       // Token doesn't exist at all
-      res.clearCookie("accessToken"); res.clearCookie("refreshToken"); res.clearCookie("csrfToken");
+      clearAuthCookies(res);
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
@@ -771,10 +771,7 @@ exports.logout = async (req, res, next) => {
       }
     }
 
-    // Clear all cookies
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken", { path: "/api/auth" });
-    res.clearCookie("csrfToken");
+    clearAuthCookies(res);
 
     res.status(200).json({ success: true });
   } catch (err) {
@@ -789,7 +786,7 @@ exports.logoutAllDevices = async (req, res, next) => {
     // Invalidate all access tokens
     await User.findByIdAndUpdate(req.userId, { $inc: { tokenVersion: 1 } });
     
-    res.clearCookie("accessToken"); res.clearCookie("refreshToken", { path: "/api/auth" }); res.clearCookie("csrfToken");
+    clearAuthCookies(res);
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);

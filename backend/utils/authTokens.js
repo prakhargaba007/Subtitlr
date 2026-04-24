@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const RefreshToken = require("../models/RefreshToken");
 
+const getCookieDomain = () => process.env.NODE_ENV === "production" ? ".kililabs.io" : undefined;
+
 const generateTokens = async (user, req, res, familyId = null) => {
   const jti = crypto.randomUUID();
 
@@ -46,13 +48,15 @@ const generateTokens = async (user, req, res, familyId = null) => {
 
   // 4. Set Cookies
   const isProd = process.env.NODE_ENV === "production";
+  const domain = getCookieDomain();
   
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: "lax",
     maxAge: 15 * 60 * 1000, // 15 mins
-    path: "/"
+    path: "/",
+    domain
   });
 
   res.cookie("refreshToken", rawRefreshToken, {
@@ -60,17 +64,26 @@ const generateTokens = async (user, req, res, familyId = null) => {
     secure: isProd,
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: "/api/auth" // Only sent to auth routes
+    path: "/api/auth", // Only sent to auth routes
+    domain
   });
 
   res.cookie("csrfToken", csrfToken, {
     httpOnly: false, // Must be readable by JS Axios
     secure: isProd,
     sameSite: "lax",
-    path: "/"
+    path: "/",
+    domain
   });
 
   return { accessToken, csrfToken };
 };
 
-module.exports = { generateTokens };
+const clearAuthCookies = (res) => {
+  const domain = getCookieDomain();
+  res.clearCookie("accessToken", { path: "/", domain });
+  res.clearCookie("refreshToken", { path: "/api/auth", domain });
+  res.clearCookie("csrfToken", { path: "/", domain });
+};
+
+module.exports = { generateTokens, clearAuthCookies };
