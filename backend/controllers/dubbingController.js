@@ -206,6 +206,7 @@ async function pipelineTtsSyncUploadForDubbing({
   let firstSyncEmitted = false;
   let uploadMsgEmitted = false;
   let completed = 0;
+  let pipelineError = null;
   let nextK = 0;
 
   console.log(`[dubbing] pipelineTtsSyncUploadForDubbing started. Rows: ${n}, Concurrency: ${limit}`);
