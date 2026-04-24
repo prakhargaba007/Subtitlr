@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("token")?.value;
+  const token = request.cookies.get("accessToken")?.value;
 
   // Protect all /dashboard/* routes
   if (pathname.startsWith("/dashboard")) {

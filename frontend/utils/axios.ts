@@ -83,11 +83,13 @@ instance.interceptors.response.use(
         processQueue(null);
         return instance(originalRequest);
       } catch (err) {
+        console.error("[AXIOS] Refresh failed or original request retry failed", err);
         processQueue(err);
         // If refresh fails, redirect to login
         if (typeof window !== "undefined") {
           localStorage.removeItem("userData");
           const path = window.location.pathname;
+          console.warn("[AXIOS] Redirecting to home due to session expiration at path:", path);
           if (path.startsWith("/dashboard") || path.startsWith("/processing") || path.startsWith("/export") || path.startsWith("/billing")) {
             window.location.href = "/?error=session_expired";
           }

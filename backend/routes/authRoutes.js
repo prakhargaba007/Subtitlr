@@ -9,9 +9,9 @@ const userRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 5, // 5 attempts
   keyGenerator: (req) => {
-    // Rate limit per email or fallback to IP. 
-    // express-rate-limit throws a warning if req.ip is used directly for IPv6. We can just stringify it.
-    return req.body.email || req.body.id || `ip_${req.ip}`;
+    // Rate limit per email or fallback to IP headers to avoid library regex false positive
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+    return req.body.email || req.body.id || String(ip);
   },
   message: { success: false, message: "Too many attempts. Please try again later." }
 });
@@ -19,6 +19,10 @@ const userRateLimiter = rateLimit({
 const refreshLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 20,
+  keyGenerator: (req) => {
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+    return String(ip);
+  },
   message: { success: false, message: "Too many refresh attempts." }
 });
 

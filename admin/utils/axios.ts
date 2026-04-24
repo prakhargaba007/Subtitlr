@@ -70,7 +70,10 @@ instance.interceptors.response.use(
         if (typeof window !== "undefined") {
           localStorage.removeItem("userRole");
           localStorage.removeItem("userData");
-          window.location.href = "/";
+          const path = window.location.pathname;
+          if (path.startsWith("/dashboard")) {
+            window.location.href = "/";
+          }
         }
         return Promise.reject(err);
       } finally {

@@ -95,6 +95,7 @@ export default function AuthForm({
           onSuccess(res.data.user);
         } else if (autoRedirect) {
           const nextPath = searchParams.get("next") || localStorage.getItem("redirectAfterLogin") || "/dashboard";
+          console.log("[AUTH] Redirecting to:", nextPath);
           localStorage.removeItem("redirectAfterLogin");
           router.push(nextPath);
         }

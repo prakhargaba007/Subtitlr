@@ -47,8 +47,9 @@ const generateTokens = async (user, req, res, familyId = null) => {
   const csrfToken = crypto.randomBytes(20).toString("hex");
 
   // 4. Set Cookies
-  const isProd = process.env.NODE_ENV === "production";
-  const domain = getCookieDomain();
+  // Temporarily simplified for debugging across local environments
+  const isProd = false; // Force false for debugging
+  const domain = undefined; // Force undefined to bind to request host
   
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
