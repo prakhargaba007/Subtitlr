@@ -35,16 +35,32 @@ export default function AuthForm({
   const [otpLoading, setOtpLoading] = useState(false);
   const [gsiReady, setGsiReady] = useState(false);
   const codeClientRef = useRef<unknown>(null);
+  const googleLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!initialEmail) return;
     setEmail((prev) => (prev.trim() === "" ? initialEmail : prev));
   }, [initialEmail]);
 
+  // If the user changes inputs / tries again, never keep a stale "Verifying…" state.
+  useEffect(() => {
+    if (!isLoading) return;
+    setIsLoading(false);
+    if (googleLoadingTimeoutRef.current) {
+      clearTimeout(googleLoadingTimeoutRef.current);
+      googleLoadingTimeoutRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, otp, agreedToTerms, showOtpInput]);
+
   const handleRequestOTPWithEmail = useCallback(
     async (emailToUse: string) => {
       if (!emailToUse || !emailToUse.includes("@")) return;
 
+      // If a previous verify/google flow got stuck, requesting OTP should recover UI.
+      setIsLoading(false);
       setOtpLoading(true);
       try {
         const response = await axiosInstance.post("/api/auth/opt-generate", {
@@ -195,6 +211,7 @@ export default function AuthForm({
       toast({ title: "Invalid Email", description: "Please enter a valid email address", variant: "destructive" });
       return;
     }
+    setIsLoading(false);
     await handleRequestOTPWithEmail(email);
   };
 
@@ -263,6 +280,19 @@ export default function AuthForm({
     const client = codeClientRef.current as { requestCode: () => void } | null;
     if (client && typeof client.requestCode === "function") {
       client.requestCode();
+      if (googleLoadingTimeoutRef.current) {
+        clearTimeout(googleLoadingTimeoutRef.current);
+      }
+      // Popup flows can fail silently (blocked/closed) without invoking the callback.
+      // Ensure the UI doesn't remain stuck in "Verifying…".
+      googleLoadingTimeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+        toast({
+          title: "Google Sign-In",
+          description: "Sign-in didn’t complete. Please try again.",
+          variant: "default",
+        });
+      }, 15000);
     } else {
       toast({ title: "Error", description: "Google client not ready", variant: "destructive" });
       setIsLoading(false);
