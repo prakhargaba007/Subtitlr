@@ -26,6 +26,14 @@ const YT_HOSTS = new Set([
 
 let cookiesDecisionLogged = false;
 
+function getYoutubeExtractorArgs() {
+  const raw = String(process.env.YT_DLP_YOUTUBE_EXTRACTOR_ARGS || "").trim();
+  if (raw) return raw;
+  const isProd = String(process.env.NODE_ENV || "").trim() === "production";
+  if (!isProd) return null;
+  return "youtube:player_client=android";
+}
+
 function getCookiesPath() {
   const allowNonProd =
     String(process.env.YT_DLP_COOKIES_ALLOW_NON_PROD || "").trim() === "1";
@@ -102,10 +110,14 @@ function normalizeYoutubeUrl(raw) {
 async function getYoutubeMetadata(url, { ytDlpPath } = {}) {
   const bin = String(ytDlpPath || process.env.YT_DLP_PATH || "").trim();
   const cookiesPath = getCookiesPath();
+  const extractorArgs = getYoutubeExtractorArgs();
   const parsed = await (bin ? ytdlp.create(bin) : ytdlp)(url, {
     noPlaylist: true,
     dumpSingleJson: true,
     noWarnings: true,
+    skipDownload: true,
+    format: "best",
+    ...(extractorArgs ? { extractorArgs } : null),
     ...(cookiesPath ? { cookies: cookiesPath } : null),
   });
 
@@ -151,6 +163,7 @@ async function downloadYoutubeToMp4(url, opts = {}) {
   const base = `yt_${uuidv4()}`;
   const outTemplate = path.join(tmpDir, `${base}.%(ext)s`);
   const cookiesPath = getCookiesPath();
+  const extractorArgs = getYoutubeExtractorArgs();
 
   try {
     await exec.exec(
@@ -161,14 +174,43 @@ async function downloadYoutubeToMp4(url, opts = {}) {
         mergeOutputFormat: DEFAULT_MERGE_OUTPUT,
         ffmpegLocation: ffmpegStatic,
         output: outTemplate,
+        ...(extractorArgs ? { extractorArgs } : null),
         ...(cookiesPath ? { cookies: cookiesPath } : null),
       },
       { timeout: timeoutMs },
     );
   } catch (e) {
-    const err = new Error(e?.stderr || e?.message || "yt-dlp failed.");
-    err.statusCode = e?.timedOut ? 504 : 422;
-    throw err;
+    const stderr = String(e?.stderr || "");
+    const message = String(e?.message || "");
+    const formatUnavailable =
+      stderr.includes("Requested format is not available") ||
+      message.includes("Requested format is not available");
+
+    if (formatUnavailable) {
+      try {
+        await exec.exec(
+          url,
+          {
+            noPlaylist: true,
+            format: "best",
+            mergeOutputFormat: DEFAULT_MERGE_OUTPUT,
+            ffmpegLocation: ffmpegStatic,
+            output: outTemplate,
+            ...(extractorArgs ? { extractorArgs } : null),
+            ...(cookiesPath ? { cookies: cookiesPath } : null),
+          },
+          { timeout: timeoutMs },
+        );
+      } catch (e2) {
+        const err = new Error(e2?.stderr || e2?.message || "yt-dlp failed.");
+        err.statusCode = e2?.timedOut ? 504 : 422;
+        throw err;
+      }
+    } else {
+      const err = new Error(e?.stderr || e?.message || "yt-dlp failed.");
+      err.statusCode = e?.timedOut ? 504 : 422;
+      throw err;
+    }
   }
 
   const filePath = await resolveDownloadedFile(tmpDir, base);
