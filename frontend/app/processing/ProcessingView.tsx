@@ -118,6 +118,8 @@ export default function ProcessingView() {
   const fileSize = Number(searchParams.get("size") ?? 0);
 
   const [progress, setProgress] = useState(0);
+  // Smoothly animated progress value for UI rendering (avoids jerky jumps / lag).
+  const [displayProgress, setDisplayProgress] = useState(0);
   const [stageLabel, setStageLabel] = useState("Preparing…");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [outOfCredits, setOutOfCredits] = useState(false);
@@ -130,6 +132,40 @@ export default function ProcessingView() {
   const exportBase = inDashboard ? "/dashboard" : "";
   const mode = getPendingMode();
   const steps = mode === "dubbing" ? DUBBING_STEPS : SUBTITLE_STEPS;
+
+  // Smooth catch-up animation: move displayProgress toward progress at a steady rate,
+  // so UI feels responsive without falling behind.
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+
+    const tick = (now: number) => {
+      const dtSec = Math.max(0, Math.min(0.1, (now - last) / 1000));
+      last = now;
+
+      setDisplayProgress((cur) => {
+        const target = Math.max(0, Math.min(100, progress));
+        if (cur === target) return cur;
+
+        const diff = target - cur;
+        const dir = Math.sign(diff);
+
+        // Base speed: % per second. Add a boost when we're far behind.
+        const baseSpeed = 70; // %/sec
+        const boostSpeed = 140; // %/sec when diff is large
+        const useSpeed = Math.abs(diff) > 15 ? boostSpeed : baseSpeed;
+
+        const step = useSpeed * dtSec;
+        const next = Math.abs(diff) <= step ? target : cur + dir * step;
+        return next;
+      });
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [progress]);
 
   // Rotate preview quote every 4 s with a fade
   useEffect(() => {
@@ -373,13 +409,13 @@ export default function ProcessingView() {
                   strokeWidth="7"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 62}`}
-                  strokeDashoffset={`${2 * Math.PI * 62 * (1 - progress / 100)}`}
-                  className={`transition-all duration-500 ease-in-out ${errorMsg ? "text-red-400" : "text-primary"}`}
+                  strokeDashoffset={`${2 * Math.PI * 62 * (1 - displayProgress / 100)}`}
+                  className={`transition-[stroke-dashoffset] duration-200 ease-out ${errorMsg ? "text-red-400" : "text-primary"}`}
                 />
               </svg>
               <div className="absolute flex flex-col items-center">
                 <span className={`font-headline text-3xl font-extrabold leading-none ${errorMsg ? "text-red-400" : "text-primary"}`}>
-                  {errorMsg ? "!" : `${Math.round(progress)}%`}
+                  {errorMsg ? "!" : `${Math.round(displayProgress)}%`}
                 </span>
               </div>
             </div>
