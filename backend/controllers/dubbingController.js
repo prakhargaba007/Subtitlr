@@ -752,7 +752,7 @@ exports.startDubbingJob = async (req, res) => {
         ttsProvider: "openai",
       });
     } else if (ttsProvider === "inworld") {
-      console.log("targetLanguage", targetLanguage);
+      // console.log("targetLanguage", targetLanguage);
 
       emit({ stage: "generating", message: "Loading Inworld voice catalog…" });
       const inworldCatalog = await fetchInworldVoiceCatalog(targetLanguage);
