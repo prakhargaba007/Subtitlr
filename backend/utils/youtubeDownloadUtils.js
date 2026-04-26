@@ -24,6 +24,22 @@ const YT_HOSTS = new Set([
   "www.youtu.be",
 ]);
 
+function getCookiesPath() {
+  const allowNonProd =
+    String(process.env.YT_DLP_COOKIES_ALLOW_NON_PROD || "").trim() === "1";
+  const isProd = String(process.env.NODE_ENV || "").trim() === "production";
+  if (!isProd && !allowNonProd) return null;
+
+  const cookiesPath = String(process.env.YT_DLP_COOKIES_PATH || "").trim();
+  if (!cookiesPath) return null;
+  try {
+    if (!fs.existsSync(cookiesPath)) return null;
+  } catch (_) {
+    return null;
+  }
+  return cookiesPath;
+}
+
 function normalizeYoutubeUrl(raw) {
   const value = String(raw || "").trim();
   if (!value) {
@@ -54,10 +70,12 @@ function normalizeYoutubeUrl(raw) {
 
 async function getYoutubeMetadata(url, { ytDlpPath } = {}) {
   const bin = String(ytDlpPath || process.env.YT_DLP_PATH || "").trim();
+  const cookiesPath = getCookiesPath();
   const parsed = await (bin ? ytdlp.create(bin) : ytdlp)(url, {
     noPlaylist: true,
     dumpSingleJson: true,
     noWarnings: true,
+    ...(cookiesPath ? { cookies: cookiesPath } : null),
   });
 
   const duration = Number(parsed?.duration || 0);
@@ -101,6 +119,7 @@ async function downloadYoutubeToMp4(url, opts = {}) {
   const tmpDir = os.tmpdir();
   const base = `yt_${uuidv4()}`;
   const outTemplate = path.join(tmpDir, `${base}.%(ext)s`);
+  const cookiesPath = getCookiesPath();
 
   try {
     await exec.exec(
@@ -111,6 +130,7 @@ async function downloadYoutubeToMp4(url, opts = {}) {
         mergeOutputFormat: DEFAULT_MERGE_OUTPUT,
         ffmpegLocation: ffmpegStatic,
         output: outTemplate,
+        ...(cookiesPath ? { cookies: cookiesPath } : null),
       },
       { timeout: timeoutMs },
     );
