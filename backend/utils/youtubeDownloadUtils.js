@@ -28,8 +28,8 @@ let cookiesDecisionLogged = false;
 
 function getYoutubeExtractorArgs() {
   const raw = String(process.env.YT_DLP_YOUTUBE_EXTRACTOR_ARGS || "").trim();
-  if (raw) return raw;
   const isProd = String(process.env.NODE_ENV || "").trim() === "production";
+  if (!isProd && raw) return raw;
   if (!isProd) return null;
 
   // IMPORTANT:
@@ -38,11 +38,28 @@ function getYoutubeExtractorArgs() {
   // Prefer cookie-compatible clients first to avoid "only images available" from forced skips.
   const cookiesPath = getCookiesPath();
   if (cookiesPath) {
+    // Guardrail: if someone set extractor args to an android client while also
+    // using cookies, yt-dlp will skip those clients and may show only images.
+    // Allow override via YT_DLP_ALLOW_ANDROID_CLIENT_WITH_COOKIES=1.
+    const allowAndroidWithCookies =
+      String(process.env.YT_DLP_ALLOW_ANDROID_CLIENT_WITH_COOKIES || "").trim() ===
+      "1";
+    if (raw && !allowAndroidWithCookies) {
+      const lower = raw.toLowerCase();
+      if (
+        lower.includes("youtube:player_client=") &&
+        (lower.includes("android") || lower.includes("android_vr"))
+      ) {
+        return "youtube:player_client=tv_downgraded,web_safari,web";
+      }
+    }
+    if (raw) return raw;
     // web_safari can expose HLS variants in some cases; tv_downgraded works with cookies.
     return "youtube:player_client=tv_downgraded,web_safari,web";
   }
 
   // Logged-out fallback clients (tend to work without cookies when not bot-checked).
+  if (raw) return raw;
   return "youtube:player_client=android_vr,ios_downgraded,web_safari,web";
 }
 
