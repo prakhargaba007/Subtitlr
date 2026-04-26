@@ -158,7 +158,8 @@ async function getYoutubeMetadata(url, { ytDlpPath } = {}) {
   const cookiesPath = getCookiesPath();
   const extractorArgs = getYoutubeExtractorArgs();
   const js = getJsRuntimeFlag();
-  const parsed = await (bin ? ytdlp.create(bin) : ytdlp)(url, {
+  const runner = bin ? ytdlp.create(bin) : ytdlp;
+  const baseFlags = {
     noPlaylist: true,
     dumpSingleJson: true,
     noWarnings: true,
@@ -166,8 +167,32 @@ async function getYoutubeMetadata(url, { ytDlpPath } = {}) {
     format: "best",
     ...(js ? { js } : null),
     ...(extractorArgs ? { extractorArgs } : null),
-    ...(cookiesPath ? { cookies: cookiesPath } : null),
-  });
+  };
+
+  let parsed;
+  try {
+    parsed = await runner(url, {
+      ...baseFlags,
+      ...(cookiesPath ? { cookies: cookiesPath } : null),
+    });
+  } catch (e) {
+    const stderr = String(e?.stderr || "");
+    const message = String(e?.message || "");
+    const looksLikeCookieRejection =
+      stderr.includes("cookies are no longer valid") ||
+      message.includes("cookies are no longer valid");
+    const looksLikeBotCheck =
+      stderr.includes("Sign in to confirm you’re not a bot") ||
+      message.includes("Sign in to confirm you’re not a bot");
+
+    // If YouTube rejects the logged-in session cookies (rotation/bot-check),
+    // retry once without cookies so the system can still function.
+    if (cookiesPath && (looksLikeCookieRejection || looksLikeBotCheck)) {
+      parsed = await runner(url, baseFlags);
+    } else {
+      throw e;
+    }
+  }
 
   const duration = Number(parsed?.duration || 0);
   const title = String(parsed?.title || "").trim() || "youtube_video";
@@ -235,8 +260,36 @@ async function downloadYoutubeToMp4(url, opts = {}) {
     const formatUnavailable =
       stderr.includes("Requested format is not available") ||
       message.includes("Requested format is not available");
+    const looksLikeCookieRejection =
+      stderr.includes("cookies are no longer valid") ||
+      message.includes("cookies are no longer valid");
+    const looksLikeBotCheck =
+      stderr.includes("Sign in to confirm you’re not a bot") ||
+      message.includes("Sign in to confirm you’re not a bot");
 
-    if (formatUnavailable) {
+    // If cookies suddenly stop working mid-run, retry once without cookies.
+    if (cookiesPath && (looksLikeCookieRejection || looksLikeBotCheck)) {
+      try {
+        await exec.exec(
+          url,
+          {
+            noPlaylist: true,
+            format: DEFAULT_YT_FORMAT,
+            mergeOutputFormat: DEFAULT_MERGE_OUTPUT,
+            ffmpegLocation: ffmpegStatic,
+            output: outTemplate,
+            ...(js ? { js } : null),
+            ...(extractorArgs ? { extractorArgs } : null),
+          },
+          { timeout: timeoutMs },
+        );
+      } catch (e0) {
+        const err = new Error(e0?.stderr || e0?.message || "yt-dlp failed.");
+        err.statusCode = e0?.timedOut ? 504 : 422;
+        throw err;
+      }
+    } else if (formatUnavailable) {
+
       try {
         await exec.exec(
           url,
