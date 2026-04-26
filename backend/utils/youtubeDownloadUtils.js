@@ -24,18 +24,49 @@ const YT_HOSTS = new Set([
   "www.youtu.be",
 ]);
 
+let cookiesDecisionLogged = false;
+
 function getCookiesPath() {
   const allowNonProd =
     String(process.env.YT_DLP_COOKIES_ALLOW_NON_PROD || "").trim() === "1";
   const isProd = String(process.env.NODE_ENV || "").trim() === "production";
-  if (!isProd && !allowNonProd) return null;
+  const debug = String(process.env.YT_DLP_DEBUG || "").trim() === "1";
+  if (!isProd && !allowNonProd) {
+    if (debug && !cookiesDecisionLogged) {
+      cookiesDecisionLogged = true;
+      console.log(
+        `[yt-dlp] cookies disabled (NODE_ENV=${process.env.NODE_ENV || ""})`,
+      );
+    }
+    return null;
+  }
 
   const cookiesPath = String(process.env.YT_DLP_COOKIES_PATH || "").trim();
-  if (!cookiesPath) return null;
-  try {
-    if (!fs.existsSync(cookiesPath)) return null;
-  } catch (_) {
+  if (!cookiesPath) {
+    if (debug && !cookiesDecisionLogged) {
+      cookiesDecisionLogged = true;
+      console.log("[yt-dlp] cookies enabled but YT_DLP_COOKIES_PATH is empty");
+    }
     return null;
+  }
+  try {
+    if (!fs.existsSync(cookiesPath)) {
+      if (debug && !cookiesDecisionLogged) {
+        cookiesDecisionLogged = true;
+        console.log(`[yt-dlp] cookies file not found at ${cookiesPath}`);
+      }
+      return null;
+    }
+  } catch (_) {
+    if (debug && !cookiesDecisionLogged) {
+      cookiesDecisionLogged = true;
+      console.log(`[yt-dlp] error checking cookies file at ${cookiesPath}`);
+    }
+    return null;
+  }
+  if (debug && !cookiesDecisionLogged) {
+    cookiesDecisionLogged = true;
+    console.log(`[yt-dlp] using cookies from ${cookiesPath}`);
   }
   return cookiesPath;
 }
