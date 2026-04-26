@@ -488,7 +488,7 @@ function UploadCardInner({
                         </span>
                       ))}
                     </div>
-                    {mode === "dubbing" && (
+                    {/* {mode === "dubbing" && (
                       <div
                         className="w-full max-w-[320px] mt-2 flex flex-col gap-3"
                         onClick={(e) => e.stopPropagation()}
@@ -522,7 +522,7 @@ function UploadCardInner({
                           Dub from a link instead of uploading a file.
                         </p>
                       </div>
-                    )}
+                    )} */}
                   </>
                 )}
               </div>
