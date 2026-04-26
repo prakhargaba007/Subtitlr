@@ -105,7 +105,7 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
                 : "text-on-surface-variant hover:text-on-surface"
                 }`}
             >
-              {mode === "monthly" ? "Monthly" : "Yearly · save 20%"}
+              {mode === "monthly" ? "Monthly" : "Yearly · save 18%"}
             </button>
           ))}
         </div>

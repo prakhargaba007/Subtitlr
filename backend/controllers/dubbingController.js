@@ -7,7 +7,10 @@ const OpenAI = require("openai");
 
 const DubbingJob = require("../models/DubbingJob");
 const User = require("../models/User");
-const { storage } = require("../utils/storage");
+const UserSubscription = require("../models/UserSubscription");
+const PlanCatalog = require("../models/PlanCatalog");
+const { storage, createPresignedPutUrl } = require("../utils/storage");
+const AUDIO_VIDEO_MIMES = require("../constants/audioVideoMimes");
 const {
   extractRandomVideoThumbnailJpg,
 } = require("../utils/videoThumbnailUtils");
@@ -347,7 +350,13 @@ async function runDubbingPipelineFromInput(
   req,
   emit,
   tmpPaths,
-  { tmpInput, inputBuffer, inputMimeType, originalFileName },
+  {
+    tmpInput,
+    inputBuffer,
+    inputMimeType,
+    originalFileName,
+    existingOriginalS3Key = null,
+  },
 ) {
   const targetLanguage = (req.body.targetLanguage || "").trim();
   if (!targetLanguage) {
@@ -502,12 +511,17 @@ async function runDubbingPipelineFromInput(
 
   saveArtifact(jobIdStr, "01_full_audio.mp3", audioPath);
 
-  // Upload original file to S3
+  // Persist original: reuse browser-uploaded key or upload from buffer (legacy path)
   try {
-    const videoKey = `dubbing/${req.userId}/${uuidv4()}${ext}`;
-    await storage.saveFile(inputBuffer, videoKey, inputMimeType);
-    job.originalVideoKey = videoKey;
-    await job.save();
+    if (existingOriginalS3Key) {
+      job.originalVideoKey = existingOriginalS3Key;
+      await job.save();
+    } else if (inputBuffer && Buffer.isBuffer(inputBuffer) && inputBuffer.length) {
+      const videoKey = `dubbing/${req.userId}/${uuidv4()}${ext}`;
+      await storage.saveFile(inputBuffer, videoKey, inputMimeType);
+      job.originalVideoKey = videoKey;
+      await job.save();
+    }
   } catch (uploadErr) {
     console.warn("Original file S3 upload failed:", uploadErr.message);
   }
@@ -641,6 +655,71 @@ async function runDubbingPipelineFromInput(
 // ─── Controllers ──────────────────────────────────────────────────────────────
 
 /**
+ * POST /api/dubbing/upload-url
+ * Returns a presigned PUT URL for direct browser → S3 upload (STORAGE_TYPE=s3 only).
+ */
+exports.requestDubbingUploadUrl = async (req, res, next) => {
+  try {
+    if ((process.env.STORAGE_TYPE || "local") !== "s3") {
+      return res.status(501).json({
+        message: "Direct S3 upload is not enabled on this server.",
+        code: "STORAGE_LOCAL",
+      });
+    }
+
+    const fileName = (req.body?.fileName || req.body?.filename || "").trim();
+    const mimeType = (req.body?.mimeType || "").trim();
+    const byteSize = Number(req.body?.byteSize);
+
+    if (!fileName || !mimeType) {
+      return res.status(400).json({
+        message: "fileName (or filename) and mimeType are required.",
+      });
+    }
+    if (!AUDIO_VIDEO_MIMES.has(mimeType)) {
+      return res.status(415).json({ message: `Unsupported mime type: ${mimeType}` });
+    }
+    if (!Number.isFinite(byteSize) || byteSize <= 0) {
+      return res.status(400).json({ message: "byteSize must be a positive number." });
+    }
+
+    const user = await User.findById(req.userId)
+      .select("activeSubscriptionId")
+      .lean();
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    let planFlags = {};
+    if (user.activeSubscriptionId) {
+      const sub = await UserSubscription.findById(user.activeSubscriptionId)
+        .select("status planCatalog")
+        .lean();
+      if (sub && sub.status === "active" && sub.planCatalog) {
+        const plan = await PlanCatalog.findById(sub.planCatalog)
+          .select("featureFlags")
+          .lean();
+        if (plan?.featureFlags) planFlags = plan.featureFlags;
+      }
+    }
+
+    const maxFileSizeMB = planFlags.maxFileSizeMB ?? null;
+    if (maxFileSizeMB !== null && byteSize > maxFileSizeMB * 1024 * 1024) {
+      return res.status(413).json({
+        message: `Declared file size exceeds the plan limit of ${maxFileSizeMB} MB.`,
+      });
+    }
+
+    const safeName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, "_");
+    const key = `dubbing/${req.userId}/${uuidv4()}-${safeName}`;
+    const { uploadUrl } = await createPresignedPutUrl(key, mimeType, 900);
+    return res.json({ uploadUrl, key });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
  * POST /api/dubbing/start
  * Accepts a video or audio file + source/target language.
  * Streams progress back via SSE and persists the job to MongoDB.
@@ -663,7 +742,11 @@ exports.startDubbingJob = async (req, res) => {
   let job = null;
 
   try {
-    if (!req.file) {
+    const hasDiskInput = Boolean(
+      req.dubbingTmpProbeFile && fs.existsSync(req.dubbingTmpProbeFile),
+    );
+    const hasBufferInput = Boolean(req.file && req.file.buffer && req.file.buffer.length);
+    if (!req.file || (!hasBufferInput && !hasDiskInput)) {
       emit({ stage: "error", message: "No file uploaded.", statusCode: 422 });
       return res.end();
     }
@@ -671,15 +754,22 @@ exports.startDubbingJob = async (req, res) => {
     const isVideo = req.file.mimetype.startsWith("video/");
     const ext =
       path.extname(req.file.originalname) || (isVideo ? ".mp4" : ".mp3");
-    const tmpInput = path.join(os.tmpdir(), `dub_input_${uuidv4()}${ext}`);
-    fs.writeFileSync(tmpInput, req.file.buffer);
+
+    let tmpInput;
+    if (hasDiskInput) {
+      tmpInput = req.dubbingTmpProbeFile;
+    } else {
+      tmpInput = path.join(os.tmpdir(), `dub_input_${uuidv4()}${ext}`);
+      fs.writeFileSync(tmpInput, req.file.buffer);
+    }
     tmpPaths.push(tmpInput);
 
     const prepared = await runDubbingPipelineFromInput(req, emit, tmpPaths, {
       tmpInput,
-      inputBuffer: req.file.buffer,
+      inputBuffer: hasBufferInput ? req.file.buffer : null,
       inputMimeType: req.file.mimetype,
       originalFileName: req.file.originalname,
+      existingOriginalS3Key: req.dubbingPresignedS3Key || null,
     });
 
     job = prepared.job;

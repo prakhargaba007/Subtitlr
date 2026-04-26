@@ -329,7 +329,10 @@ function UploadCardInner({
 
   const handleNext = () => {
     const safeLang = language ?? "";
-    if (mode === "dubbing" && !safeLang.trim()) return;
+    if (mode === "dubbing" && !safeLang.trim()) {
+      setError("Please choose a dubbing target language.");
+      return;
+    }
 
     const yt = youtubeUrl.trim();
     if (mode === "dubbing" && yt) {
@@ -346,7 +349,10 @@ function UploadCardInner({
       return;
     }
 
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      setError("No file attached. Please upload a file to continue.");
+      return;
+    }
 
     setPendingFile(selectedFile);
     setPendingMode(mode);
@@ -368,6 +374,11 @@ function UploadCardInner({
       : dubProvider === "inworld"
         ? "Inworld TTS (voice catalog)"
         : "your configured dubbing TTS provider";
+
+  const canProceed =
+    langReady &&
+    (mode !== "dubbing" || (language ?? "").trim()) &&
+    (mode === "dubbing" ? Boolean(selectedFile || youtubeUrl.trim()) : Boolean(selectedFile));
 
   return (
     <>
@@ -575,20 +586,11 @@ function UploadCardInner({
 
               <button
                 onClick={handleNext}
-                disabled={
-                  !langReady ||
-                  (mode === "dubbing" && !(language ?? "").trim()) ||
-                  (mode === "dubbing"
-                    ? !(selectedFile || youtubeUrl.trim())
-                    : !selectedFile)
-                }
                 className={[
                   "w-full flex items-center justify-center gap-2 py-3.5 font-headline font-bold text-sm rounded-2xl transition-all",
-                  (selectedFile || (mode === "dubbing" && youtubeUrl.trim())) &&
-                    langReady &&
-                    (mode !== "dubbing" || (language ?? "").trim())
+                  canProceed
                     ? "bg-primary text-on-primary hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/25"
-                    : "bg-surface-container text-on-surface-variant cursor-not-allowed",
+                    : "bg-primary text-on-primary hover:bg-primary/90 active:scale-[0.99]",
                 ].join(" ")}
               >
                 <span className="material-symbols-outlined text-lg">auto_awesome</span>
@@ -598,7 +600,7 @@ function UploadCardInner({
               {!selectedFile && !(mode === "dubbing" && youtubeUrl.trim()) && (
                 <p className="text-[11px] text-center text-on-surface-variant/50">
                   {mode === "dubbing"
-                    ? "Select a file or paste a YouTube link"
+                    ? "Select a file"
                     : "Select a file to get started"}
                 </p>
               )}

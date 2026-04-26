@@ -48,7 +48,7 @@ export default function HeroSection() {
 
       <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto mb-10 font-light leading-relaxed">
         {mode === "dubbing"
-          ? "Upload a video, generate natural-sounding dubs in 15+ languages in under a minute."
+          ? "Upload a video, generate natural-sounding dubs in 25+ languages in under a minute."
           : "Upload a video, get accurate SRT/VTT captions in 60+ languages in under a minute."}
       </p>
 

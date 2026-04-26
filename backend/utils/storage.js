@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { pipeline } = require("stream/promises");
 const {
   S3Client,
   PutObjectCommand,
@@ -257,9 +258,7 @@ const createPresignedPutUrl = async (
   contentType,
   expiresInSeconds = 900,
 ) => {
-  const region = process.env.AWS_REGION;
-  const bucket = process.env.S3_BUCKET;
-  const client = new S3Client({ region });
+  const { client, bucket } = getRawS3ClientAndBucket();
   const command = new PutObjectCommand({
     Bucket: bucket,
     Key: key,
@@ -274,6 +273,60 @@ const createPresignedPutUrl = async (
     : "";
   return { uploadUrl, key, publicUrl };
 };
+
+/** @returns {{ client: import("@aws-sdk/client-s3").S3Client, bucket: string }} */
+function getRawS3ClientAndBucket() {
+  const region = process.env.AWS_REGION;
+  const bucket = process.env.S3_BUCKET;
+  if (!region || !bucket) {
+    throw new Error("AWS_REGION and S3_BUCKET are required for S3 operations.");
+  }
+  const client = new S3Client({
+    region,
+    credentials:
+      process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+        ? {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          }
+        : undefined,
+  });
+  return { client, bucket };
+}
+
+/**
+ * HEAD object metadata (size, content type).
+ * @param {string} key
+ * @returns {Promise<{ contentLength: number, contentType: string | null }>}
+ */
+async function headS3ObjectMeta(key) {
+  const { client, bucket } = getRawS3ClientAndBucket();
+  const res = await client.send(
+    new HeadObjectCommand({ Bucket: bucket, Key: key }),
+  );
+  return {
+    contentLength: Number(res.ContentLength) || 0,
+    contentType: res.ContentType || null,
+  };
+}
+
+/**
+ * Stream S3 object to a local file (no full-file RAM buffer).
+ * @param {string} key
+ * @param {string} destPath
+ */
+async function downloadS3ObjectToFile(key, destPath) {
+  const { client, bucket } = getRawS3ClientAndBucket();
+  const res = await client.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key }),
+  );
+  const body = res.Body;
+  if (!body) {
+    throw new Error(`Empty S3 body for key: ${key}`);
+  }
+  await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
+  await pipeline(body, fs.createWriteStream(destPath));
+}
 
 // Create and export the appropriate storage adapter based on the environment
 const createStorageAdapter = () => {
@@ -295,4 +348,6 @@ module.exports = {
   S3StorageAdapter,
   storage: createStorageAdapter(),
   createPresignedPutUrl,
+  headS3ObjectMeta,
+  downloadS3ObjectToFile,
 };

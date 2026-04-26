@@ -2,9 +2,8 @@ import axios from "axios";
 
 const instance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // Don't set a global Content-Type. Some endpoints use FormData and need axios
+  // to automatically set the correct multipart boundary.
   withCredentials: true, // Crucial: Sends HttpOnly cookies automatically
 });
 
@@ -43,10 +42,14 @@ instance.interceptors.request.use((config) => {
 
 // Response Interceptor: Auto-refresh on 401
 let isRefreshing = false;
-let failedQueue: any[] = [];
+type FailedQueueItem = {
+  resolve: (value?: unknown) => void;
+  reject: (error: unknown) => void;
+};
+let failedQueue: FailedQueueItem[] = [];
 
-const processQueue = (error: any) => {
-  failedQueue.forEach(prom => {
+const processQueue = (error: unknown) => {
+  failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
     else prom.resolve();
   });

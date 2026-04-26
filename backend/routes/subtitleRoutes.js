@@ -4,6 +4,11 @@ const router = express.Router();
 
 const isAuth = require("../middleware/is-auth");
 const {
+  prepareSubtitleStartFromS3,
+} = require("../middleware/subtitlePrepareS3Input");
+const AUDIO_VIDEO_MIMES = require("../constants/audioVideoMimes");
+const {
+  requestSubtitleUploadUrl,
   generateSubtitles,
   exportSubtitles,
   getSubtitleJobs,
@@ -13,36 +18,6 @@ const {
   getCreditSummary,
   getLanguages,
 } = require("../controllers/subtitleController");
-
-// Accepted MIME types for audio and video files
-const AUDIO_VIDEO_MIMES = new Set([
-  // Audio
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  "audio/wave",
-  "audio/x-wav",
-  "audio/ogg",
-  "audio/flac",
-  "audio/aac",
-  "audio/mp4",
-  "audio/webm",
-  "audio/x-m4a",
-  "audio/m4a",
-  "audio/x-flac",
-  // Video
-  "video/mp4",
-  "video/mpeg",
-  "video/quicktime",
-  "video/x-msvideo",
-  "video/webm",
-  "video/x-matroska",
-  "video/3gpp",
-  "video/3gpp2",
-  "video/x-flv",
-  "video/x-ms-wmv",
-  "video/ogg",
-]);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,9 +39,20 @@ const upload = multer({
 // GET /api/subtitles/languages  (public — no auth)
 router.get("/languages", getLanguages);
 
+// POST /api/subtitles/upload-url — presigned PUT (STORAGE_TYPE=s3 only)
+router.post("/upload-url", isAuth, requestSubtitleUploadUrl);
+
+function subtitleMultipartOrS3(req, res, next) {
+  prepareSubtitleStartFromS3(req, res, (err) => {
+    if (err) return next(err);
+    if (req.subtitleTmpProbeFile) return next();
+    upload.single("file")(req, res, next);
+  });
+}
+
 // POST /api/subtitles/generate
-// Body: multipart/form-data — field "file" (audio/video) + optional field "language"
-router.post("/generate", isAuth, upload.single("file"), generateSubtitles);
+// multipart: file + optional language, OR JSON: { s3Key, originalFileName, mimeType, language? }
+router.post("/generate", isAuth, subtitleMultipartOrS3, generateSubtitles);
 
 // GET /api/subtitles/credits
 router.get("/credits", isAuth, getUserCredits);

@@ -247,16 +247,22 @@ export function featureBullets(plan: PublicPlan, lowerPlan?: PublicPlan): string
   const lf = lowerPlan?.featureFlags || {};
   const out: string[] = [];
 
+  const creditsPerMonth =
+    plan.interval === "annual" ? plan.creditsPerPeriod / 12 : plan.creditsPerPeriod;
+  const creditsPerMonthLabel = Number.isInteger(creditsPerMonth)
+    ? String(creditsPerMonth)
+    : String(Number(creditsPerMonth.toFixed(2)));
+
   if (lowerPlan) {
     out.push(`Everything in ${lowerPlan.displayName} plan`);
   }
 
   // 1. Credits
   if (plan.creditsPerPeriod > (lowerPlan?.creditsPerPeriod || 0)) {
-    out.push(`${plan.creditsPerPeriod} credits per month`);
+    out.push(`${creditsPerMonthLabel} credits per month`);
   } else if (!lowerPlan) {
     if (plan.creditsPerPeriod > 0) {
-      out.push(`${plan.creditsPerPeriod} credits per month`);
+      out.push(`${creditsPerMonthLabel} credits per month`);
     } else {
       out.push("Starter credits included");
     }

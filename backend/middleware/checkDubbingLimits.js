@@ -115,14 +115,7 @@ module.exports = async function checkDubbingLimits(req, res, next) {
   let tmpFile = null;
 
   try {
-    // ── 0. Require uploaded file ──────────────────────────────────────────────
-    if (!req.file) {
-      return next(limitError("No file uploaded.", 422));
-    }
-
-    // ── 1. Idempotency check ──────────────────────────────────────────────────
-    // Client sends X-Idempotency-Key on retry. If we've seen this key before
-    // for this user, return the existing job without reserving usage again.
+    // ── 0. Idempotency check (before touching disk / S3 download) ─────────────
     const idempotencyKey = (req.headers["x-idempotency-key"] || "").trim() || null;
 
     if (idempotencyKey) {
@@ -134,8 +127,6 @@ module.exports = async function checkDubbingLimits(req, res, next) {
         .lean();
 
       if (existingJob) {
-        // Return the existing job — do NOT proceed to pipeline.
-        // The SSE stream is already open so we close it gracefully.
         res.write(
           `data: ${JSON.stringify({
             stage: "duplicate",
@@ -148,11 +139,24 @@ module.exports = async function checkDubbingLimits(req, res, next) {
       }
     }
 
-    // ── 2. Probe file duration ────────────────────────────────────────────────
-    const ext = path.extname(req.file.originalname) || ".mp3";
-    tmpFile = path.join(os.tmpdir(), `limit_probe_${uuidv4()}${ext}`);
-    fs.writeFileSync(tmpFile, req.file.buffer);
+    // ── 1. Resolve probe file on disk (pre-downloaded S3 temp or multer buffer) ─
+    if (req.dubbingTmpProbeFile && fs.existsSync(req.dubbingTmpProbeFile)) {
+      tmpFile = req.dubbingTmpProbeFile;
+    } else {
+      if (!req.file || !req.file.buffer) {
+        return next(limitError("No file uploaded.", 422));
+      }
+      const ext = path.extname(req.file.originalname) || ".mp3";
+      tmpFile = path.join(os.tmpdir(), `limit_probe_${uuidv4()}${ext}`);
+      fs.writeFileSync(tmpFile, req.file.buffer);
+    }
 
+    const fileSize =
+      typeof req.file?.size === "number" && req.file.size > 0
+        ? req.file.size
+        : fs.statSync(tmpFile).size;
+
+    // ── 2. Probe file duration ────────────────────────────────────────────────
     let durationSeconds;
     try {
       durationSeconds = await getFileDuration(tmpFile);
@@ -191,9 +195,9 @@ module.exports = async function checkDubbingLimits(req, res, next) {
 
     // ── 4a. Hard limit: max file size ─────────────────────────────────────────
     const maxFileSizeMB = flags.maxFileSizeMB ?? null;
-    if (maxFileSizeMB !== null && req.file.size > maxFileSizeMB * 1024 * 1024) {
+    if (maxFileSizeMB !== null && fileSize > maxFileSizeMB * 1024 * 1024) {
       return next(limitError(
-        `File size ${(req.file.size / 1024 / 1024).toFixed(1)} MB exceeds the plan limit of ${maxFileSizeMB} MB.`,
+        `File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the plan limit of ${maxFileSizeMB} MB.`,
         413,
       ));
     }
@@ -336,7 +340,11 @@ module.exports = async function checkDubbingLimits(req, res, next) {
     next();
   } catch (err) {
     if (tmpFile) {
-      try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
+      try {
+        fs.unlinkSync(tmpFile);
+      } catch {
+        /* ignore */
+      }
     }
     next(err);
   }

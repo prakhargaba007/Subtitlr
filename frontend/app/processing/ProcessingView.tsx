@@ -83,6 +83,29 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Browser PUT to S3 using a presigned URL (must match signed Content-Type). */
+function putFileToPresignedUrl(
+  uploadUrl: string,
+  file: File,
+  contentType: string,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", contentType || "application/octet-stream");
+    xhr.upload.onprogress = (evt) => {
+      if (evt.lengthComputable && onProgress) onProgress(evt.loaded, evt.total);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`S3 upload failed with status ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error("Network error during S3 upload"));
+    xhr.send(file);
+  });
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ProcessingView() {
@@ -138,22 +161,6 @@ export default function ProcessingView() {
     const targetLanguage = getPendingTargetLanguage();
     const sourceLanguage = getPendingSourceLanguage();
 
-    const body =
-      mode === "dubbing" && youtubeUrl
-        ? { youtubeUrl, targetLanguage, sourceLanguage }
-        : (() => {
-          const fd = new FormData();
-          if (file) fd.append("file", file);
-          if (mode === "subtitles") {
-            const lang = getPendingLanguage();
-            if (lang) fd.append("language", lang);
-          } else {
-            if (targetLanguage) fd.append("targetLanguage", targetLanguage);
-            if (sourceLanguage) fd.append("sourceLanguage", sourceLanguage);
-          }
-          return fd;
-        })();
-
     let parsedUpTo = 0;
 
     const handleSSEText = (raw: string) => {
@@ -203,37 +210,118 @@ export default function ProcessingView() {
       }
     };
 
-    axiosInstance
-      .post<string>(
+    const run = async () => {
+      const headers: Record<string, string> = {};
+      let body: FormData | Record<string, string>;
+
+      if (mode === "dubbing" && youtubeUrl) {
+        body = { youtubeUrl, targetLanguage, sourceLanguage };
+        headers["Content-Type"] = "application/json";
+      } else if (file) {
+        let payload: FormData | Record<string, string> | null = null;
+        const preferDirectS3 =
+          process.env.NEXT_PUBLIC_STORAGE_TYPE === "s3" ||
+          process.env.NEXT_PUBLIC_DIRECT_S3_UPLOAD === "true";
+
+        if (preferDirectS3) {
+          try {
+            const presignUrl =
+              mode === "dubbing" ? "/api/dubbing/upload-url" : "/api/subtitles/upload-url";
+            const pres = await axiosInstance.post<{ uploadUrl: string; key: string }>(
+              presignUrl,
+              {
+                fileName: file.name,
+                mimeType: file.type || "application/octet-stream",
+                byteSize: file.size,
+              },
+              { signal: controller.signal },
+            );
+            const { uploadUrl, key } = pres.data || {};
+            if (uploadUrl && key) {
+              if (cancelled) return;
+              setStageLabel("Uploading to storage…");
+              const mime = file.type || "application/octet-stream";
+              await putFileToPresignedUrl(uploadUrl, file, mime, (loaded, total) => {
+                if (cancelled || !total) return;
+                setProgress(Math.min(12, Math.round((loaded / total) * 12)));
+              });
+              if (cancelled) return;
+              headers["Content-Type"] = "application/json";
+              if (mode === "subtitles") {
+                const lang = getPendingLanguage();
+                payload = {
+                  s3Key: key,
+                  originalFileName: file.name,
+                  mimeType: mime,
+                  ...(lang ? { language: lang } : {}),
+                };
+              } else {
+                payload = {
+                  s3Key: key,
+                  originalFileName: file.name,
+                  mimeType: mime,
+                  targetLanguage,
+                  ...(sourceLanguage ? { sourceLanguage } : {}),
+                };
+              }
+            }
+          } catch {
+            /* presign / PUT failed — fall back to multipart through the API */
+          }
+        }
+
+        if (!payload) {
+          const fd = new FormData();
+          fd.append("file", file);
+          if (mode === "subtitles") {
+            const lang = getPendingLanguage();
+            if (lang) fd.append("language", lang);
+          } else {
+            if (targetLanguage) fd.append("targetLanguage", targetLanguage);
+            if (sourceLanguage) fd.append("sourceLanguage", sourceLanguage);
+          }
+          payload = fd;
+        }
+        body = payload;
+      } else {
+        return;
+      }
+
+      const url =
         mode === "dubbing"
           ? youtubeUrl
             ? "/api/dubbing/start-youtube"
             : "/api/dubbing/start"
-          : "/api/subtitles/generate",
-        body as any,
-        {
-          responseType: "text",
-          signal: controller.signal,
-          headers: { "Content-Type": youtubeUrl ? "application/json" : undefined },
-          onDownloadProgress: (progressEvent) => {
-            if (cancelled) return;
-            const responseText =
-              (progressEvent.event?.target as XMLHttpRequest | undefined)?.responseText ?? "";
-            handleSSEText(responseText);
-          },
+          : "/api/subtitles/generate";
+
+      await axiosInstance.post<string>(url, body as FormData & Record<string, string>, {
+        responseType: "text",
+        signal: controller.signal,
+        ...(Object.keys(headers).length ? { headers } : {}),
+        onDownloadProgress: (progressEvent) => {
+          if (cancelled) return;
+          const responseText =
+            (progressEvent.event?.target as XMLHttpRequest | undefined)?.responseText ?? "";
+          handleSSEText(responseText);
         },
-      )
-      .catch((err) => {
-        if (cancelled || axios.isCancel(err) || err?.code === "ERR_CANCELED") return;
-        const status = err?.response?.status;
-        const msg: string =
-          err?.response?.data?.message ?? err?.message ?? "Unexpected error.";
-        if (status === 402) {
-          setOutOfCredits(true);
-        }
-        setErrorMsg(msg);
-        setStageLabel("Error");
       });
+    };
+
+    run().catch((err) => {
+      if (cancelled || axios.isCancel(err) || err?.code === "ERR_CANCELED") return;
+      const status = err?.response?.status;
+      const msg: string =
+        typeof err?.response?.data === "object" && err?.response?.data !== null && "message" in err.response.data
+          ? String((err.response.data as { message?: string }).message)
+          : err?.response?.data != null && typeof err.response.data === "string"
+            ? err.response.data
+            : err?.message ?? "Unexpected error.";
+      if (status === 402) {
+        setOutOfCredits(true);
+      }
+      setErrorMsg(msg);
+      setStageLabel("Error");
+    });
 
     return () => {
       cancelled = true;

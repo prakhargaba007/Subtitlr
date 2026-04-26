@@ -5,8 +5,13 @@ const router = express.Router();
 const isAuth = require("../middleware/is-auth");
 const checkDubbingLimits = require("../middleware/checkDubbingLimits");
 const {
+  prepareDubbingStartFromS3,
+} = require("../middleware/dubbingPrepareS3Input");
+const AUDIO_VIDEO_MIMES = require("../constants/audioVideoMimes");
+const {
   startDubbingJob,
   startDubbingFromYoutube,
+  requestDubbingUploadUrl,
   getDubbingJob,
   getDubbingJobs,
   getDubbingEditor,
@@ -17,35 +22,6 @@ const {
   rebuildDubbingJob,
   listLocalInworldVoices,
 } = require("../controllers/dubbingController");
-
-const AUDIO_VIDEO_MIMES = new Set([
-  // Audio
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  "audio/wave",
-  "audio/x-wav",
-  "audio/ogg",
-  "audio/flac",
-  "audio/aac",
-  "audio/mp4",
-  "audio/webm",
-  "audio/x-m4a",
-  "audio/m4a",
-  "audio/x-flac",
-  // Video
-  "video/mp4",
-  "video/mpeg",
-  "video/quicktime",
-  "video/x-msvideo",
-  "video/webm",
-  "video/x-matroska",
-  "video/3gpp",
-  "video/3gpp2",
-  "video/x-flv",
-  "video/x-ms-wmv",
-  "video/ogg",
-]);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,12 +40,26 @@ const upload = multer({
   },
 });
 
+// POST /api/dubbing/upload-url — presigned PUT for direct browser → S3 (STORAGE_TYPE=s3 only)
+router.post("/upload-url", isAuth, requestDubbingUploadUrl);
+
+function dubbingMultipartOrS3(req, res, next) {
+  prepareDubbingStartFromS3(req, res, (err) => {
+    if (err) return next(err);
+    if (req.dubbingTmpProbeFile) {
+      return checkDubbingLimits(req, res, next);
+    }
+    upload.single("file")(req, res, (e2) => {
+      if (e2) return next(e2);
+      checkDubbingLimits(req, res, next);
+    });
+  });
+}
+
 // POST /api/dubbing/start
-// Body: multipart/form-data
-//   - file: audio or video file
-//   - targetLanguage: e.g. "french", "spanish", "hindi"
-//   - sourceLanguage: (optional) e.g. "english" — auto-detected if omitted
-router.post("/start", isAuth, upload.single("file"), checkDubbingLimits, startDubbingJob);
+// Body: multipart/form-data (file + languages) OR application/json after direct S3 upload:
+//   { s3Key, originalFileName, mimeType, targetLanguage, sourceLanguage? }
+router.post("/start", isAuth, dubbingMultipartOrS3, startDubbingJob);
 
 // POST /api/dubbing/start-youtube
 // Body: application/json

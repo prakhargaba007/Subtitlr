@@ -6,7 +6,10 @@ const mongoose = require("mongoose");
 
 const SubtitleJob = require("../models/Subtitle");
 const User = require("../models/User");
-const { storage } = require("../utils/storage");
+const UserSubscription = require("../models/UserSubscription");
+const PlanCatalog = require("../models/PlanCatalog");
+const { storage, createPresignedPutUrl } = require("../utils/storage");
+const AUDIO_VIDEO_MIMES = require("../constants/audioVideoMimes");
 const {
   calculateCreditsNeeded,
   assertEnoughCredits,
@@ -50,6 +53,70 @@ const WHISPER_MAX_BYTES = 24 * 1024 * 1024;
 
 // ─── Controllers ──────────────────────────────────────────────────────────────
 
+/**
+ * POST /api/subtitles/upload-url — presigned PUT for direct browser → S3.
+ */
+exports.requestSubtitleUploadUrl = async (req, res, next) => {
+  try {
+    if ((process.env.STORAGE_TYPE || "local") !== "s3") {
+      return res.status(501).json({
+        message: "Direct S3 upload is not enabled on this server.",
+        code: "STORAGE_LOCAL",
+      });
+    }
+
+    const fileName = (req.body?.fileName || req.body?.filename || "").trim();
+    const mimeType = (req.body?.mimeType || "").trim();
+    const byteSize = Number(req.body?.byteSize);
+
+    if (!fileName || !mimeType) {
+      return res.status(400).json({
+        message: "fileName (or filename) and mimeType are required.",
+      });
+    }
+    if (!AUDIO_VIDEO_MIMES.has(mimeType)) {
+      return res.status(415).json({ message: `Unsupported mime type: ${mimeType}` });
+    }
+    if (!Number.isFinite(byteSize) || byteSize <= 0) {
+      return res.status(400).json({ message: "byteSize must be a positive number." });
+    }
+
+    const user = await User.findById(req.userId)
+      .select("activeSubscriptionId")
+      .lean();
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    let planFlags = {};
+    if (user.activeSubscriptionId) {
+      const sub = await UserSubscription.findById(user.activeSubscriptionId)
+        .select("status planCatalog")
+        .lean();
+      if (sub && sub.status === "active" && sub.planCatalog) {
+        const plan = await PlanCatalog.findById(sub.planCatalog)
+          .select("featureFlags")
+          .lean();
+        if (plan?.featureFlags) planFlags = plan.featureFlags;
+      }
+    }
+
+    const maxFileSizeMB = planFlags.maxFileSizeMB ?? null;
+    if (maxFileSizeMB !== null && byteSize > maxFileSizeMB * 1024 * 1024) {
+      return res.status(413).json({
+        message: `Declared file size exceeds the plan limit of ${maxFileSizeMB} MB.`,
+      });
+    }
+
+    const safeName = path.basename(fileName).replace(/[^a-zA-Z0-9._-]/g, "_");
+    const key = `subtitles/${req.userId}/${uuidv4()}-${safeName}`;
+    const { uploadUrl } = await createPresignedPutUrl(key, mimeType, 900);
+    return res.json({ uploadUrl, key });
+  } catch (err) {
+    return next(err);
+  }
+};
+
 exports.generateSubtitles = async (req, res, next) => {
   console.log("generateSubtitles endpoint called");
 
@@ -65,7 +132,11 @@ exports.generateSubtitles = async (req, res, next) => {
   const tmpPaths = [];
 
   try {
-    if (!req.file) {
+    const hasDiskInput = Boolean(
+      req.subtitleTmpProbeFile && fs.existsSync(req.subtitleTmpProbeFile),
+    );
+    const hasBufferInput = Boolean(req.file && req.file.buffer && req.file.buffer.length);
+    if (!req.file || (!hasBufferInput && !hasDiskInput)) {
       emit({ stage: "error", message: "No file uploaded.", statusCode: 422 });
       return res.end();
     }
@@ -75,8 +146,13 @@ exports.generateSubtitles = async (req, res, next) => {
     const { isoCode, label: langLabel } = resolveLanguage(req.body.language);
 
     const ext = path.extname(req.file.originalname) || ".tmp";
-    const tmpInput = path.join(os.tmpdir(), `sub_input_${uuidv4()}${ext}`);
-    fs.writeFileSync(tmpInput, req.file.buffer);
+    let tmpInput;
+    if (hasDiskInput) {
+      tmpInput = req.subtitleTmpProbeFile;
+    } else {
+      tmpInput = path.join(os.tmpdir(), `sub_input_${uuidv4()}${ext}`);
+      fs.writeFileSync(tmpInput, req.file.buffer);
+    }
     tmpPaths.push(tmpInput);
 
     const duration = await getFileDuration(tmpInput);
