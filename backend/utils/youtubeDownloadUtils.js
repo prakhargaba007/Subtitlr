@@ -31,7 +31,19 @@ function getYoutubeExtractorArgs() {
   if (raw) return raw;
   const isProd = String(process.env.NODE_ENV || "").trim() === "production";
   if (!isProd) return null;
-  return "youtube:player_client=android";
+
+  // IMPORTANT:
+  // - When passing account cookies, yt-dlp skips Android clients ("does not support cookies")
+  // - On many servers, web clients require JS challenge + may require PO tokens
+  // Prefer cookie-compatible clients first to avoid "only images available" from forced skips.
+  const cookiesPath = getCookiesPath();
+  if (cookiesPath) {
+    // web_safari can expose HLS variants in some cases; tv_downgraded works with cookies.
+    return "youtube:player_client=tv_downgraded,web_safari,web";
+  }
+
+  // Logged-out fallback clients (tend to work without cookies when not bot-checked).
+  return "youtube:player_client=android_vr,ios_downgraded,web_safari,web";
 }
 
 function getJsRuntimeFlag() {
@@ -110,6 +122,14 @@ function normalizeYoutubeUrl(raw) {
     const err = new Error("Only YouTube links are supported.");
     err.statusCode = 422;
     throw err;
+  }
+
+  // Normalize Shorts to watch?v= to improve extractor stability.
+  // Example: https://www.youtube.com/shorts/<id> -> https://www.youtube.com/watch?v=<id>
+  const shortsMatch = u.pathname.match(/^\/shorts\/([^/?#]+)/i);
+  if (shortsMatch && shortsMatch[1]) {
+    u.pathname = "/watch";
+    u.searchParams.set("v", shortsMatch[1]);
   }
 
   u.hash = "";
