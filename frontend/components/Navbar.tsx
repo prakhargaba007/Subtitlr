@@ -65,9 +65,9 @@ export default function Navbar() {
           <Link href="/pricing" className={navLinkClass}>
             Pricing
           </Link>
-          <a href="#" className={navLinkClass}>
+          <Link href="/use-cases" className={navLinkClass}>
             Use Cases
-          </a>
+          </Link>
           <Link href="/docs" className={navLinkClass}>
             Docs
           </Link>

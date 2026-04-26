@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Kili",
+  title: "Terms of Service",
   description: "The terms that govern your use of Kili.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsOfServicePage() {

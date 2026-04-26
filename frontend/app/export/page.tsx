@@ -4,6 +4,7 @@ import ExportView from "./ExportView";
 export const metadata = {
   title: "Export Ready | Kili",
   description: "Your subtitles are ready. Preview, edit, and download.",
+  robots: { index: false, follow: false },
 };
 
 export default function ExportPage() {

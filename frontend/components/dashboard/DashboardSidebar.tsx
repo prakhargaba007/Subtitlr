@@ -91,9 +91,9 @@ export default function DashboardSidebar() {
       <div className="mb-10 px-4 hidden lg:block cursor-pointer" onClick={() => router.push("/dashboard")}>
         <div className="flex items-center gap-2">
           <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={60} height={60} priority />
-          <h1 className="font-headline text-3xl font-extrabold text-primary tracking-tight">
+          <p className="font-headline text-3xl font-extrabold text-primary tracking-tight">
             Kili Labs
-          </h1>
+          </p>
         </div>
         {/* <p className="text-xl text-on-surface-variant font-bold uppercase tracking-widest mt-1">
           Workspace
@@ -226,11 +226,13 @@ export default function DashboardSidebar() {
         >
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center">
             {userInfo?.profilePicture ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 alt={displayName}
-                className="w-full h-full object-cover"
+                className="object-cover"
                 src={userInfo.profilePicture}
+                width={40}
+                height={40}
+                sizes="40px"
               />
             ) : (
               <span className="text-primary font-bold font-headline text-sm">{initials}</span>

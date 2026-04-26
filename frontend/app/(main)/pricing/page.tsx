@@ -4,8 +4,20 @@ import PricingFAQ from "@/components/PricingFAQ";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Pricing | Kili",
+  title: "Pricing",
   description: "Plans and credits for transcription and dubbing. Compare monthly and yearly billing.",
+  alternates: { canonical: "/pricing" },
+  keywords: [
+    "transcription pricing",
+    "subtitle pricing",
+    "AI dubbing pricing",
+    "cheap AI dubbing",
+    "low cost AI dubbing",
+    "free dubbing",
+    "caption credits",
+    "SRT pricing",
+    "VTT pricing",
+  ],
 };
 
 export default function PricingPage() {

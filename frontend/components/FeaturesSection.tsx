@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function FeaturesSection() {
   return (
     <section className="max-w-7xl mx-auto px-8 mb-40">
@@ -13,11 +15,12 @@ export default function FeaturesSection() {
               AI that understands punctuation, speaker shifts, and industry-specific jargon.
             </p>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            className="absolute right-0 bottom-0 w-[100%] opacity-20 group-hover:opacity-90 transition-opacity pointer-events-none"
+          <Image
+            className="absolute right-0 bottom-0 opacity-20 group-hover:opacity-90 transition-opacity pointer-events-none object-cover"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuBszvSUoBi0dK37R6bs-LDRLCrzXZvVyHqbdUBeSBvNCSxuMllp8HsccsovK04jgyBPgHasEXLpNauIhGZUeCGveFS1I_SSGys0qKwI75Y8ptTNSaMng1ePOhyNPRFXD_G965LQ6wUnOWUqcQeRrzsuC6OnvSUUCivfSkbpyRHb-qSQnAwZRivb4lPc2LfwHNXVG8AtZheISEtmTczgbQko4EdWiWR92Mf6ApR0IWYN6mkPnR17BnFd38yIfC64WX4gxKgO_firwoU"
             alt="Abstract flowing wave patterns"
+            fill
+            sizes="(min-width: 768px) 66vw, 100vw"
           />
         </div>
 

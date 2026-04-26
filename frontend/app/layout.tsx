@@ -3,6 +3,24 @@ import { Manrope, Inter } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
+function getSiteUrl() {
+  const fallback = "https://www.kililabs.io";
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "";
+
+  try {
+    const url = new URL(raw || fallback);
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return fallback;
+    return url.origin;
+  } catch {
+    return fallback;
+  }
+}
+
+const siteUrl = getSiteUrl();
+
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
@@ -16,9 +34,41 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Kili | Subtitles & Dubbing in Seconds",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Kili",
+    template: "%s | Kili",
+  },
   description:
     "Upload a video or audio file and get accurate SRT/VTT subtitles or AI dubs in 60+ languages—fast.",
+  keywords: [
+    "AI subtitles",
+    "subtitle generator",
+    "SRT generator",
+    "VTT generator",
+    "video transcription",
+    "audio transcription",
+    "speech to text",
+    "auto captions",
+    "subtitle translator",
+    "multilingual subtitles",
+    "AI dubbing",
+    "AI video dubbing",
+    "automatic dubbing",
+    "dub video online",
+    "dubbing software",
+    "cheap dubbing",
+    "low cost dubbing",
+    "free dubbing",
+    "dubbing free",
+    "free AI dubbing",
+    "voice dubbing",
+    "video localization",
+    "caption editor",
+  ],
+  alternates: {
+    canonical: "/",
+  },
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -36,10 +86,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" suppressHydrationWarning>
+    <html lang="en" className="light">
       <body
         className={`${manrope.variable} ${inter.variable} bg-surface font-body text-on-surface antialiased`}
-        suppressHydrationWarning
       >
         <Providers>{children}</Providers>
       </body>

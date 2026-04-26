@@ -7,6 +7,7 @@ import UploadFAB from "@/components/dashboard/UploadFAB";
 export const metadata: Metadata = {
   title: "Launchpad | Kili",
   description: "Your transcription workspace.",
+  robots: { index: false, follow: false },
 };
 
 export default function DashboardLayout({

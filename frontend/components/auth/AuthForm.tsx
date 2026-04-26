@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
@@ -416,13 +417,19 @@ export default function AuthForm({
                 className="cursor-pointer font-body text-sm leading-relaxed text-on-surface-variant"
               >
                 I agree to the{" "}
-                <a href="#" className="font-headline font-semibold text-primary underline-offset-2 hover:underline">
+                <Link
+                  href="/terms"
+                  className="font-headline font-semibold text-primary underline-offset-2 hover:underline"
+                >
                   Terms of Service
-                </a>{" "}
+                </Link>{" "}
                 and{" "}
-                <a href="#" className="font-headline font-semibold text-primary underline-offset-2 hover:underline">
+                <Link
+                  href="/privacy"
+                  className="font-headline font-semibold text-primary underline-offset-2 hover:underline"
+                >
                   Privacy Policy
-                </a>
+                </Link>
                 .
               </label>
             </div>

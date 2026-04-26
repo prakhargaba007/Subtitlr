@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import FadingCircle from "@/components/FadingCircle";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Kili",
+  title: "Privacy Policy",
   description: "How Kili collects, uses, and protects your information.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPolicyPage() {
