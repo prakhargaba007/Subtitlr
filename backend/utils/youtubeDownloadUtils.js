@@ -34,6 +34,15 @@ function getYoutubeExtractorArgs() {
   return "youtube:player_client=android";
 }
 
+function getJsRuntimeFlag() {
+  const raw = String(process.env.YT_DLP_JS || "").trim();
+  if (raw) return raw;
+  const isProd = String(process.env.NODE_ENV || "").trim() === "production";
+  if (!isProd) return null;
+  // Node is already present in the backend runtime.
+  return "node";
+}
+
 function getCookiesPath() {
   const allowNonProd =
     String(process.env.YT_DLP_COOKIES_ALLOW_NON_PROD || "").trim() === "1";
@@ -111,12 +120,14 @@ async function getYoutubeMetadata(url, { ytDlpPath } = {}) {
   const bin = String(ytDlpPath || process.env.YT_DLP_PATH || "").trim();
   const cookiesPath = getCookiesPath();
   const extractorArgs = getYoutubeExtractorArgs();
+  const js = getJsRuntimeFlag();
   const parsed = await (bin ? ytdlp.create(bin) : ytdlp)(url, {
     noPlaylist: true,
     dumpSingleJson: true,
     noWarnings: true,
     skipDownload: true,
     format: "best",
+    ...(js ? { js } : null),
     ...(extractorArgs ? { extractorArgs } : null),
     ...(cookiesPath ? { cookies: cookiesPath } : null),
   });
@@ -164,6 +175,7 @@ async function downloadYoutubeToMp4(url, opts = {}) {
   const outTemplate = path.join(tmpDir, `${base}.%(ext)s`);
   const cookiesPath = getCookiesPath();
   const extractorArgs = getYoutubeExtractorArgs();
+  const js = getJsRuntimeFlag();
 
   try {
     await exec.exec(
@@ -174,6 +186,7 @@ async function downloadYoutubeToMp4(url, opts = {}) {
         mergeOutputFormat: DEFAULT_MERGE_OUTPUT,
         ffmpegLocation: ffmpegStatic,
         output: outTemplate,
+        ...(js ? { js } : null),
         ...(extractorArgs ? { extractorArgs } : null),
         ...(cookiesPath ? { cookies: cookiesPath } : null),
       },
@@ -196,6 +209,7 @@ async function downloadYoutubeToMp4(url, opts = {}) {
             mergeOutputFormat: DEFAULT_MERGE_OUTPUT,
             ffmpegLocation: ffmpegStatic,
             output: outTemplate,
+            ...(js ? { js } : null),
             ...(extractorArgs ? { extractorArgs } : null),
             ...(cookiesPath ? { cookies: cookiesPath } : null),
           },
