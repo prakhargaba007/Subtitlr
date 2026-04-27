@@ -99,11 +99,11 @@ const { loadLocalInworldVoices } = require("../utils/localInworldVoices");
 const { createProjectForDubbingJob } = require("../utils/projectUtils");
 const { downloadYoutubeVideo } = require("../utils/youtubeDownloadUtils");
 
-// Dubbing costs more credits than subtitles — 5 credits per minute
-const DUBBING_CREDITS_PER_MINUTE = 5;
+// Dubbing credits: 1 credit per second (rounded up to the next whole second).
+const DUBBING_CREDITS_PER_SECOND = 1;
 
 const calculateDubbingCredits = (durationSeconds) =>
-  Math.ceil(durationSeconds / 60) * DUBBING_CREDITS_PER_MINUTE;
+  Math.ceil(durationSeconds) * DUBBING_CREDITS_PER_SECOND;
 
 let _openai = null;
 const getOpenAI = () => {

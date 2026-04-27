@@ -312,7 +312,7 @@ exports.generateSubtitles = async (req, res, next) => {
       req.userId,
       creditsNeeded,
       "subtitle_job",
-      `Transcribed ${req.file.originalname} (${creditsNeeded} min)`,
+      `Transcribed ${req.file.originalname} (${creditsNeeded} credits)`,
       {
         fileName: req.file.originalname,
         fileType: isVideo ? "video" : "audio",

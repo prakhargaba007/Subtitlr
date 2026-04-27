@@ -17,8 +17,11 @@ const DEFAULT_CREDITS = 0;
 /** Credits awarded when a user creates a verified account (OTP, Google, email). */
 const SIGNUP_CREDITS = 60;
 
-/** How many credits one "unit" costs. 1 credit = 1 started minute of media. */
-const CREDITS_PER_MINUTE = 1;
+/** How many credits one "unit" costs for subtitles. 5 credits = 1 started minute (rounded up). */
+const CREDITS_PER_MINUTE = 5;
+
+/** Target balance for the one-time welcome top-up. */
+const WELCOME_CREDITS_TARGET = 60;
 
 // ─── Calculation helpers ──────────────────────────────────────────────────────
 
@@ -206,6 +209,63 @@ const addCredits = async (userId, amount, source, description = "", metadata = {
 
   return balanceAfter;
 };
+
+/**
+ * One-time welcome credits: top up the user's balance to WELCOME_CREDITS_TARGET
+ * exactly once (never again), even if they later spend credits.
+ *
+ * Backward compatible for older users: if the ledger already contains a signup_bonus
+ * credit, we mark the flag and do NOT grant again.
+ *
+ * @param {string} userId
+ * @param {{ reason?: string }} [opts]
+ * @returns {Promise<{ granted: boolean, added: number, target: number }>}
+ */
+async function grantWelcomeCreditsOnce(userId, opts = {}) {
+  const reason = String(opts.reason || "welcome_topup").trim() || "welcome_topup";
+
+  const user = await User.findById(userId).select("credits welcomeCreditsGranted").lean();
+  if (!user) {
+    const err = new Error("User not found when granting welcome credits.");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (user.welcomeCreditsGranted) {
+    return { granted: false, added: 0, target: WELCOME_CREDITS_TARGET };
+  }
+
+  // If we already granted in the past (older deployments), mark the flag and skip.
+  const existingWelcome = await CreditTransaction.findOne({
+    user: userId,
+    type: "credit",
+    source: "signup_bonus",
+  })
+    .select("_id")
+    .lean();
+
+  if (existingWelcome) {
+    await User.updateOne({ _id: userId }, { $set: { welcomeCreditsGranted: true } });
+    return { granted: false, added: 0, target: WELCOME_CREDITS_TARGET };
+  }
+
+  const current = Math.max(0, Number(user.credits) || 0);
+  const toAdd = Math.max(0, WELCOME_CREDITS_TARGET - current);
+
+  if (toAdd > 0) {
+    await addCredits(
+      userId,
+      toAdd,
+      "signup_bonus",
+      `Welcome credits top-up (to ${WELCOME_CREDITS_TARGET})`,
+      { reason, target: WELCOME_CREDITS_TARGET },
+    );
+  }
+
+  await User.updateOne({ _id: userId }, { $set: { welcomeCreditsGranted: true } });
+
+  return { granted: true, added: toAdd, target: WELCOME_CREDITS_TARGET };
+}
 
 /**
  * Perform a legally exact refund via a strict atomic transaction.
@@ -404,6 +464,7 @@ const getCreditSummary = async (userId) => {
 module.exports = {
   DEFAULT_CREDITS,
   SIGNUP_CREDITS,
+  WELCOME_CREDITS_TARGET,
   CREDITS_PER_MINUTE,
   calculateCreditsNeeded,
   formatDuration,
@@ -411,6 +472,7 @@ module.exports = {
   assertEnoughCredits,
   deductCredits,
   addCredits,
+  grantWelcomeCreditsOnce,
   processRefundAtomic,
   getCreditHistory,
   getCreditSummary,

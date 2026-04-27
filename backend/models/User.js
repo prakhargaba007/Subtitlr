@@ -79,6 +79,15 @@ const UserSchema = new Schema(
       default: 0,
       min: 0,
     },
+    /**
+     * One-time welcome credits guard.
+     * When true, we will never auto-top-up this user again.
+     */
+    welcomeCreditsGranted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     /** Reserved for future org / team billing (null = none). */
     organizationId: {
       type: Schema.Types.ObjectId,

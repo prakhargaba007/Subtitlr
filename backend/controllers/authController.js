@@ -4,7 +4,11 @@ const User = require("../models/User.js");
 const SubtitleJob = require("../models/Subtitle.js");
 const { createOTP, sendOTPEmail, verifyOTP } = require("../utils/otpUtils");
 const { OAuth2Client } = require("google-auth-library");
-const { addCredits, DEFAULT_CREDITS, SIGNUP_CREDITS } = require("../utils/creditUtils");
+const {
+  addCredits,
+  DEFAULT_CREDITS,
+  grantWelcomeCreditsOnce,
+} = require("../utils/creditUtils");
 const { generateTokens, clearAuthCookies } = require("../utils/authTokens");
 const RefreshToken = require("../models/RefreshToken");
 const crypto = require("crypto");
@@ -138,7 +142,7 @@ exports.signup = async (req, res, next) => {
 
     // Save the user to the database
     await user.save();
-    await addCredits(user._id, SIGNUP_CREDITS, "signup_bonus", "Welcome credits");
+    await grantWelcomeCreditsOnce(user._id, { reason: "signup" });
 
     await generateTokens(user, req, res);
 
@@ -230,6 +234,9 @@ exports.login = async (req, res, next) => {
         throw error;
       }
     }
+
+    // One-time welcome credits top-up (first login only; never again).
+    await grantWelcomeCreditsOnce(user._id, { reason: "login" }).catch(() => {});
 
     await generateTokens(user, req, res);
 
@@ -474,12 +481,7 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
     
     await user.save();
 
-    // Top up credits to SIGNUP_CREDITS for newly verified accounts
-    if ((user.credits ?? 0) < SIGNUP_CREDITS) {
-      const toAdd = SIGNUP_CREDITS - (user.credits ?? 0);
-      await addCredits(user._id, toAdd, "signup_bonus", "Welcome credits top-up");
-      user.credits = SIGNUP_CREDITS;
-    }
+    await grantWelcomeCreditsOnce(user._id, { reason: "otp_verify" });
 
     await generateTokens(user, req, res);
 
@@ -663,7 +665,7 @@ exports.googleExchange = async (req, res, next) => {
         profilePicture: picture,
       });
       await user.save();
-      await addCredits(user._id, SIGNUP_CREDITS, "signup_bonus", "Welcome credits");
+      await grantWelcomeCreditsOnce(user._id, { reason: "google_first" });
     } else {
       // Update profile image/name if changed
       const shouldUpdate = (picture && user.profilePicture !== picture) || (displayName && user.name !== displayName);
@@ -676,11 +678,8 @@ exports.googleExchange = async (req, res, next) => {
         user.tempUser = false;
       }
       await user.save();
-      // Top up credits to SIGNUP_CREDITS for first-time Google sign-in
-      if ((user.credits ?? 0) < SIGNUP_CREDITS) {
-        const toAdd = SIGNUP_CREDITS - (user.credits ?? 0);
-        await addCredits(user._id, toAdd, "signup_bonus", "Welcome credits top-up");
-      }
+      // One-time welcome credits top-up (first login only; never again).
+      await grantWelcomeCreditsOnce(user._id, { reason: "google_login" }).catch(() => {});
     }
 
     await generateTokens(user, req, res);
