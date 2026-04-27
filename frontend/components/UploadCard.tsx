@@ -187,6 +187,7 @@ function UploadCardInner({
   const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [language, setLanguage] = useState("");
+  const [authChecking, setAuthChecking] = useState(false);
   const [languageBundle, setLanguageBundle] = useState<{
     mode: "subtitles" | "dubbing";
     languages: ApiLanguage[];
@@ -327,7 +328,36 @@ function UploadCardInner({
     }
   };
 
-  const handleNext = () => {
+  const ensureAuthenticatedOrRedirect = async (nextPath: string): Promise<boolean> => {
+    // If auth check is already running, don't duplicate requests.
+    if (authChecking) return false;
+
+    setAuthChecking(true);
+    try {
+      // `GET /api/user/profile` is protected by backend auth middleware.
+      await axiosInstance.get("/api/user/profile");
+      return true;
+    } catch (err: unknown) {
+      const status =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+      if (status === 401) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("redirectAfterLogin", nextPath);
+        }
+        router.push(`/login?next=${encodeURIComponent(nextPath)}`);
+        return false;
+      }
+      // Non-auth error: let the user try again.
+      setError("Could not verify login status. Please try again.");
+      return false;
+    } finally {
+      setAuthChecking(false);
+    }
+  };
+
+  const handleNext = async () => {
     const safeLang = language ?? "";
     if (mode === "dubbing" && !safeLang.trim()) {
       setError("Please choose a dubbing target language.");
@@ -345,7 +375,10 @@ function UploadCardInner({
       setPendingMode(mode);
       setPendingTargetLanguage(safeLang);
       setPendingSourceLanguage(""); // auto
-      router.push(`${basePath}/processing?name=${encodeURIComponent("youtube")}&size=0`);
+      const nextPath = `${basePath}/processing?name=${encodeURIComponent("youtube")}&size=0`;
+      const ok = await ensureAuthenticatedOrRedirect(nextPath);
+      if (!ok) return;
+      router.push(nextPath);
       return;
     }
 
@@ -363,7 +396,10 @@ function UploadCardInner({
       setPendingTargetLanguage(safeLang);
       setPendingSourceLanguage(""); // auto
     }
-    router.push(`${basePath}/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`);
+    const nextPath = `${basePath}/processing?name=${encodeURIComponent(selectedFile.name)}&size=${selectedFile.size}`;
+    const ok = await ensureAuthenticatedOrRedirect(nextPath);
+    if (!ok) return;
+    router.push(nextPath);
   };
 
   const selectedLangRow = langReady ? languages.find((l) => l.lang_name === language) : undefined;
@@ -586,6 +622,7 @@ function UploadCardInner({
 
               <button
                 onClick={handleNext}
+                disabled={!canProceed || authChecking}
                 className={[
                   "w-full flex items-center justify-center gap-2 py-3.5 font-headline font-bold text-sm rounded-2xl transition-all",
                   canProceed
@@ -594,7 +631,11 @@ function UploadCardInner({
                 ].join(" ")}
               >
                 <span className="material-symbols-outlined text-lg">auto_awesome</span>
-                {mode === "dubbing" ? "Start Dubbing" : "Generate Subtitles"}
+                {authChecking
+                  ? "Checking…"
+                  : mode === "dubbing"
+                    ? "Start Dubbing"
+                    : "Generate Subtitles"}
               </button>
 
               {!selectedFile && !(mode === "dubbing" && youtubeUrl.trim()) && (
