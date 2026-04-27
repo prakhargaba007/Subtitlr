@@ -90,13 +90,6 @@ export default function AuthForm({
   const handleGoogleAuthCode = useCallback(
     async (response: { code?: string; error?: string }) => {
       try {
-        // If we received a callback, the popup flow did not "silently fail".
-        // Cancel the fallback timer so we don't show "Sign-in didn’t complete" after success.
-        if (googleLoadingTimeoutRef.current) {
-          clearTimeout(googleLoadingTimeoutRef.current);
-          googleLoadingTimeoutRef.current = null;
-        }
-
         if (response?.error) throw new Error(response.error);
         const code = response?.code;
         if (!code) throw new Error("Missing authorization code");
@@ -131,10 +124,6 @@ export default function AuthForm({
             : "Failed to sign in with Google";
         toast({ title: "Error", description: errorMessage, variant: "destructive" });
       } finally {
-        if (googleLoadingTimeoutRef.current) {
-          clearTimeout(googleLoadingTimeoutRef.current);
-          googleLoadingTimeoutRef.current = null;
-        }
         setIsLoading(false);
       }
     },
@@ -278,10 +267,6 @@ export default function AuthForm({
 
   const handleGoogleSignIn = () => {
     setIsLoading(true);
-    if (googleLoadingTimeoutRef.current) {
-      clearTimeout(googleLoadingTimeoutRef.current);
-      googleLoadingTimeoutRef.current = null;
-    }
     if (!gsiReady) {
       toast({
         title: "Google Sign-In",

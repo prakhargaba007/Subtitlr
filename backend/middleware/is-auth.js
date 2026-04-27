@@ -11,14 +11,23 @@ module.exports = async (req, res, next) => {
       return res.status(401).json({ message: "Not authenticated!" });
     }
 
-    // 2. Verify JWT
+    // 2. CSRF Protection for mutating requests
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+      const csrfCookie = req.cookies?.csrfToken;
+      const csrfHeader = req.get("X-CSRF-Token");
+      if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+        return res.status(403).json({ message: "CSRF validation failed" });
+      }
+    }
+
+    // 3. Verify JWT
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     
     if (!decodedToken) {
       return res.status(401).json({ message: "Not authenticated!" });
     }
 
-    // 3. Validate Token Version to support instant global revocation
+    // 4. Validate Token Version to support instant global revocation
     const user = await User.findById(decodedToken.user.id).select('tokenVersion');
     if (!user) {
       console.log(`[AUTH] 401 - User ${decodedToken.user.id} not found in DB`);

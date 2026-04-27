@@ -22,6 +22,24 @@ export function s3Url(keyOrUrl: string | null | undefined): string {
   return `${S3_BASE_URL}/${keyOrUrl.replace(/^\//, "")}`;
 }
 
+// Helper to read non-HttpOnly CSRF cookie
+const getCsrfToken = () => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(^|;)\s*csrfToken\s*=\s*([^;]+)/);
+  return match ? match[2] : null;
+};
+
+// Request interceptor
+instance.interceptors.request.use((config) => {
+  if (config.method && ['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      config.headers['X-CSRF-Token'] = csrfToken;
+    }
+  }
+  return config;
+});
+
 // Response Interceptor: Auto-refresh on 401
 let isRefreshing = false;
 type FailedQueueItem = {
