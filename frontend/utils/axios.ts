@@ -81,7 +81,9 @@ instance.interceptors.response.use(
 
       try {
         // Call refresh endpoint
-        await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/refresh`, {}, { withCredentials: true });
+        // Use the same axios instance so baseURL + cookie handling are consistent.
+        // (The response interceptor already guards against infinite loops for /api/auth/refresh.)
+        await instance.post("/api/auth/refresh", {});
         
         processQueue(null);
         return instance(originalRequest);

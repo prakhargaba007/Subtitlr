@@ -2,11 +2,44 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const RefreshToken = require("../models/RefreshToken");
 
-const isProdEnv = () =>
-  process.env.NODE_ENV === "production" ||
-  (process.env.NODE_ENV !== "development" && (process.env.FRONTEND_URL || "").startsWith("https://"));
+/**
+ * IMPORTANT:
+ * Cookie `domain` must be consistent across ALL auth endpoints, otherwise browsers can end up
+ * storing BOTH a host-only cookie (api.kililabs.io) and a domain cookie (.kililabs.io) with the
+ * same name (refreshToken). That leads to non-deterministic `req.cookies.refreshToken` parsing.
+ *
+ * We therefore decide "production cookie mode" based on the incoming request host/proto (not on
+ * brittle env heuristics), and we clear BOTH domain and host-only variants on logout/invalid refresh.
+ */
+const isProdRequest = (req) => {
+  const host = String(req?.get?.("host") || "");
+  const proto = String(req?.get?.("x-forwarded-proto") || "");
 
-const getCookieDomain = () => isProdEnv() ? ".kililabs.io" : undefined;
+  // Explicit env override always wins
+  if (process.env.AUTH_COOKIE_MODE === "prod") return true;
+  if (process.env.AUTH_COOKIE_MODE === "dev") return false;
+
+  // Common production deployments forget to set NODE_ENV=production.
+  // If we are serving on *.kililabs.io or behind https, treat it as prod-cookie mode.
+  if (host.endsWith(".kililabs.io") || host === "kililabs.io") return true;
+  if (proto === "https") return true;
+
+  return process.env.NODE_ENV === "production";
+};
+
+const getCookieDomain = (req) => {
+  const isProd = isProdRequest(req);
+  if (!isProd) return undefined;
+  return process.env.COOKIE_DOMAIN || ".kililabs.io";
+};
+
+const clearCookieVariants = (res, name, options) => {
+  // Clear domain cookie
+  res.clearCookie(name, options);
+  // Clear host-only cookie variant (no domain attribute)
+  const { domain: _domain, ...withoutDomain } = options || {};
+  res.clearCookie(name, withoutDomain);
+};
 
 const generateTokens = async (user, req, res, familyId = null) => {
   const jti = crypto.randomUUID();
@@ -51,12 +84,12 @@ const generateTokens = async (user, req, res, familyId = null) => {
   const csrfToken = crypto.randomBytes(20).toString("hex");
 
   // 4. Set Cookies
-  const isProd = isProdEnv();
+  const isProd = isProdRequest(req);
   // In production: cross-origin requests (www.kililabs.io → api.kililabs.io)
   // require sameSite:"none" + secure:true for cookies to be sent by browser.
   // In development: sameSite:"lax" works fine since both run on localhost.
   const sameSite = isProd ? "none" : "lax";
-  const domain = getCookieDomain(); // ".kililabs.io" in prod, undefined in dev
+  const domain = getCookieDomain(req); // ".kililabs.io" in prod, undefined in dev
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
@@ -64,7 +97,7 @@ const generateTokens = async (user, req, res, familyId = null) => {
     sameSite,
     maxAge: 15 * 60 * 1000, // 15 mins
     path: "/",
-    domain
+    domain,
   });
 
   res.cookie("refreshToken", rawRefreshToken, {
@@ -73,7 +106,7 @@ const generateTokens = async (user, req, res, familyId = null) => {
     sameSite,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/api/auth", // Only sent to auth routes
-    domain
+    domain,
   });
 
   res.cookie("csrfToken", csrfToken, {
@@ -81,17 +114,17 @@ const generateTokens = async (user, req, res, familyId = null) => {
     secure: isProd,
     sameSite,
     path: "/",
-    domain
+    domain,
   });
 
   return { accessToken, csrfToken };
 };
 
-const clearAuthCookies = (res) => {
-  const domain = getCookieDomain();
-  res.clearCookie("accessToken", { path: "/", domain });
-  res.clearCookie("refreshToken", { path: "/api/auth", domain });
-  res.clearCookie("csrfToken", { path: "/", domain });
+const clearAuthCookies = (req, res) => {
+  const domain = getCookieDomain(req);
+  clearCookieVariants(res, "accessToken", { path: "/", domain });
+  clearCookieVariants(res, "refreshToken", { path: "/api/auth", domain });
+  clearCookieVariants(res, "csrfToken", { path: "/", domain });
 };
 
 module.exports = { generateTokens, clearAuthCookies };

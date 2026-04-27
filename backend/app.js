@@ -11,6 +11,9 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Ensure correct req.ip / x-forwarded-proto behavior behind proxies (Render/NGINX/Cloudflare/etc.)
+app.set("trust proxy", 1);
+
 // Security Headers with Strict CSP
 app.use(helmet({
   contentSecurityPolicy: {

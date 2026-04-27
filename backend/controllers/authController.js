@@ -733,12 +733,12 @@ exports.refresh = async (req, res, next) => {
            await User.findByIdAndUpdate(existingToken.user, { $inc: { tokenVersion: 1 } });
         }
 
-        clearAuthCookies(res);
+        clearAuthCookies(req, res);
         return res.status(401).json({ message: "Security violation detected. Please log in again." });
       }
 
       // Token doesn't exist at all
-      clearAuthCookies(res);
+      clearAuthCookies(req, res);
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
@@ -771,7 +771,7 @@ exports.logout = async (req, res, next) => {
       }
     }
 
-    clearAuthCookies(res);
+    clearAuthCookies(req, res);
 
     res.status(200).json({ success: true });
   } catch (err) {
@@ -786,7 +786,7 @@ exports.logoutAllDevices = async (req, res, next) => {
     // Invalidate all access tokens
     await User.findByIdAndUpdate(req.userId, { $inc: { tokenVersion: 1 } });
     
-    clearAuthCookies(res);
+    clearAuthCookies(req, res);
     res.status(200).json({ success: true });
   } catch (err) {
     next(err);
