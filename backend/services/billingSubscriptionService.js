@@ -209,6 +209,69 @@ async function handleSubscriptionUpdated(dodo) {
   });
 }
 
+/**
+ * Payment succeeded is the "source of truth" to grant subscription credits.
+ * We fetch the live subscription (to get next_billing_date) and then grant credits
+ * for that billing period using the same idempotency key.
+ *
+ * @param {object} payment - Dodo Payment payload
+ */
+async function handlePaymentSucceeded(payment) {
+  const { getDodoClient } = require("../utils/dodoClient");
+  const client = getDodoClient();
+  if (!client) return null;
+
+  const subId = payment.subscription_id || payment.subscriptionId || null;
+  if (!subId) return null; // not a subscription payment
+
+  // Fetch subscription for accurate billing period dates
+  let dodoSub = null;
+  try {
+    const getter =
+      client.subscriptions?.get ||
+      client.subscriptions?.retrieve ||
+      null;
+    if (typeof getter === "function") {
+      dodoSub = await getter.call(client.subscriptions, subId);
+    }
+  } catch (e) {
+    // throw so webhook retries; we don't want to miss a grant due to transient network
+    throw e;
+  }
+  if (!dodoSub || !dodoSub.subscription_id) return null;
+
+  // Sync local mirror first (plan, dates, status)
+  const sub = await syncUserSubscriptionFromDodo(dodoSub, {
+    setPlanVersionOnCreate: true,
+    preserveCreditsPerRenewal: true,
+  });
+
+  if (!sub) return null;
+  if (sub.status !== "active") return { subscription: sub, grant: { granted: false, reason: "not_active" } };
+
+  // Treat as renewal when previousBillingDate exists, else initial activation.
+  const isRenewal = Boolean(dodoSub.previous_billing_date);
+  const periodKey = billingPeriodKey(dodoSub);
+  const credits = sub.creditsPerRenewal;
+
+  const r = await grantSubscriptionCredits(
+    sub.user.toString(),
+    credits,
+    isRenewal ? "subscription_renewal" : "subscription_initial",
+    isRenewal
+      ? `Subscription renewed (${sub.dodoSubscriptionId})`
+      : `Subscription activated (${sub.dodoSubscriptionId})`,
+    periodKey,
+    {
+      dodoSubscriptionId: sub.dodoSubscriptionId,
+      event: "payment.succeeded",
+      paymentId: payment.payment_id || payment.paymentId || payment.id || null,
+    }
+  );
+
+  return { subscription: sub, grant: r };
+}
+
 async function handleTerminalStatus(dodo, status) {
   let sub = await UserSubscription.findOne({ dodoSubscriptionId: dodo.subscription_id });
   if (!sub) {
@@ -306,6 +369,9 @@ async function processDodoWebhookEvent(event) {
       break;
     case "subscription.updated":
       await handleSubscriptionUpdated(data);
+      break;
+    case "payment.succeeded":
+      await handlePaymentSucceeded(data);
       break;
     case "subscription.on_hold":
       await handleTerminalStatus(data, "on_hold");
