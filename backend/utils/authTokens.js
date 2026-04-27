@@ -4,23 +4,19 @@ const RefreshToken = require("../models/RefreshToken");
 
 /**
  * IMPORTANT:
- * Cookie `domain` must be consistent across ALL auth endpoints, otherwise browsers can end up
- * storing BOTH a host-only cookie (api.kililabs.io) and a domain cookie (.kililabs.io) with the
- * same name (refreshToken). That leads to non-deterministic `req.cookies.refreshToken` parsing.
+ * Cookie `domain` must be consistent across ALL auth endpoints, otherwise browsers can store BOTH
+ * a host-only cookie (api.kililabs.io) and a domain cookie (.kililabs.io) with the same name.
+ * That leads to two refreshToken entries being sent and non-deterministic server parsing.
  *
- * We therefore decide "production cookie mode" based on the incoming request host/proto (not on
- * brittle env heuristics), and we clear BOTH domain and host-only variants on logout/invalid refresh.
+ * We decide cookie mode based on the incoming request (host/proto) and allow env overrides.
  */
 const isProdRequest = (req) => {
   const host = String(req?.get?.("host") || "");
   const proto = String(req?.get?.("x-forwarded-proto") || "");
 
-  // Explicit env override always wins
   if (process.env.AUTH_COOKIE_MODE === "prod") return true;
   if (process.env.AUTH_COOKIE_MODE === "dev") return false;
 
-  // Common production deployments forget to set NODE_ENV=production.
-  // If we are serving on *.kililabs.io or behind https, treat it as prod-cookie mode.
   if (host.endsWith(".kililabs.io") || host === "kililabs.io") return true;
   if (proto === "https") return true;
 
@@ -105,7 +101,10 @@ const generateTokens = async (user, req, res, familyId = null) => {
     secure: isProd,
     sameSite,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: "/api/auth", // Only sent to auth routes
+    // Your observation is correct: clearing with path "/api/auth" deletes only that cookie.
+    // Using Path="/" avoids accidental "disappears on reload" behavior and prevents multiple
+    // refreshToken cookies across different paths.
+    path: "/",
     domain,
   });
 
@@ -123,6 +122,8 @@ const generateTokens = async (user, req, res, familyId = null) => {
 const clearAuthCookies = (req, res) => {
   const domain = getCookieDomain(req);
   clearCookieVariants(res, "accessToken", { path: "/", domain });
+  // Clear both current + historical refresh cookie paths
+  clearCookieVariants(res, "refreshToken", { path: "/", domain });
   clearCookieVariants(res, "refreshToken", { path: "/api/auth", domain });
   clearCookieVariants(res, "csrfToken", { path: "/", domain });
 };

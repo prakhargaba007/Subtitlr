@@ -49,6 +49,7 @@ type FailedQueueItem = {
 let failedQueue: FailedQueueItem[] = [];
 
 const processQueue = (error: unknown) => {
+  console.log(`[AXIOS] Processing queue. Error:`, error ? "Yes" : "No", "Queue size:", failedQueue.length);
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
     else prom.resolve();
@@ -60,50 +61,82 @@ instance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
+    const url = originalRequest?.url || "unknown";
 
-    // Prevent infinite loops on the refresh endpoint itself
-    if (originalRequest.url?.includes("/api/auth/refresh")) {
-      return Promise.reject(error);
+    if (status === 401) {
+      console.log(`[AXIOS] 401 Unauthorized for ${url}. isRefreshing: ${isRefreshing}`);
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 Unauthorized errors
+    if (status === 401 && !originalRequest._retry) {
+      // Prevent infinite loops on the refresh endpoint itself
+      if (url.includes("/api/auth/refresh")) {
+        console.warn("[AXIOS] Refresh token itself failed with 401. Clearing session.");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("userData");
+        }
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
+        console.log(`[AXIOS] Already refreshing. Queuing request for ${url}`);
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then(() => {
-          // Retry original request (cookies are sent automatically)
-          return instance(originalRequest);
-        }).catch(err => Promise.reject(err));
+        })
+          .then(() => {
+            console.log(`[AXIOS] Retrying queued request for ${url}`);
+            return instance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
+      console.log(`[AXIOS] Starting token refresh for ${url}`);
 
       try {
         // Call refresh endpoint
-        // Use the same axios instance so baseURL + cookie handling are consistent.
-        // (The response interceptor already guards against infinite loops for /api/auth/refresh.)
-        await instance.post("/api/auth/refresh", {});
-        
+        // Use plain axios to avoid interceptor recursion
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+        console.log("[AXIOS] Token refresh successful");
+
+        // IMPORTANT: Set isRefreshing to false BEFORE processing queue
+        // so that retried requests don't get stuck in the "if (isRefreshing)" block again.
+        isRefreshing = false;
         processQueue(null);
+
         return instance(originalRequest);
-      } catch (err) {
-        console.error("[AXIOS] Refresh failed or original request retry failed", err);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : typeof err === "string" ? err : "Unknown error";
+        console.error("[AXIOS] Token refresh failed:", message);
+        isRefreshing = false; // Ensure it's reset on failure too
         processQueue(err);
-        // If refresh fails, redirect to login
+
+        // If refresh fails, redirect to login for protected pages
         if (typeof window !== "undefined") {
           localStorage.removeItem("userData");
           const path = window.location.pathname;
-          console.warn("[AXIOS] Redirecting to home due to session expiration at path:", path);
-          if (path.startsWith("/dashboard") || path.startsWith("/processing") || path.startsWith("/export") || path.startsWith("/billing")) {
+          console.warn("[AXIOS] Redirecting due to session expiration at path:", path);
+          
+          if (
+            path.startsWith("/dashboard") ||
+            path.startsWith("/processing") ||
+            path.startsWith("/export") ||
+            path.startsWith("/billing")
+          ) {
             window.location.href = "/?error=session_expired";
           }
         }
         return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   }
 );
