@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "evbnb.s3.us-east-1.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "crystalpng.com",
+      },
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+        pathname: "/wikipedia/**",
+      },
     ],
   },
 };

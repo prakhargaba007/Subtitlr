@@ -80,11 +80,42 @@ export default function HeroSection() {
         <div className="max-w-xl mx-auto flex justify-center items-center">
           <LogoLoop
             logos={[
-              { src: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg", alt: "Microsoft", href: "https://microsoft.com" },
-              { src: "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg", alt: "Spotify", href: "https://spotify.com" },
-              { src: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg", alt: "IBM", href: "https://ibm.com" },
-              { src: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg", alt: "Google", href: "https://google.com" },
-              { src: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Logo_NIKE.svg", alt: "Nike", href: "https://nike.com" },
+              {
+                src: "/MrBeast-logo-02.png",
+                alt: "MrBeast",
+                href: "https://www.youtube.com/@MrBeast",
+                title: "MrBeast — widely known for multilingual dubbed channels",
+              },
+              {
+                src: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Kurzgesagt_in_a_nutshell_wordmark.svg",
+                alt: "Kurzgesagt",
+                href: "https://www.youtube.com/@kurzgesagt",
+                title: "Kurzgesagt — In a Nutshell, localized science animation",
+              },
+              {
+                src: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/2018_Linus_Tech_Tips_logo.svg/3840px-2018_Linus_Tech_Tips_logo.svg.png",
+                alt: "Linus Tech Tips",
+                href: "https://www.youtube.com/@LinusTechTips",
+                title: "Linus Tech Tips — tech content with a large international audience",
+              },
+              {
+                src: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/TED_three_letter_logo.svg/1280px-TED_three_letter_logo.svg.png",
+                alt: "TED",
+                href: "https://www.youtube.com/@TED",
+                title: "TED — talks and shorts in many languages",
+              },
+              {
+                src: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Dude_Perfect_logo.svg/960px-Dude_Perfect_logo.svg.png",
+                alt: "Dude Perfect",
+                href: "https://www.youtube.com/@DudePerfect",
+                title: "Dude Perfect — top sports-comedy channel with localized uploads",
+              },
+              {
+                src: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Bright_Side_Logos.svg/3840px-Bright_Side_Logos.svg.png",
+                alt: "BRIGHT SIDE",
+                href: "https://www.youtube.com/@BRIGHTSIDE",
+                title: "BRIGHT SIDE — part of large multilingual creator networks",
+              },
             ]}
             speed={70}
             direction="left"
@@ -92,7 +123,7 @@ export default function HeroSection() {
             gap={42}
             fadeOut
             fadeOutColor="#fff"
-            ariaLabel="Trusted by these companies"
+            ariaLabel="Examples of major YouTube channels that publish multilingual and dubbed content"
             className="w-full"
           />
         </div>
