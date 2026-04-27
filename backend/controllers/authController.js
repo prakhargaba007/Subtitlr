@@ -540,7 +540,7 @@ exports.googleExchange = async (req, res, next) => {
       error.statusCode = 400;
       throw error;
     }
-    console.log("env", process.env.GOOGLE_CLIENT_ID, process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+    // console.log("env", process.env.GOOGLE_CLIENT_ID, process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
     
 
     const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;

@@ -6,7 +6,18 @@ const isProdEnv = () =>
   process.env.NODE_ENV === "production" ||
   (process.env.NODE_ENV !== "development" && (process.env.FRONTEND_URL || "").startsWith("https://"));
 
-const getCookieDomain = () => isProdEnv() ? ".kililabs.io" : undefined;
+const getCookieDomain = () => {
+  // For MVP, avoid hardcoding a domain. Setting a mismatched Domain causes cookies
+  // to be rejected entirely (common on preview/staging URLs).
+  // If you later need cross-subdomain cookies, set COOKIE_DOMAIN explicitly.
+  return process.env.COOKIE_DOMAIN || undefined;
+};
+
+const shouldUseSecureCookies = (req) => {
+  const origin = req.get("Origin") || "";
+  if (origin.startsWith("https://")) return true;
+  return isProdEnv();
+};
 
 const generateTokens = async (user, req, res, familyId = null) => {
   const jti = crypto.randomUUID();
@@ -41,26 +52,23 @@ const generateTokens = async (user, req, res, familyId = null) => {
     user: user._id,
     tokenHash: tokenHash,
     familyId: tokenFamily,
-    ipAddress: req.ip,
-    userAgent: req.get('User-Agent'),
+    // MVP: do not bind sessions to IP/device details
+    ipAddress: undefined,
+    userAgent: undefined,
     expiresAt,
     lastUsedAt: Date.now(),
   });
 
-  // 3. CSRF Token
-  const csrfToken = crypto.randomBytes(20).toString("hex");
-
-  // 4. Set Cookies
-  const isProd = isProdEnv();
-  // In production: cross-origin requests (www.kililabs.io → api.kililabs.io)
-  // require sameSite:"none" + secure:true for cookies to be sent by browser.
-  // In development: sameSite:"lax" works fine since both run on localhost.
-  const sameSite = isProd ? "none" : "lax";
-  const domain = getCookieDomain(); // ".kililabs.io" in prod, undefined in dev
+  // 3. Set Cookies
+  // Cookies must be `sameSite:"none"` + `secure:true` for HTTPS cross-origin XHR.
+  // In local dev over http, keep `lax` and `secure:false`.
+  const secure = shouldUseSecureCookies(req);
+  const sameSite = secure ? "none" : "lax";
+  const domain = getCookieDomain();
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: isProd,
+    secure,
     sameSite,
     maxAge: 15 * 60 * 1000, // 15 mins
     path: "/",
@@ -69,29 +77,19 @@ const generateTokens = async (user, req, res, familyId = null) => {
 
   res.cookie("refreshToken", rawRefreshToken, {
     httpOnly: true,
-    secure: isProd,
+    secure,
     sameSite,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/api/auth", // Only sent to auth routes
     domain
   });
-
-  res.cookie("csrfToken", csrfToken, {
-    httpOnly: false, // Must be readable by JS for CSRF header
-    secure: isProd,
-    sameSite,
-    path: "/",
-    domain
-  });
-
-  return { accessToken, csrfToken };
+  return { accessToken };
 };
 
 const clearAuthCookies = (res) => {
   const domain = getCookieDomain();
   res.clearCookie("accessToken", { path: "/", domain });
   res.clearCookie("refreshToken", { path: "/api/auth", domain });
-  res.clearCookie("csrfToken", { path: "/", domain });
 };
 
 module.exports = { generateTokens, clearAuthCookies };
