@@ -9,68 +9,6 @@ import axiosInstance from "@/utils/axios";
 import { setUserDetails } from "@/redux/slices/userSlice";
 import { Button } from "@/components/ui/Button";
 
-function shouldDebugAuth() {
-  if (process.env.NEXT_PUBLIC_AUTH_DEBUG === "true") return true;
-  if (typeof window === "undefined") return false;
-  try {
-    return localStorage.getItem("authDebug") === "true";
-  } catch {
-    return false;
-  }
-}
-
-function maskEmail(value: string) {
-  const v = (value || "").trim();
-  const at = v.indexOf("@");
-  if (at <= 1) return v ? "***" : "";
-  return `${v.slice(0, 2)}***${v.slice(at)}`;
-}
-
-function maskOtp(value: string) {
-  const v = (value || "").trim();
-  if (!v) return "";
-  if (v.length <= 2) return "*".repeat(v.length);
-  return `${"*".repeat(Math.max(0, v.length - 2))}${v.slice(-2)}`;
-}
-
-function describeAxiosError(error: unknown) {
-  const err = error as {
-    message?: string;
-    name?: string;
-    code?: string;
-    stack?: string;
-    config?: { url?: string; method?: string; baseURL?: string; timeout?: number };
-    response?: { status?: number; statusText?: string; data?: unknown; headers?: unknown };
-    request?: unknown;
-    isAxiosError?: boolean;
-  };
-
-  return {
-    isAxiosError: Boolean(err?.isAxiosError),
-    name: err?.name,
-    message: err?.message,
-    code: err?.code,
-    request: err?.request ? "[request present]" : undefined,
-    config: err?.config
-      ? {
-          baseURL: err.config.baseURL,
-          url: err.config.url,
-          method: err.config.method,
-          timeout: err.config.timeout,
-        }
-      : undefined,
-    response: err?.response
-      ? {
-          status: err.response.status,
-          statusText: err.response.statusText,
-          data: err.response.data,
-          headers: err.response.headers,
-        }
-      : undefined,
-    stack: err?.stack,
-  };
-}
-
 interface AuthFormProps {
   initialEmail?: string;
   onSuccess?: (user: unknown) => void;
@@ -126,41 +64,10 @@ export default function AuthForm({
       setIsLoading(false);
       setOtpLoading(true);
       try {
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][OTP] request start");
-          console.log("email:", maskEmail(emailToUse));
-          console.log("endpoint:", "/api/auth/opt-generate");
-          console.log("payload:", { email: maskEmail(emailToUse), purpose: "email_verification" });
-          console.log("existing localStorage:", {
-            userId: (() => {
-              try {
-                return localStorage.getItem("userId");
-              } catch {
-                return null;
-              }
-            })(),
-            isTempUser: (() => {
-              try {
-                return localStorage.getItem("isTempUser");
-              } catch {
-                return null;
-              }
-            })(),
-          });
-          console.groupEnd();
-        }
-
         const response = await axiosInstance.post("/api/auth/opt-generate", {
           email: emailToUse,
           purpose: "email_verification",
         });
-
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][OTP] request success");
-          console.log("status:", (response as { status?: number }).status);
-          console.log("data:", response.data);
-          console.groupEnd();
-        }
 
         if (response.data.success) {
           setShowOtpInput(true);
@@ -168,11 +75,6 @@ export default function AuthForm({
         }
       } catch (error: unknown) {
         console.error("Error requesting OTP:", error);
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][OTP] request failed (details)");
-          console.log(describeAxiosError(error));
-          console.groupEnd();
-        }
         const errorMessage =
           error && typeof error === "object" && "response" in error
             ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to send OTP"
@@ -188,14 +90,6 @@ export default function AuthForm({
   const handleGoogleAuthCode = useCallback(
     async (response: { code?: string; error?: string }) => {
       try {
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][GOOGLE] callback received");
-          console.log("response keys:", response ? Object.keys(response) : null);
-          console.log("has code:", Boolean(response?.code));
-          console.log("error:", response?.error);
-          console.groupEnd();
-        }
-
         if (response?.error) throw new Error(response.error);
         const code = response?.code;
         if (!code) throw new Error("Missing authorization code");
@@ -203,25 +97,10 @@ export default function AuthForm({
         const tempUserId = localStorage.getItem("userId");
         const isTempUser = localStorage.getItem("isTempUser") === "true";
 
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][GOOGLE] exchange start");
-          console.log("endpoint:", "/api/auth/google-exchange");
-          console.log("tempUser:", { isTempUser, tempUserIdPresent: Boolean(tempUserId) });
-          console.groupEnd();
-        }
-
         const res = await axiosInstance.post("/api/auth/google-exchange", {
           code,
           tempUserId: isTempUser && tempUserId ? tempUserId : undefined,
         });
-
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][GOOGLE] exchange success");
-          console.log("status:", (res as { status?: number }).status);
-          console.log("data keys:", res?.data ? Object.keys(res.data) : null);
-          console.log("user present:", Boolean(res?.data?.user));
-          console.groupEnd();
-        }
 
         localStorage.setItem("userData", JSON.stringify(res.data.user));
         if (isTempUser) localStorage.removeItem("isTempUser");
@@ -233,24 +112,12 @@ export default function AuthForm({
           onSuccess(res.data.user);
         } else if (autoRedirect) {
           const nextPath = searchParams.get("next") || localStorage.getItem("redirectAfterLogin") || "/dashboard";
-          if (shouldDebugAuth()) {
-            console.groupCollapsed("[AUTH][GOOGLE] redirect decision");
-            console.log("autoRedirect:", autoRedirect);
-            console.log("searchParams.next:", searchParams.get("next"));
-            console.log("redirectAfterLogin:", localStorage.getItem("redirectAfterLogin"));
-            console.log("final nextPath:", nextPath);
-            console.groupEnd();
-          }
+          console.log("[AUTH] Redirecting to:", nextPath);
           localStorage.removeItem("redirectAfterLogin");
           router.push(nextPath);
         }
       } catch (error: unknown) {
         console.error("Google auth code exchange error:", error);
-        if (shouldDebugAuth()) {
-          console.groupCollapsed("[AUTH][GOOGLE] exchange failed (details)");
-          console.log(describeAxiosError(error));
-          console.groupEnd();
-        }
         const errorMessage =
           error && typeof error === "object" && "response" in error
             ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to sign in with Google"
@@ -306,6 +173,8 @@ export default function AuthForm({
     script.id = "google-gsi";
     script.onload = () => {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      console.log("clientId", clientId);
+      
       if (!clientId) {
         console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set");
         setGsiReady(false);
@@ -326,6 +195,7 @@ export default function AuthForm({
           };
         };
       };
+
       if (googleWindow.google?.accounts?.oauth2) {
         codeClientRef.current = googleWindow.google.accounts.oauth2.initCodeClient({
           client_id: clientId,
@@ -341,14 +211,6 @@ export default function AuthForm({
   }, [handleGoogleAuthCode]);
 
   const handleRequestOTP = async () => {
-    if (shouldDebugAuth()) {
-      console.groupCollapsed("[AUTH][OTP] click request");
-      console.log("email:", maskEmail(email));
-      console.log("showOtpInput:", showOtpInput);
-      console.log("otpLoading:", otpLoading);
-      console.groupEnd();
-    }
-
     if (!email || !email.includes("@")) {
       toast({ title: "Invalid Email", description: "Please enter a valid email address", variant: "destructive" });
       return;
@@ -358,15 +220,6 @@ export default function AuthForm({
   };
 
   const handleVerifyOTP = async () => {
-    if (shouldDebugAuth()) {
-      console.groupCollapsed("[AUTH][OTP] click verify");
-      console.log("email:", maskEmail(email));
-      console.log("otp:", maskOtp(otp));
-      console.log("agreedToTerms:", agreedToTerms);
-      console.log("isLoading:", isLoading);
-      console.groupEnd();
-    }
-
     if (!otp || otp.length !== 6) {
       toast({ title: "Invalid OTP", description: "Please enter a 6-digit OTP", variant: "destructive" });
       return;
@@ -381,34 +234,12 @@ export default function AuthForm({
       const tempUserId = localStorage.getItem("userId");
       const isTempUser = localStorage.getItem("isTempUser") === "true";
 
-      if (shouldDebugAuth()) {
-        console.groupCollapsed("[AUTH][OTP] verify start");
-        console.log("endpoint:", "/api/auth/verify-otp");
-        console.log("tempUser:", { isTempUser, tempUserIdPresent: Boolean(tempUserId) });
-        console.log("payload:", {
-          email: maskEmail(email),
-          otp: maskOtp(otp),
-          purpose: "email_verification",
-          tempUserId: isTempUser && tempUserId ? "[present]" : undefined,
-        });
-        console.groupEnd();
-      }
-
       const response = await axiosInstance.post("/api/auth/verify-otp", {
         email,
         otp,
         purpose: "email_verification",
         tempUserId: isTempUser && tempUserId ? tempUserId : undefined,
       });
-
-      if (shouldDebugAuth()) {
-        console.groupCollapsed("[AUTH][OTP] verify success");
-        console.log("status:", (response as { status?: number }).status);
-        console.log("data keys:", response?.data ? Object.keys(response.data) : null);
-        console.log("success:", response?.data?.success);
-        console.log("user present:", Boolean(response?.data?.user));
-        console.groupEnd();
-      }
 
       if (response.data.success) {
         localStorage.setItem("userData", JSON.stringify(response.data.user));
@@ -421,25 +252,12 @@ export default function AuthForm({
           onSuccess(response.data.user);
         } else if (autoRedirect) {
           const nextPath = searchParams.get("next") || localStorage.getItem("redirectAfterLogin") || "/dashboard";
-          if (shouldDebugAuth()) {
-            console.groupCollapsed("[AUTH][OTP] redirect decision");
-            console.log("autoRedirect:", autoRedirect);
-            console.log("searchParams.next:", searchParams.get("next"));
-            console.log("redirectAfterLogin:", localStorage.getItem("redirectAfterLogin"));
-            console.log("final nextPath:", nextPath);
-            console.groupEnd();
-          }
           localStorage.removeItem("redirectAfterLogin");
           router.push(nextPath);
         }
       }
     } catch (error: unknown) {
       console.error("Error verifying OTP:", error);
-      if (shouldDebugAuth()) {
-        console.groupCollapsed("[AUTH][OTP] verify failed (details)");
-        console.log(describeAxiosError(error));
-        console.groupEnd();
-      }
       const errorMessage =
         error && typeof error === "object" && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Failed to verify OTP"
@@ -451,15 +269,10 @@ export default function AuthForm({
   };
 
   const handleGoogleSignIn = () => {
-    if (shouldDebugAuth()) {
-      console.groupCollapsed("[AUTH][GOOGLE] click sign-in");
-      console.log("gsiReady:", gsiReady);
-      console.log("has client:", Boolean(codeClientRef.current));
-      console.log("NEXT_PUBLIC_GOOGLE_CLIENT_ID present:", Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID));
-      console.groupEnd();
-    }
-
     setIsLoading(true);
+    console.log("gsiReady", gsiReady);
+
+    console.log("process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
     if (!gsiReady) {
       toast({
         title: "Google Sign-In",
@@ -471,23 +284,21 @@ export default function AuthForm({
       setIsLoading(false);
       return;
     }
+    console.log("codeClientRef.current", codeClientRef.current);
+    
     const client = codeClientRef.current as { requestCode: () => void } | null;
+    console.log("client", client);
+    
+    console.log("Checking Google client for requestCode...");
     if (client && typeof client.requestCode === "function") {
+      console.log("Google client is ready, calling requestCode()");
       client.requestCode();
       if (googleLoadingTimeoutRef.current) {
+        console.log("Clearing googleLoadingTimeoutRef");
         clearTimeout(googleLoadingTimeoutRef.current);
       }
-      // Popup flows can fail silently (blocked/closed) without invoking the callback.
-      // Ensure the UI doesn't remain stuck in "Verifying…".
-      googleLoadingTimeoutRef.current = setTimeout(() => {
-        setIsLoading(false);
-        toast({
-          title: "Google Sign-In",
-          description: "Sign-in didn’t complete. Please try again.",
-          variant: "default",
-        });
-      }, 15000);
     } else {
+      console.error("Google client not ready", client);
       toast({ title: "Error", description: "Google client not ready", variant: "destructive" });
       setIsLoading(false);
     }
