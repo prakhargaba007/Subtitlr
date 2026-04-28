@@ -23,6 +23,7 @@ const DIRECT_LINKS = [
   { icon: "rocket_launch", label: "Request a Feature", href: "/dashboard/request-feature" },
 ];
 
+
 const MAX_CREDITS = 60;
 
 export default function DashboardSidebar() {
@@ -30,17 +31,17 @@ export default function DashboardSidebar() {
   const router = useRouter();
   const dispatch = useDispatch();
   const userInfo = useSelector((state: RootState) => state.user.userInfo);
-
+  
   const displayName = userInfo?.name ?? "User";
   const initials = displayName.charAt(0).toUpperCase();
-
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
+  
   const [credits, setCredits] = useState<number | null>(null);
   const [creditsLoading, setCreditsLoading] = useState(true);
   const [currentPlan, setCurrentPlan] = useState<CurrentPlanResponse>(null);
-
+  
   // Fetch credits & plan
   useEffect(() => {
     const userData = localStorage.getItem("userData");
@@ -48,16 +49,16 @@ export default function DashboardSidebar() {
       setCreditsLoading(false);
       return;
     }
-
+    
     axiosInstance
-      .get<{ credits: number }>("/api/subtitles/credits")
-      .then((res) => setCredits(res.data.credits))
-      .catch(() => setCredits(null))
-      .finally(() => setCreditsLoading(false));
-
+    .get<{ credits: number }>("/api/subtitles/credits")
+    .then((res) => setCredits(res.data.credits))
+    .catch(() => setCredits(null))
+    .finally(() => setCreditsLoading(false));
+    
     fetchCurrentPlan().then((plan) => setCurrentPlan(plan));
   }, []);
-
+  
   // Close popup on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -68,7 +69,7 @@ export default function DashboardSidebar() {
     if (menuOpen) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
-
+  
   const handleLogout = async () => {
     try {
       await axiosInstance.post("/api/auth/logout");
@@ -80,7 +81,16 @@ export default function DashboardSidebar() {
     dispatch(clearUserDetails());
     router.push("/");
   };
-
+  const USER_LINKS = [
+    { icon: "settings", label: "Settings", action: () => router.push("/dashboard/settings") },
+    {
+      icon: "toll",
+      label: "Credit History",
+      action: () => router.push("/dashboard/credit-history"),
+    },
+     { icon: "logout", label: "Log Out", action: handleLogout, danger: true },
+  ]
+  
   const usedPercent =
     credits !== null ? Math.round(((MAX_CREDITS - credits) / MAX_CREDITS) * 100) : 0;
 
@@ -187,15 +197,7 @@ export default function DashboardSidebar() {
                 </div>
               )}
             </div>
-            {[
-              { icon: "settings", label: "Settings", action: () => { } },
-              {
-                icon: "toll",
-                label: "Credit History",
-                action: () => router.push("/dashboard/credit-history"),
-              },
-              { icon: "logout", label: "Log Out", action: handleLogout, danger: true },
-            ].map(({ icon, label, action, danger }) => (
+            {USER_LINKS.map(({ icon, label, action, danger }) => (
               <button
                 key={label}
                 onClick={() => { setMenuOpen(false); action(); }}
