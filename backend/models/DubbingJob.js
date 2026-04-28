@@ -160,6 +160,7 @@ const dubbingJobSchema = new mongoose.Schema(
     // Transcription + dubbing data
     segments: { type: [segmentSchema], default: [] },
     speakerProfiles: { type: [speakerProfileSchema], default: [] },
+    completionEmailSentAt: { type: Date, default: null },
     // Error details if job failed
     error: { type: String, default: null },
   },

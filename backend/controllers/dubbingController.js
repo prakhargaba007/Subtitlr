@@ -1528,6 +1528,33 @@ exports.startDubbingJob = async (req, res) => {
       dubbedUrl: dubbedAudioKey,
     });
 
+    // Best-effort completion email (send once per job).
+    try {
+      const alreadySent = Boolean(finalJob?.completionEmailSentAt);
+      if (!alreadySent) {
+        const user = await User.findById(req.userId)
+          .select("email preferences.emailNotifications")
+          .lean();
+        const emailOk =
+          Boolean(user?.email) && user?.preferences?.emailNotifications !== false;
+        if (emailOk) {
+          await sendDubbingCompletedEmail({
+            email: user.email,
+            jobId: finalJob._id.toString(),
+            fileName: finalJob.originalFileName,
+            targetLanguage: finalJob.targetLanguage,
+          });
+          await DubbingJob.findByIdAndUpdate(finalJob._id, {
+            completionEmailSentAt: new Date(),
+          }).catch(() => {});
+        }
+      }
+    } catch (e) {
+      console.warn("[dubbing] completion email failed (non-fatal):", e.message);
+    }
+
+  
+
     res.end();
   } catch (err) {
     console.error("Dubbing pipeline error:", err);
