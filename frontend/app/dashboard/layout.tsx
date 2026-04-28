@@ -5,7 +5,7 @@ import DashboardInit from "@/components/dashboard/DashboardInit";
 import UploadFAB from "@/components/dashboard/UploadFAB";
 
 export const metadata: Metadata = {
-  title: "Launchpad | Kili",
+  title: "Launchpad",
   description: "Your transcription workspace.",
   robots: { index: false, follow: false },
 };
