@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/redux/store";
 import axiosInstance from "@/utils/axios";
@@ -46,7 +46,7 @@ const SECTIONS: Array<{ id: SettingsSectionId; label: string }> = [
   { id: "billing", label: "Billing" },
 ];
 
-export default function SettingsPage() {
+function SettingsPageInner() {
   const userInfo = useSelector((s: RootState) => s.user.userInfo);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -373,6 +373,23 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background text-on-surface">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10 py-10">
+            <h1 className="text-3xl font-extrabold tracking-tight font-headline">Settings</h1>
+            <p className="text-sm text-on-surface-variant mt-2 font-body">Loading…</p>
+          </div>
+        </div>
+      }
+    >
+      <SettingsPageInner />
+    </Suspense>
   );
 }
 
