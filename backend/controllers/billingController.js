@@ -74,6 +74,58 @@ exports.getCurrentPlan = async (req, res, next) => {
   }
 };
 
+/** POST /api/billing/cancel */
+exports.cancelMySubscription = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).populate({
+      path: "activeSubscriptionId",
+      populate: { path: "planCatalog", select: "key displayName" },
+    });
+
+    const activeSub = user?.activeSubscriptionId;
+    if (!activeSub || !activeSub.dodoSubscriptionId) {
+      return res.status(404).json({ message: "No active subscription found." });
+    }
+
+    if (activeSub.cancelAtNextBillingDate) {
+      return res.status(200).json({ success: true, message: "Already set to cancel at next billing date." });
+    }
+
+    const client = getDodoClient();
+    if (!client) {
+      return res.status(503).json({ message: "Billing provider is not configured." });
+    }
+
+    // Prefer cancel-at-period-end behavior if available.
+    // Dodo SDK capabilities vary; we attempt cancel(), then fall back to update().
+    let cancelled = false;
+    try {
+      if (typeof client.subscriptions?.cancel === "function") {
+        await client.subscriptions.cancel(activeSub.dodoSubscriptionId);
+        cancelled = true;
+      } else if (typeof client.subscriptions?.update === "function") {
+        await client.subscriptions.update(activeSub.dodoSubscriptionId, { cancel_at_next_billing_date: true });
+        cancelled = true;
+      }
+    } catch (err) {
+      console.error("Failed to cancel subscription:", err);
+      // If provider call fails, surface a clear message.
+      return res.status(502).json({ message: "Could not cancel subscription. Please try again." });
+    }
+
+    if (cancelled) {
+      await UserSubscription.updateOne(
+        { _id: activeSub._id },
+        { $set: { cancelAtNextBillingDate: true } }
+      );
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 /**
  * POST /api/billing/dodo/checkout-session
  * body: { planKey: string }

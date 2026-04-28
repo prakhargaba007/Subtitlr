@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         hostname: "upload.wikimedia.org",
         pathname: "/wikipedia/**",
       },
+      {
+        protocol: "https",
+        hostname: "evbnb.s3.us-east-1.amazonaws.compublic",
+      },
     ],
   },
 };

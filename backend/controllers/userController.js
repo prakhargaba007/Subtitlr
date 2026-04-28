@@ -6,7 +6,37 @@ exports.getUserProfile = async (req, res, next) => {
   try {
     // console.log("req.userId", req.userId);
     // Fetch user details using req.userId
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.userId).select(
+      [
+        "_id",
+        "name",
+        "email",
+        "phoneNumber",
+        "userName",
+        "tempUser",
+        "gender",
+        "dateOfBirth",
+        "language",
+        "lastLogin",
+        "isActive",
+        "isDeleted",
+        "isVerified",
+        "hasUpdatedProfile",
+        "interests",
+        "profilePicture",
+        "bio",
+        "role",
+        "accessPermissions",
+        "credits",
+        "welcomeCreditsGranted",
+        "organizationId",
+        "activeSubscriptionId",
+        "enterpriseManual",
+        "preferences",
+        "createdAt",
+        "updatedAt",
+      ].join(" ")
+    );
     // console.log("user", user);
     if (!user) {
       const error = new Error("User not found");
@@ -115,6 +145,7 @@ exports.updateUserProfile = async (req, res, next) => {
 
     // Fetch user by userId or by provided ID for admin operations
     const userId = req.params.id || req.userId;
+    const isAdminUpdate = Boolean(req.params.id);
     let user = await User.findById(userId);
 
     if (!user) {
@@ -149,7 +180,10 @@ exports.updateUserProfile = async (req, res, next) => {
         ),
       };
     }
+    // Role/accessPermissions updates should never be allowed on self-update.
+    // Only allow role changes on the admin path (`/update-profile/:id`).
     if (
+      isAdminUpdate &&
       role &&
       ["instructor", "influencer", "admin", "sub-admin"].includes(role)
     ) {

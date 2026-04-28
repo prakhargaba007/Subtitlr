@@ -2,6 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const isAuth = require("../middleware/is-auth");
+const isAdmin = require("../middleware/is-admin");
 const userController = require("../controllers/userController");
 const { createUploadMiddleware } = require("../utils/fileUpload");
 
@@ -52,7 +53,7 @@ router.put("/reactivate", isAuth, userController.reactivateAccount);
 router.delete("/delete", isAuth, userController.deleteAccount);
 
 // User listing routes
-router.get("/all", userController.getAllUsers);
+router.get("/all", isAuth, isAdmin, userController.getAllUsers);
 router.get("/role/:role", isAuth, userController.getUsersByRole);
 router.get("/:id", userController.getUserById);
 

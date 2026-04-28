@@ -33,22 +33,21 @@ export default function DashboardSidebar() {
   const userInfo = useSelector((state: RootState) => state.user.userInfo);
   
   const displayName = userInfo?.name ?? "User";
+  console.log("profilePicture", userInfo?.profilePicture);
+  
   const initials = displayName.charAt(0).toUpperCase();
   
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   
   const [credits, setCredits] = useState<number | null>(null);
-  const [creditsLoading, setCreditsLoading] = useState(true);
+  const hasUserData = typeof window !== "undefined" && Boolean(localStorage.getItem("userData"));
+  const [creditsLoading, setCreditsLoading] = useState(hasUserData);
   const [currentPlan, setCurrentPlan] = useState<CurrentPlanResponse>(null);
   
   // Fetch credits & plan
   useEffect(() => {
-    const userData = localStorage.getItem("userData");
-    if (!userData) {
-      setCreditsLoading(false);
-      return;
-    }
+    if (!hasUserData) return;
     
     axiosInstance
     .get<{ credits: number }>("/api/subtitles/credits")
@@ -57,7 +56,7 @@ export default function DashboardSidebar() {
     .finally(() => setCreditsLoading(false));
     
     fetchCurrentPlan().then((plan) => setCurrentPlan(plan));
-  }, []);
+  }, [hasUserData]);
   
   // Close popup on outside click
   useEffect(() => {
@@ -226,7 +225,14 @@ export default function DashboardSidebar() {
               <Image
                 alt={displayName}
                 className="object-cover"
-                src={userInfo.profilePicture}
+                src={
+                  userInfo.profilePicture?.startsWith("https")
+                    ? userInfo.profilePicture
+                    : process.env.NEXT_PUBLIC_S3_BASE_URL
+                    ? `${process.env.NEXT_PUBLIC_S3_BASE_URL}/${userInfo.profilePicture ?? ""}`
+                    : userInfo.profilePicture
+                }
+           
                 width={40}
                 height={40}
                 sizes="40px"

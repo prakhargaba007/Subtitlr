@@ -536,6 +536,12 @@ exports.sendNotificationToUser = async (
   { title, body, data = {}, imageUrl }
 ) => {
   try {
+    // Respect user push notification preference
+    const user = await User.findById(userId).select("preferences.pushNotifications");
+    if (user && user.preferences && user.preferences.pushNotifications === false) {
+      return { success: false, message: "User has disabled push notifications" };
+    }
+
     // Find all device tokens for this user
     const deviceTokens = await DeviceToken.find({
       userId,

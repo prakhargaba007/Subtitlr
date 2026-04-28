@@ -1,26 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/redux/store";
-
-type SettingsSectionId =
-  | "general"
-  | "account"
-  | "privacy"
-  | "billing"
-  | "capabilities"
-  | "connectors"
-  | "claude-code";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/redux/store";
+import axiosInstance from "@/utils/axios";
+import { setUserDetails } from "@/redux/slices/userSlice";
+import SettingsSectionNav, { type SettingsSectionId } from "@/components/settings/SettingsSectionNav";
+import { BillingCard, NotificationsCard, ProfileCard, SecurityCard, type SessionInfo } from "@/components/settings/SettingsCards";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type SettingsState = {
   fullName: string;
   preferredName: string;
+  bio: string;
   workFunction: string;
   responsePreferences: string;
   notifications: {
-    responseCompletions: boolean;
-    dispatchMessages: boolean;
+    emailNotifications: boolean;
+    pushNotifications: boolean;
   };
   activeSection: SettingsSectionId;
 };
@@ -45,45 +42,16 @@ const WORK_FUNCTIONS = [
 const SECTIONS: Array<{ id: SettingsSectionId; label: string }> = [
   { id: "general", label: "General" },
   { id: "account", label: "Account" },
-  { id: "privacy", label: "Privacy" },
+  { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
-  { id: "capabilities", label: "Capabilities" },
-  { id: "connectors", label: "Connectors" },
-  { id: "claude-code", label: "Claude Code" },
 ];
-
-function Toggle({
-  checked,
-  onChange,
-  ariaLabel,
-}: {
-  checked: boolean;
-  onChange: (next: boolean) => void;
-  ariaLabel: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      aria-pressed={checked}
-      onClick={() => onChange(!checked)}
-      className={[
-        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-outline/30",
-      ].join(" ")}
-    >
-      <span
-        className={[
-          "inline-block h-5 w-5 transform rounded-full bg-surface-container-lowest shadow transition-transform",
-          checked ? "translate-x-5" : "translate-x-1",
-        ].join(" ")}
-      />
-    </button>
-  );
-}
 
 export default function SettingsPage() {
   const userInfo = useSelector((s: RootState) => s.user.userInfo);
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const defaults = useMemo<SettingsState>(() => {
     const fullName = (userInfo?.name ?? "").trim();
@@ -91,11 +59,12 @@ export default function SettingsPage() {
     return {
       fullName,
       preferredName,
+      bio: "",
       workFunction: WORK_FUNCTIONS[0],
       responsePreferences: "",
       notifications: {
-        responseCompletions: true,
-        dispatchMessages: false,
+        emailNotifications: true,
+        pushNotifications: true,
       },
       activeSection: "general",
     };
@@ -103,51 +72,216 @@ export default function SettingsPage() {
 
   const [state, setState] = useState<SettingsState>(defaults);
   const [saved, setSaved] = useState<"idle" | "saved">("idle");
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState("");
+  const [busySessionId, setBusySessionId] = useState("");
+  const [busyAll, setBusyAll] = useState(false);
+
+  const validTabs = useMemo(() => new Set(SECTIONS.map((s) => s.id)), []);
+
+  const selectSection = useCallback(
+    (id: SettingsSectionId) => {
+      setState((p) => ({ ...p, activeSection: id }));
+      const next = new URLSearchParams(searchParams?.toString());
+      next.set("tab", id);
+      router.replace(`${pathname}?${next.toString()}`);
+    },
+    [pathname, router, searchParams],
+  );
+
+  // Initialize / sync activeSection from URL (?tab=...)
+  useEffect(() => {
+    const raw = searchParams?.get("tab") || "";
+    const tab = (raw as SettingsSectionId) || "general";
+    if (!validTabs.has(tab)) return;
+    setState((p) => (p.activeSection === tab ? p : { ...p, activeSection: tab }));
+  }, [searchParams, validTabs]);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
+    let mounted = true;
+
+    (async () => {
+      setLoading(true);
+      setErrorMsg("");
+      try {
+        const res = await axiosInstance.get("/api/user/profile");
+        const u = res.data as {
+          name?: string;
+          userName?: string;
+          bio?: string;
+          profilePicture?: string;
+          preferences?: { emailNotifications?: boolean; pushNotifications?: boolean };
+        };
+
+        let local: Partial<SettingsState> = {};
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw) as Partial<SettingsState> | null;
+            if (parsed && typeof parsed === "object") local = parsed;
+          }
+        } catch {
+          // ignore local parse errors
+        }
+
+        if (!mounted) return;
+        setProfilePicture(u.profilePicture ?? "");
+        setState((prev) => ({
+          ...defaults,
+          ...local,
+          fullName: (u.name ?? defaults.fullName).trim(),
+          preferredName: (u.userName ?? defaults.preferredName).trim(),
+          bio: (u.bio ?? "").trim(),
+          notifications: {
+            emailNotifications: u.preferences?.emailNotifications !== false,
+            pushNotifications: u.preferences?.pushNotifications !== false,
+          },
+          activeSection: prev.activeSection,
+        }));
+      } catch (err: unknown) {
+        if (!mounted) return;
         setState(defaults);
-        return;
+        const msg =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          "Could not load settings. Please refresh.";
+        setErrorMsg(msg);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      const parsed = JSON.parse(raw) as Partial<SettingsState> | null;
-      if (!parsed || typeof parsed !== "object") {
-        setState(defaults);
-        return;
-      }
-      setState((prev) => ({
-        ...defaults,
-        ...parsed,
-        notifications: {
-          ...defaults.notifications,
-          ...(parsed.notifications ?? {}),
-        },
-        activeSection: prev.activeSection,
-      }));
-    } catch {
-      setState(defaults);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, [defaults]);
+
+  useEffect(() => {
+    if (!avatarFile) return;
+    const url = URL.createObjectURL(avatarFile);
+    setAvatarPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatarFile]);
 
   const set = <K extends keyof SettingsState>(key: K, val: SettingsState[K]) =>
     setState((p) => ({ ...p, [key]: val }));
 
-  const save = () => {
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    setSessionsError("");
     try {
-      const toSave: SettingsState = { ...state, activeSection: "general" };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+      const res = await axiosInstance.get("/api/auth/sessions");
+      const raw = res.data as { sessions?: SessionInfo[] };
+      setSessions(Array.isArray(raw.sessions) ? raw.sessions : []);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Could not load sessions.";
+      setSessionsError(msg);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (state.activeSection !== "account") return;
+    if (sessionsLoading) return;
+    void fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.activeSection]);
+
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
+    setErrorMsg("");
+    try {
+      const localToSave: Partial<SettingsState> = {
+        workFunction: state.workFunction,
+        responsePreferences: state.responsePreferences,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(localToSave));
+
+      const form = new FormData();
+      form.append("name", state.fullName);
+      form.append("userName", state.preferredName);
+      form.append("bio", state.bio);
+      form.append(
+        "preferences",
+        JSON.stringify({
+          emailNotifications: state.notifications.emailNotifications,
+          pushNotifications: state.notifications.pushNotifications,
+        }),
+      );
+      if (avatarFile) form.append("profilePicture", avatarFile);
+
+      const res = await axiosInstance.put("/api/user/update-profile", form);
+      const updated = (res.data as { user?: unknown })?.user;
+      if (updated && typeof window !== "undefined") {
+        localStorage.setItem("userData", JSON.stringify(updated));
+        dispatch(setUserDetails(updated as never));
+      }
+
+      setProfilePicture(
+        (updated && typeof updated === "object" && "profilePicture" in updated
+          ? (updated as { profilePicture?: string }).profilePicture
+          : profilePicture) ?? "",
+      );
+      setAvatarFile(null);
       setSaved("saved");
       window.setTimeout(() => setSaved("idle"), 1400);
-    } catch {
-      // If localStorage is unavailable, just no-op.
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Could not save settings. Please try again.";
+      setErrorMsg(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const logoutAllDevices = async () => {
+    if (busyAll) return;
+    setBusyAll(true);
+    setSessionsError("");
+    try {
+      await axiosInstance.post("/api/auth/logout-all");
+      setSessions([]);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Could not log out all devices.";
+      setSessionsError(msg);
+    } finally {
+      setBusyAll(false);
+    }
+  };
+
+  const logoutSession = async (sessionId: string) => {
+    if (!sessionId || busySessionId) return;
+    setBusySessionId(sessionId);
+    setSessionsError("");
+    try {
+      await axiosInstance.post(`/api/auth/logout-session/${encodeURIComponent(sessionId)}`);
+      setSessions((prev) => prev.filter((s) => s._id !== sessionId));
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Could not log out session.";
+      setSessionsError(msg);
+    } finally {
+      setBusySessionId("");
     }
   };
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
-      <div className="max-w-6xl mx-auto px-6 lg:px-10 py-10">
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-10">
         <div className="flex items-start justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight font-headline">Settings</h1>
@@ -158,148 +292,83 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={save}
+            disabled={saving || loading}
             className={[
               "px-4 py-2 rounded-xl font-headline font-bold text-sm transition-colors border",
               saved === "saved"
                 ? "bg-secondary-container text-on-secondary-container border-outline-variant/20"
-                : "bg-surface-container-low text-on-surface border-outline-variant/20 hover:bg-surface-container",
+                : "bg-surface-container-low text-on-surface border-outline-variant/20 hover:bg-surface-container disabled:opacity-60 disabled:pointer-events-none",
             ].join(" ")}
           >
-            {saved === "saved" ? "Saved" : "Save"}
+            {saving ? "Saving…" : saved === "saved" ? "Saved" : "Save"}
           </button>
         </div>
 
+        {errorMsg ? (
+          <div className="mb-8 px-5 py-4 rounded-2xl bg-error-container text-on-error-container text-sm font-body flex items-center gap-3">
+            <span className="material-symbols-outlined text-xl shrink-0">error</span>
+            {errorMsg}
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8">
-          <aside className="lg:sticky lg:top-6 h-fit">
-            <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-2">
-              {SECTIONS.map((s) => {
-                const active = state.activeSection === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => set("activeSection", s.id)}
-                    className={[
-                      "w-full text-left px-4 py-2.5 rounded-xl text-sm font-body transition-colors",
-                      active
-                        ? "bg-surface-container text-on-surface font-semibold"
-                        : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low",
-                    ].join(" ")}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-          </aside>
+          <SettingsSectionNav
+            sections={SECTIONS}
+            activeSection={state.activeSection}
+            onSelect={selectSection}
+          />
 
           <section className="space-y-8">
-            <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-3xl p-6 lg:p-8">
-              <h2 className="text-lg font-extrabold font-headline mb-5">Profile</h2>
+            {state.activeSection === "general" ? (
+              <ProfileCard
+                fullName={state.fullName}
+                preferredName={state.preferredName}
+                bio={state.bio}
+                workFunction={state.workFunction}
+                responsePreferences={state.responsePreferences}
+                workFunctions={WORK_FUNCTIONS}
+                profilePicture={profilePicture}
+                avatarPreview={avatarPreview}
+                avatarFileSelected={Boolean(avatarFile)}
+                onFullNameChange={(v) => set("fullName", v)}
+                onPreferredNameChange={(v) => set("preferredName", v)}
+                onBioChange={(v) => set("bio", v)}
+                onWorkFunctionChange={(v) => set("workFunction", v)}
+                onResponsePreferencesChange={(v) => set("responsePreferences", v)}
+                onAvatarFileChange={(f) => setAvatarFile(f)}
+                onAvatarRemove={() => setAvatarFile(null)}
+              />
+            ) : null}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
-                    Full name
-                  </label>
-                  <input
-                    value={state.fullName}
-                    onChange={(e) => set("fullName", e.target.value)}
-                    placeholder="Your name"
-                    className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body"
-                  />
-                </div>
+            {state.activeSection === "notifications" ? (
+              <NotificationsCard
+                emailNotifications={state.notifications.emailNotifications}
+                pushNotifications={state.notifications.pushNotifications}
+                onEmailNotificationsChange={(next) =>
+                  set("notifications", { ...state.notifications, emailNotifications: next })
+                }
+                onPushNotificationsChange={(next) =>
+                  set("notifications", { ...state.notifications, pushNotifications: next })
+                }
+              />
+            ) : null}
 
-                <div>
-                  <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
-                    What should Claude call you? <span className="text-primary">*</span>
-                  </label>
-                  <input
-                    value={state.preferredName}
-                    onChange={(e) => set("preferredName", e.target.value)}
-                    placeholder="e.g. Prakhar"
-                    className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body"
-                  />
-                </div>
-              </div>
+            {state.activeSection === "account" ? (
+              <SecurityCard
+                sessions={sessions}
+                loading={sessionsLoading}
+                error={sessionsError}
+                onRefresh={() => void fetchSessions()}
+                onLogoutAll={() => void logoutAllDevices()}
+                onLogoutSession={(id) => void logoutSession(id)}
+                busySessionId={busySessionId}
+                busyAll={busyAll}
+              />
+            ) : null}
 
-              <div className="mt-5">
-                <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
-                  What best describes your work?
-                </label>
-                <div className="relative">
-                  <select
-                    value={state.workFunction}
-                    onChange={(e) => set("workFunction", e.target.value)}
-                    className="w-full appearance-none px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body"
-                  >
-                    {WORK_FUNCTIONS.map((w) => (
-                      <option key={w} value={w}>
-                        {w}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">
-                    expand_more
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
-                  What personal preferences should Claude consider in responses?
-                </label>
-                <textarea
-                  value={state.responsePreferences}
-                  onChange={(e) => set("responsePreferences", e.target.value)}
-                  rows={4}
-                  placeholder="e.g. keep explanations brief and to the point"
-                  className="w-full resize-none px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body leading-relaxed"
-                />
-              </div>
-            </div>
-
-            <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-3xl p-6 lg:p-8">
-              <h2 className="text-lg font-extrabold font-headline mb-5">Notifications</h2>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-bold font-headline">Response completions</p>
-                    <p className="text-xs text-on-surface-variant font-body mt-0.5">
-                      Get notified when a long-running task finishes.
-                    </p>
-                  </div>
-                  <Toggle
-                    checked={state.notifications.responseCompletions}
-                    onChange={(next) =>
-                      set("notifications", { ...state.notifications, responseCompletions: next })
-                    }
-                    ariaLabel="Toggle response completions notifications"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-bold font-headline">Dispatch messages</p>
-                    <p className="text-xs text-on-surface-variant font-body mt-0.5">
-                      Get a push notification on your phone.
-                    </p>
-                  </div>
-                  <Toggle
-                    checked={state.notifications.dispatchMessages}
-                    onChange={(next) =>
-                      set("notifications", { ...state.notifications, dispatchMessages: next })
-                    }
-                    ariaLabel="Toggle dispatch messages notifications"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6 text-xs text-on-surface-variant font-body">
-                Tip: settings are currently stored locally in this browser.
-              </div>
-            </div>
+            {state.activeSection === "billing" ? (
+              <BillingCard onOpenBilling={() => router.push("/dashboard/billing")} />
+            ) : null}
           </section>
         </div>
       </div>
