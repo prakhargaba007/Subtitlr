@@ -171,7 +171,7 @@ async function synthesizeDubbingTts(
 
 function getDubbingSegmentPipelineConcurrency() {
   const raw = String(
-    process.env.DUBBING_SEGMENT_PIPELINE_CONCURRENCY || "1",
+    process.env.DUBBING_SEGMENT_PIPELINE_CONCURRENCY || "3",
   ).trim();
   const n = parseInt(raw, 10);
   if (!Number.isFinite(n) || n < 1) return 3;
@@ -483,23 +483,25 @@ async function runDubbingPipelineFromInput(
   }
   saveArtifact(jobIdStr, `00_input${ext}`, tmpInput);
 
-  // Generate a thumbnail for video inputs (best-effort)
-  if (isVideo) {
-    try {
-      const tmpThumb = path.join(os.tmpdir(), `dub_thumb_${uuidv4()}.jpg`);
-      tmpPaths.push(tmpThumb);
-      await extractRandomVideoThumbnailJpg(tmpInput, tmpThumb);
-      const key = `dubbing/${req.userId}/${uuidv4()}_thumb.jpg`;
-      await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
-      job.thumbnailKey = key;
-      await job.save();
-    } catch (thumbErr) {
-      console.warn("[dubbing] thumbnail generation failed:", thumbErr.message);
-    }
-  }
+  // ── Thumbnail: start non-blocking immediately (only needs tmpInput) ────────
+  const thumbPromise = isVideo
+    ? (async () => {
+        try {
+          const tmpThumb = path.join(os.tmpdir(), `dub_thumb_${uuidv4()}.jpg`);
+          tmpPaths.push(tmpThumb);
+          await extractRandomVideoThumbnailJpg(tmpInput, tmpThumb);
+          const key = `dubbing/${req.userId}/${uuidv4()}_thumb.jpg`;
+          await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
+          await DubbingJob.findByIdAndUpdate(job._id, { thumbnailKey: key });
+        } catch (thumbErr) {
+          console.warn("[dubbing] thumbnail generation failed:", thumbErr.message);
+        }
+      })()
+    : Promise.resolve();
 
   // ── Step 1: Extract audio ─────────────────────────────────────────────────
   emit({ stage: "extracting", message: "Extracting audio from file…" });
+  const _t0 = Date.now();
 
   let audioPath = tmpInput;
   if (isVideo) {
@@ -510,23 +512,38 @@ async function runDubbingPipelineFromInput(
   }
 
   saveArtifact(jobIdStr, "01_full_audio.mp3", audioPath);
+  console.log(`[dubbing:timing] extract done: ${Date.now() - _t0}ms`);
 
-  // Persist original: reuse browser-uploaded key or upload from buffer (legacy path)
-  try {
-    if (existingOriginalS3Key) {
-      job.originalVideoKey = existingOriginalS3Key;
-      await job.save();
-    } else if (inputBuffer && Buffer.isBuffer(inputBuffer) && inputBuffer.length) {
-      const videoKey = `dubbing/${req.userId}/${uuidv4()}${ext}`;
-      await storage.saveFile(inputBuffer, videoKey, inputMimeType);
-      job.originalVideoKey = videoKey;
-      await job.save();
+  // ── Original asset upload: non-blocking (video key + new audio key) ───────
+  const origUploadPromise = (async () => {
+    try {
+      let videoKey = null;
+      if (existingOriginalS3Key) {
+        videoKey = existingOriginalS3Key;
+      } else if (inputBuffer && Buffer.isBuffer(inputBuffer) && inputBuffer.length) {
+        const key = `dubbing/${req.userId}/${uuidv4()}${ext}`;
+        await storage.saveFile(inputBuffer, key, inputMimeType);
+        videoKey = key;
+      } else if (isVideo) {
+        // Disk-upload path: we may not have req.file.buffer. Fall back to reading tmpInput.
+        // NOTE: This reads the whole file into memory; acceptable for typical short uploads.
+        const key = `dubbing/${req.userId}/${uuidv4()}${ext}`;
+        await storage.saveFile(fs.readFileSync(tmpInput), key, inputMimeType);
+        videoKey = key;
+      }
+
+      const audioOrigKey = `dubbing/${req.userId}/${uuidv4()}_original_audio.mp3`;
+      await storage.saveFile(fs.readFileSync(audioPath), audioOrigKey, "audio/mpeg");
+
+      const update = { originalAudioKey: audioOrigKey };
+      if (videoKey) update.originalVideoKey = videoKey;
+      await DubbingJob.findByIdAndUpdate(job._id, update);
+    } catch (uploadErr) {
+      console.warn("[dubbing] Original asset upload failed:", uploadErr.message);
     }
-  } catch (uploadErr) {
-    console.warn("Original file S3 upload failed:", uploadErr.message);
-  }
+  })();
 
-  // ── Step 2: Source separation ─────────────────────────────────────────────
+  // ── Step 2: Source separation — start non-blocking, stems needed only at mix
   emit({
     stage: "separating",
     message: "Separating vocals from background audio…",
@@ -535,64 +552,71 @@ async function runDubbingPipelineFromInput(
 
   const separationDir = path.join(os.tmpdir(), `dub_stems_${uuidv4()}`);
   tmpPaths.push(separationDir);
+  const _tSepStart = Date.now();
 
-  const {
-    vocalsPath,
-    backgroundPath,
-    method: separationMethod,
-  } = await separateVocalsAndBackground(audioPath, separationDir);
+  const sepPromise = separateVocalsAndBackground(audioPath, separationDir).then(
+    async (result) => {
+      console.log(`[dubbing:timing] separation done: ${Date.now() - _tSepStart}ms`);
+      emit({
+        stage: "separating",
+        message: `Audio separated (${result.method === "replicate" ? "Demucs" : "ElevenLabs fallback"}).`,
+      });
+      saveArtifact(jobIdStr, "02_vocals.mp3", result.vocalsPath);
+      saveArtifact(jobIdStr, "03_background.mp3", result.backgroundPath);
 
-  emit({
-    stage: "separating",
-    message: `Audio separated (${separationMethod === "replicate" ? "Demucs" : "ElevenLabs fallback"}).`,
-  });
+      // Upload stems — runs concurrently inside the resolved promise
+      try {
+        const [vocalsKey, backgroundKey] = await Promise.all([
+          (async () => {
+            const key = `dubbing/${req.userId}/${uuidv4()}_vocals.mp3`;
+            await storage.saveFile(fs.readFileSync(result.vocalsPath), key, "audio/mpeg");
+            return key;
+          })(),
+          (async () => {
+            const key = `dubbing/${req.userId}/${uuidv4()}_background.mp3`;
+            await storage.saveFile(fs.readFileSync(result.backgroundPath), key, "audio/mpeg");
+            return key;
+          })(),
+        ]);
+        await DubbingJob.findByIdAndUpdate(job._id, {
+          vocalsKey,
+          backgroundKey,
+          separationMethod: result.method,
+        });
+      } catch (uploadErr) {
+        console.warn("Stems S3 upload failed:", uploadErr.message);
+      }
 
-  saveArtifact(jobIdStr, "02_vocals.mp3", vocalsPath);
-  saveArtifact(jobIdStr, "03_background.mp3", backgroundPath);
+      return result;
+    },
+  );
 
-  // Upload stems to S3
-  try {
-    const [vocalsKey, backgroundKey] = await Promise.all([
-      (async () => {
-        const key = `dubbing/${req.userId}/${uuidv4()}_vocals.mp3`;
-        await storage.saveFile(fs.readFileSync(vocalsPath), key, "audio/mpeg");
-        return key;
-      })(),
-      (async () => {
-        const key = `dubbing/${req.userId}/${uuidv4()}_background.mp3`;
-        await storage.saveFile(
-          fs.readFileSync(backgroundPath),
-          key,
-          "audio/mpeg",
-        );
-        return key;
-      })(),
-    ]);
-    await DubbingJob.findByIdAndUpdate(job._id, {
-      vocalsKey,
-      backgroundKey,
-      separationMethod,
-    });
-  } catch (uploadErr) {
-    console.warn("Stems S3 upload failed:", uploadErr.message);
-  }
+  // ── Step 3: Transcribe ─────────────────────────────────────────────────────
+  // Default (DUBBING_TRANSCRIBE_SOURCE=original): transcribe full-track audioPath
+  // in parallel with separation — pipeline continues as soon as this resolves.
+  // Set DUBBING_TRANSCRIBE_SOURCE=vocals to wait for stems and use clean vocals.
+  const transcribeSource = String(
+    process.env.DUBBING_TRANSCRIBE_SOURCE || "original",
+  ).trim().toLowerCase();
 
-  // The rest of the pipeline remains unchanged; it relies on:
-  // - jobIdStr, localOutputPath, isVideo, duration, sourceLanguage, targetLanguage
-  // - tmpInput, audioPath, vocalsPath, backgroundPath, separationMethod
-  // - creditsNeeded, ttsProvider
-  //
-  // NOTE: We intentionally keep the original control flow below to minimize risk.
-
-  // ── Step 3: Transcribe with speaker diarization ───────────────────────────
   emit({
     stage: "transcribing",
     message: "Transcribing audio and identifying speakers…",
   });
   await DubbingJob.findByIdAndUpdate(job._id, { status: "transcribing" });
 
+  let transcribeInputPath;
+  if (transcribeSource === "vocals") {
+    const sepResult = await sepPromise;
+    transcribeInputPath = sepResult.vocalsPath;
+  } else {
+    transcribeInputPath = audioPath;
+  }
+
+  const _tTrStart = Date.now();
   const { segments: rawSegments, speaker_profiles } =
-    await transcribeWithSpeakers(vocalsPath, sourceLanguage);
+    await transcribeWithSpeakers(transcribeInputPath, sourceLanguage);
+  console.log(`[dubbing:timing] transcribe done: ${Date.now() - _tTrStart}ms`);
 
   emit({
     stage: "transcribing",
@@ -627,10 +651,10 @@ async function runDubbingPipelineFromInput(
   );
 
   emit({ stage: "translating", message: "Translation complete." });
+  console.log(`[dubbing:timing] translate done: ${Date.now() - _t0}ms elapsed total`);
 
-  // ── Step 5+: keep existing implementation by jumping into original code path
-  // (below is the original file content; we return values needed later)
-
+  // Separation may still be running; it will be awaited in startDubbingJob
+  // immediately before layerSpeechOverBackground (which needs backgroundPath).
   return {
     job,
     jobIdStr,
@@ -639,16 +663,18 @@ async function runDubbingPipelineFromInput(
     ext,
     duration,
     creditsNeeded,
-    separationMethod,
     ttsProvider,
     sourceLanguage,
     targetLanguage,
     audioPath,
-    vocalsPath,
-    backgroundPath,
+    sepPromise,
     translatedSegments,
     speaker_profiles,
     segmentsForTranslate,
+    _t0,
+    // Best-effort background tasks that read temp files; await before cleanup.
+    thumbPromise,
+    origUploadPromise,
   };
 }
 
@@ -777,7 +803,6 @@ exports.startDubbingJob = async (req, res) => {
     const {
       jobIdStr,
       localOutputPath,
-      separationMethod,
       ttsProvider,
       sourceLanguage,
       targetLanguage,
@@ -787,8 +812,10 @@ exports.startDubbingJob = async (req, res) => {
       translatedSegments,
       speaker_profiles,
       audioPath,
-      vocalsPath,
-      backgroundPath,
+      sepPromise,
+      _t0,
+      thumbPromise,
+      origUploadPromise,
     } = prepared;
 
     // ── Step 5: Match each speaker to a TTS voice (OpenAI, Inworld, Smallest, or ElevenLabs) ─
@@ -1348,12 +1375,17 @@ exports.startDubbingJob = async (req, res) => {
       }
     }
 
-    // ── Step 8: Merge speech over background + mux with video ─────────────────
+    console.log(`[dubbing:timing] TTS+sync done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`);
+
+    // ── Step 8: Await stems (may already be done) then mix ────────────────────
     emit({
       stage: "merging",
       message: "Mixing dubbed speech with background audio…",
     });
     await DubbingJob.findByIdAndUpdate(job._id, { status: "merging" });
+
+    // Separation runs concurrently with TTS; await the result now.
+    const { backgroundPath, method: separationMethod } = await sepPromise;
 
     const mixedAudioPath = path.join(os.tmpdir(), `dub_mixed_${uuidv4()}.mp3`);
     tmpPaths.push(mixedAudioPath);
@@ -1388,53 +1420,13 @@ exports.startDubbingJob = async (req, res) => {
     const mixedAudioForOutput = mixResult.path;
 
     saveArtifact(jobIdStr, "dubbed_mix.mp3", mixedAudioForOutput);
+    console.log(`[dubbing:timing] mix done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`);
 
-    let finalOutputPath;
-    let finalMimeType;
-    let finalExt;
-
-    if (isVideo) {
-      finalOutputPath = path.join(os.tmpdir(), `dub_final_${uuidv4()}.mp4`);
-      finalMimeType = "video/mp4";
-      finalExt = ".mp4";
-      tmpPaths.push(finalOutputPath);
-
-      let lipsyncedPath = null;
-      try {
-        emit({ stage: "lipsync", message: "Lip-syncing video…" });
-        lipsyncedPath = await lipSyncVideo({
-          inputVideoPath: tmpInput,
-          inputAudioPath: mixedAudioForOutput,
-          outputVideoPath: finalOutputPath,
-        });
-      } catch (lipErr) {
-        const strict = String(process.env.LIPSYNC_STRICT || "0").trim() === "1";
-        console.warn(
-          "Lip-sync failed:",
-          lipErr && lipErr.message ? lipErr.message : lipErr,
-        );
-        if (strict) throw lipErr;
-      }
-
-      if (lipsyncedPath) {
-        saveArtifact(jobIdStr, "final_dubbed_lipsynced.mp4", finalOutputPath);
-      } else {
-        emit({ stage: "merging", message: "Muxing dubbed audio into video…" });
-        await muxWithVideo(tmpInput, mixedAudioForOutput, finalOutputPath);
-        saveArtifact(jobIdStr, "final_dubbed.mp4", finalOutputPath);
-      }
-    } else {
-      finalOutputPath = mixedAudioForOutput;
-      finalMimeType = "audio/mpeg";
-      finalExt = ".mp3";
-      saveArtifact(jobIdStr, "final_dubbed.mp3", finalOutputPath);
-    }
-
-    // ── Step 9: Upload dubbed mix + final output to storage ───────────────────
-    emit({ stage: "merging", message: "Uploading final dubbed output…" });
+    // ── Step 9 (v1): Upload dubbed audio only — video mux is done client-side ─
+    // Lip-sync and server-side video mux are deferred to a future opt-in path.
+    emit({ stage: "merging", message: "Uploading dubbed audio…" });
 
     let dubbedAudioKey = null;
-    let dubbedAudioUrl = null;
     try {
       dubbedAudioKey = `dubbing/${req.userId}/${uuidv4()}_dubbed_audio.mp3`;
       await storage.saveFile(
@@ -1442,36 +1434,27 @@ exports.startDubbingJob = async (req, res) => {
         dubbedAudioKey,
         "audio/mpeg",
       );
-      dubbedAudioUrl = await storage.getPublicUrl(dubbedAudioKey);
     } catch (mixUploadErr) {
-      console.warn("Dubbed audio (mix) upload failed:", mixUploadErr.message);
+      console.warn("Dubbed audio upload failed:", mixUploadErr.message);
     }
 
-    const finalKey = `dubbing/${req.userId}/${uuidv4()}_dubbed${finalExt}`;
-    await storage.saveFile(
-      fs.readFileSync(finalOutputPath),
-      finalKey,
-      finalMimeType,
-    );
-    const finalUrl = await storage.getPublicUrl(finalKey);
+    saveArtifact(jobIdStr, "final_dubbed.mp3", mixedAudioForOutput);
+    console.log(`[dubbing:timing] upload done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`);
 
     // ── Step 10: Confirm usage reservation + Deduct credits + finalise job ────
     emit({ stage: "saving", message: "Saving results…" });
 
-    // Confirm the usage reservation made by checkDubbingLimits middleware.
-    // Passes the actual job duration as both reservedDur and actualDur (full confirm).
     if (req.dubbingUsageReserved) {
       await confirmDubbingUsage(
         req.userId,
         job._id,
         req.dubbingDurationSeconds ?? duration,
-        duration, // actual processed duration = file duration (full pipeline ran)
+        duration,
       ).catch((e) =>
         console.warn("[dubbing] Usage confirm failed (non-fatal):", e.message),
       );
     }
 
-    // Record processedSeconds on the job for audit / stuck-job reaper.
     await DubbingJob.findByIdAndUpdate(job._id, {
       processedSeconds: duration,
     }).catch(() => {});
@@ -1496,7 +1479,7 @@ exports.startDubbingJob = async (req, res) => {
       const subs = parentSubSegments.get(i) || [];
       const solo = parentSolo.get(i);
       return {
-        segmentId: segmentIds[i], // use pre-generated ID
+        segmentId: segmentIds[i],
         revision: 0,
         start: ts.start,
         end: ts.end,
@@ -1507,20 +1490,27 @@ exports.startDubbingJob = async (req, res) => {
         timingStrategy: subs.length ? null : (solo?.timingStrategy ?? null),
         ttsWordTimestamps: subs.length ? undefined : solo?.ttsWordTimestamps,
         voiceProfile: ts.voiceProfile,
-        // Solo segments get their own S3 key; sub-segment parents stay null (rebuilt on demand)
         dubbedAudioKey: subs.length ? null : (segmentAudioKeys.get(i) ?? null),
       };
     });
+
+    // Ensure background uploads that set original keys have finished before we finalize the job.
+    await Promise.allSettled([origUploadPromise, thumbPromise]);
+    const originalKeys = await DubbingJob.findById(job._id)
+      .select("originalVideoKey originalAudioKey")
+      .lean()
+      .catch(() => null);
+    const originalVideoKeyForJob = originalKeys?.originalVideoKey ?? null;
 
     const finalJob = await DubbingJob.findByIdAndUpdate(
       job._id,
       {
         status: "completed",
-        dubbedVideoKey: finalKey,
-        dubbedVideoUrl: finalUrl,
+        // v1: we don't generate a dubbed MP4; keep the original video key here for the UI.
+        dubbedVideoKey: originalVideoKeyForJob,
+        dubbedVideoUrl: null,
         dubbedAudioKey,
-        dubbedAudioUrl,
-        localOutputPath,
+        dubbedAudioUrl: null,
         separationMethod,
         ttsProvider: resolvedTtsProvider,
         segments: segmentsForDb,
@@ -1529,13 +1519,13 @@ exports.startDubbingJob = async (req, res) => {
       { new: true },
     );
 
+    console.log(`[dubbing:timing] TOTAL pipeline: ${Date.now() - (_t0 || Date.now())}ms`);
+
     emit({
       stage: "done",
       message: "Dubbing complete!",
       job: finalJob,
-      dubbedUrl: finalUrl,
-      dubbedAudioUrl,
-      localOutputPath,
+      dubbedUrl: dubbedAudioKey,
     });
 
     res.end();
@@ -1576,6 +1566,14 @@ exports.startDubbingJob = async (req, res) => {
       res.end();
     } catch (_) {}
   } finally {
+    // Ensure background uploads that read temp files finish before cleanup.
+    try {
+      const bg = [];
+      if (typeof thumbPromise?.then === "function") bg.push(thumbPromise);
+      if (typeof origUploadPromise?.then === "function") bg.push(origUploadPromise);
+      await Promise.allSettled(bg);
+    } catch (_) {}
+
     // Clean up all temp files
     tmpPaths.forEach(cleanupPath);
   }
@@ -1760,6 +1758,7 @@ exports.getDubbingEditor = async (req, res, next) => {
         dubbedVideoUrl: job.dubbedVideoUrl,
         dubbedAudioUrl: job.dubbedAudioUrl,
         originalVideoKey: job.originalVideoKey,
+        originalAudioKey: job.originalAudioKey,
         vocalsKey: job.vocalsKey,
         backgroundKey: job.backgroundKey,
         ttsProvider: job.ttsProvider,

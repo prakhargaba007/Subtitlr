@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,18 +16,13 @@ import {
   ShieldCheck,
   Mic,
   Subtitles,
-  ListVideo
+  ListVideo,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import axiosInstance, { s3Url } from "@/utils/axios";
 import type { EditorJob } from "@/components/dubbingEditor/types";
 import { fmtTimeShort } from "@/components/dubbingEditor/types";
-
-// --- Video.js Setup ---
-import '@videojs/react/video/skin.css';
-import { createPlayer, videoFeatures } from '@videojs/react';
-import { VideoSkin, Video } from '@videojs/react/video';
-
-const Player = createPlayer({ features: videoFeatures });
 
 // --- Sub-components ---
 
@@ -105,59 +100,176 @@ function ProcessingStepper({ status }: { status: string }) {
 }
 
 function VideoPreview({ job }: { job: EditorJob }) {
+  // "original" = unmuted video; "dubbed" = muted video + synced external audio
   const [useOriginal, setUseOriginal] = useState(false);
-  const rawVideoSrc = useOriginal ? s3Url(job.originalVideoKey || "") : s3Url(job.dubbedVideoUrl || "");
-  const videoSrc = rawVideoSrc.split('?')[0];
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Prefer the original video for playback (always the same visual stream).
+  // Fall back to legacy dubbedVideoUrl for old jobs that have no originalVideoKey.
+  const videoSrc = job.originalVideoKey
+    ? s3Url(job.originalVideoKey).split("?")[0]
+    : job.dubbedVideoUrl
+      ? s3Url(job.dubbedVideoUrl).split("?")[0]
+      : null;
+
+  const dubbedAudioSrc = job.dubbedAudioKey
+    ? s3Url(job.dubbedAudioKey).split("?")[0]
+    : null;
+
+  // Whether we're in sync mode: showing original video + external dubbed audio.
+  const syncMode = !useOriginal && !!dubbedAudioSrc && !!job.originalVideoKey;
+
+  // Keep video muted state in sync (React's `muted` attr is unreliable).
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = syncMode;
+  }, [syncMode]);
+
+  // Wire video play/pause/seek events to the external audio element (dubbed mode).
+  useEffect(() => {
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    if (!video || !audio || !syncMode) return;
+
+    const onPlay = () => {
+      audio.currentTime = video.currentTime;
+      audio.play().catch(() => {});
+    };
+    const onPause = () => audio.pause();
+    const onSeeked = () => { audio.currentTime = video.currentTime; };
+    const onRateChange = () => { audio.playbackRate = video.playbackRate; };
+
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("seeked", onSeeked);
+    video.addEventListener("ratechange", onRateChange);
+
+    return () => {
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("ratechange", onRateChange);
+    };
+  }, [syncMode]);
+
+  // When the user toggles modes, hand off playback smoothly.
+  const handleToggle = () => {
+    const video = videoRef.current;
+    const audio = audioRef.current;
+    const next = !useOriginal;
+    setUseOriginal(next);
+
+    if (video) {
+      if (next) {
+        // Switching to original: unmute video, stop external audio.
+        video.muted = false;
+        audio?.pause();
+      } else {
+        // Switching to dubbed: mute video, sync external audio.
+        video.muted = true;
+        if (audio) {
+          audio.currentTime = video.currentTime;
+          if (!video.paused) audio.play().catch(() => {});
+        }
+      }
+    }
+  };
 
   if (!videoSrc) return null;
 
-  return (
-    <div className="relative group aspect-video rounded-[2rem] overflow-hidden bg-black border border-outline-variant/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-      <Player.Provider>
-        <VideoSkin>
-          <Video
-            src={videoSrc}
-            playsInline
-            autoPlay
-            muted
-            className="w-full h-full object-contain"
-          />
-        </VideoSkin>
-      </Player.Provider>
+  const showToggle = !!job.originalVideoKey && !!dubbedAudioSrc;
 
-      <div className="absolute top-6 left-6 z-20">
-        <button
-          onClick={() => setUseOriginal(!useOriginal)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 shadow-lg ${useOriginal
-            ? "bg-surface/90 backdrop-blur-md text-on-surface hover:bg-surface"
-            : "bg-primary text-white hover:bg-primary/90"
+  return (
+    <div className="relative group aspect-video rounded-4xl overflow-hidden bg-black border border-outline-variant/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <video
+        ref={videoRef}
+        src={videoSrc}
+        playsInline
+        controls
+        className="w-full h-full object-contain"
+      />
+
+      {/* External dubbed audio — synced to video via JS events */}
+      {syncMode && dubbedAudioSrc && (
+        <audio ref={audioRef} src={dubbedAudioSrc} preload="auto" />
+      )}
+
+      {showToggle && (
+        <div className="absolute top-6 left-6 z-20">
+          <button
+            onClick={handleToggle}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 shadow-lg backdrop-blur-sm ${
+              useOriginal
+                ? "bg-surface/90 text-on-surface hover:bg-surface"
+                : "bg-primary text-white hover:bg-primary/90"
             }`}
-        >
-          <div className={`w-2 h-2 rounded-full ${useOriginal ? "bg-primary" : "bg-white"}`} />
-          {useOriginal ? "Playing Original" : "Playing Dubbed"}
-        </button>
-      </div>
+          >
+            {useOriginal ? (
+              <Volume2 size={12} className="shrink-0" />
+            ) : (
+              <VolumeX size={12} className="shrink-0" />
+            )}
+            {useOriginal ? "Original" : "Dubbed"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 function LiveTranscription({ job }: { job: EditorJob }) {
+  const segments = [...(job.segments ?? [])].sort((a, b) => a.start - b.start);
+  const sourceLang =
+    job.sourceLanguage === "auto" ? "Auto" : job.sourceLanguage || "Original";
+  const targetLang = job.targetLanguage || "Dubbed";
+
   return (
     <div className="bg-surface rounded-[2rem] p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10 mt-8">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-lg font-bold font-headline text-on-surface">Live Transcription</h3>
-        <div className="bg-primary/5 text-primary text-xs font-bold px-4 py-2 rounded-full">
-          <span className="capitalize">{job.sourceLanguage || "English"}</span> (Original) → <span className="capitalize">{job.targetLanguage || "Spanish"}</span> (Dubbed)
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <h3 className="text-lg font-bold font-headline text-on-surface">Transcript</h3>
+        <div className="bg-primary/5 text-primary text-xs font-bold px-4 py-2 rounded-full w-fit shrink-0">
+          <span className="capitalize">{sourceLang}</span> (Original) →{" "}
+          <span className="capitalize">{targetLang}</span> (Dubbed)
         </div>
       </div>
-      <div className="space-y-8 text-lg">
-        <p className="font-semibold text-on-surface-variant italic leading-relaxed">
-          "Exploring these hidden valleys has always been a dream, but the silence here is what really speaks..."
+      {segments.length === 0 ? (
+        <p className="text-on-surface-variant text-sm leading-relaxed">
+          No segments on this job yet. They appear here after transcription and translation finish.
         </p>
-        <p className="font-bold text-primary leading-relaxed">
-          "Explorar estos valles ocultos siempre ha sido un sueño, pero el silencio aquí es lo que realmente habla..."
-        </p>
-      </div>
+      ) : (
+        <div className="space-y-6 max-h-[min(60vh,520px)] overflow-y-auto pr-2 custom-scrollbar">
+          {segments.map((seg, idx) => {
+            const original = (seg.originalText ?? "").trim();
+            const translated = (seg.translatedText ?? "").trim();
+            const key = seg.segmentId || `seg-${seg.start}-${seg.end}-${idx}`;
+
+            return (
+              <div
+                key={key}
+                className="space-y-3 pb-6 border-b border-outline-variant/10 last:border-0 last:pb-0"
+              >
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant/70 font-label">
+                  <span className="tabular-nums">
+                    {fmtTimeShort(seg.start)} — {fmtTimeShort(seg.end)}
+                  </span>
+                  {seg.speaker_id ? (
+                    <>
+                      <span className="text-on-surface-variant/30">·</span>
+                      <span>Speaker {seg.speaker_id}</span>
+                    </>
+                  ) : null}
+                </div>
+                <p className="font-semibold text-on-surface-variant italic leading-relaxed text-base">
+                  {original || "—"}
+                </p>
+                <p className="font-bold text-primary leading-relaxed text-base">
+                  {translated || "—"}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -197,62 +309,109 @@ function StatCards() {
 }
 
 function DownloadPanel({ job }: { job: EditorJob }) {
-  const [isExporting, setIsExporting] = useState(false);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
-  const handleDownload = async (url: string, filename: string) => {
-    setIsExporting(true);
+  const handleDownload = async (url: string, filename: string, key: string) => {
+    setDownloading(key);
     try {
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = blobUrl;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Download failed:", error);
-      window.open(url, '_blank');
+    } catch {
+      window.open(url, "_blank");
     } finally {
-      setIsExporting(false);
+      setDownloading(null);
     }
   };
 
+  const dubbedAudioUrl = job.dubbedAudioKey ? s3Url(job.dubbedAudioKey) : null;
+  const originalVideoUrl = job.originalVideoKey ? s3Url(job.originalVideoKey) : null;
+  // Legacy: old jobs that already have a server-muxed dubbed video.
+  const legacyDubbedVideoUrl = job.dubbedVideoUrl ? s3Url(job.dubbedVideoUrl) : null;
+
+  const baseName = job.originalFileName.replace(/\.[^/.]+$/, "");
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Primary: dubbed audio */}
       <button
-        onClick={() => handleDownload(s3Url(job.dubbedVideoUrl || ""), `dubbed_${job.originalFileName}`)}
-        disabled={isExporting}
+        onClick={() =>
+          dubbedAudioUrl &&
+          handleDownload(dubbedAudioUrl, `${baseName}_dubbed.mp3`, "audio")
+        }
+        disabled={!dubbedAudioUrl || downloading === "audio"}
         className="group relative w-full h-14 rounded-full bg-primary flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(57,44,193,0.3)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0"
       >
         <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000" />
-        {isExporting ? (
+        {downloading === "audio" ? (
           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : (
-          <Download size={20} className="text-white transition-transform duration-300" />
+          <Mic size={20} className="text-white" />
         )}
         <span className="text-base font-bold text-white tracking-tight font-headline">
-          {isExporting ? "Exporting..." : "Download Video"}
+          {downloading === "audio" ? "Downloading…" : "Download Dubbed Audio"}
         </span>
       </button>
 
       <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => handleDownload(s3Url(job.dubbedAudioUrl || ""), `audio_${job.originalFileName.replace(/\.[^/.]+$/, ".mp3")}`)}
-          className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300"
-        >
-          <Mic size={16} className="text-on-surface-variant" />
-          <span>Audio Mix</span>
-        </button>
-        <button
-          className="flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300 cursor-not-allowed"
-          title="Coming soon"
-        >
-          <Subtitles size={16} className="text-on-surface-variant" />
-          <span>Subtitles</span>
-        </button>
+        {/* Original video download */}
+        {originalVideoUrl && (
+          <button
+            onClick={() =>
+              handleDownload(
+                originalVideoUrl,
+                `${baseName}_original${job.fileType === "video" ? ".mp4" : ".mp3"}`,
+                "origvid",
+              )
+            }
+            disabled={downloading === "origvid"}
+            className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300 disabled:opacity-50"
+          >
+            {downloading === "origvid" ? (
+              <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            ) : (
+              <Download size={16} className="text-on-surface-variant" />
+            )}
+            <span>Original Video</span>
+          </button>
+        )}
+
+        {/* Legacy: server-muxed dubbed video (old jobs) */}
+        {legacyDubbedVideoUrl && (
+          <button
+            onClick={() =>
+              handleDownload(legacyDubbedVideoUrl, `${baseName}_dubbed.mp4`, "vid")
+            }
+            disabled={downloading === "vid"}
+            className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300 disabled:opacity-50"
+          >
+            {downloading === "vid" ? (
+              <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            ) : (
+              <Download size={16} className="text-on-surface-variant" />
+            )}
+            <span>Dubbed Video</span>
+          </button>
+        )}
+
+        {/* Subtitles — coming soon */}
+        {!legacyDubbedVideoUrl && (
+          <button
+            disabled
+            className="flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant text-sm font-bold cursor-not-allowed opacity-50"
+            title="Coming soon"
+          >
+            <Subtitles size={16} />
+            <span>Subtitles</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -273,8 +432,9 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
       setJob(res.data.job);
       if (loading) setLoading(false);
       return ["completed", "failed"].includes(res.data.job.status);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to fetch job.";
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = e?.response?.data?.message ?? e?.message ?? "Failed to fetch job.";
       setErrorMsg(msg);
       setLoading(false);
       return true;
@@ -282,12 +442,6 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
   }, [jobId, loading]);
 
   useEffect(() => {
-    if (!jobId) {
-      setErrorMsg("Missing job identification.");
-      setLoading(false);
-      return;
-    }
-
     let isMounted = true;
     let timeoutId: number;
 
@@ -305,6 +459,35 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
       if (timeoutId) window.clearTimeout(timeoutId);
     };
   }, [jobId, fetchJob]);
+
+  if (!jobId) {
+    return (
+      <div
+        className={`flex items-center justify-center p-6 text-on-surface bg-background ${
+          inDashboard ? "h-[calc(100vh-100px)] rounded-3xl" : "h-screen"
+        }`}
+      >
+        <div className="max-w-md w-full text-center space-y-8 bg-surface-container border border-outline-variant/20 p-12 rounded-[2rem]">
+          <div className="mx-auto w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center">
+            <AlertCircle className="text-red-500" size={40} />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold font-headline">Missing job ID</h1>
+            <p className="text-on-surface-variant text-sm leading-relaxed font-body">
+              Please open this page with a valid <span className="font-semibold">jobId</span>.
+            </p>
+          </div>
+          <Link
+            href={inDashboard ? "/dashboard" : "/"}
+            className="flex items-center justify-center gap-2 w-full h-14 rounded-2xl bg-primary text-on-primary font-bold hover:brightness-110 transition-all active:scale-95"
+          >
+            <RefreshCcw size={18} />
+            <span>Go Back</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -406,7 +589,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
                 </h3>
                 <Sparkles className="absolute -top-4 -right-2 text-primary/20 rotate-12 scale-250" size={40} />
                 {/* <Sparkles className="absolute top-4 right-6 text-primary/20 scale-75" size={24} /> */}
-                <p className="text-on-surface-variant text-sm leading-relaxed font-body pr-8">Your dubbing project is polished. We've optimized the high-quality audio mix and synced the subtitles with frame-perfect precision.</p>
+                <p className="text-on-surface-variant text-sm leading-relaxed font-body pr-8">Your dubbing project is polished. We&apos;ve optimized the high-quality audio mix and synced the subtitles with frame-perfect precision.</p>
               </div>
 
               <DownloadPanel job={job} />
@@ -415,7 +598,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
 
           {!isProcessing && !isFailed && (
             <>
-              <div className="bg-surface p-6 rounded-[2rem] space-y-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
+              <div className="bg-surface p-6 rounded-4xl space-y-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
                 <div className="flex items-center justify-between">
                   <span className="text-on-surface-variant text-sm font-bold">Credits Spent</span>
                   <span className="font-bold text-on-surface text-sm">{job.duration ? Math.ceil(job.duration / 60) * 5 : 10} pts</span>
