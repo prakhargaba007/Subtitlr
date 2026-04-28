@@ -16,6 +16,7 @@ import {
 import styles from "./BillingSuccess.module.css";
 import Image from "next/image";
 import axiosInstance from "@/utils/axios";
+import { fetchCurrentPlan } from "@/utils/plansApi";
 
 const HERO_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuANkuUENN3hh_DZUxKHRqbVi_usD1ApmGWBMVuRSQTe_ynvOF5-EUQ2T-NT7hSuopeG_Cb_DdLorATLyAusSONO66Vo4gw__lHU1CtTNfb-ESQEXVr0t1UJMU2wLB1qMDS12eReu7LH2_xcVNDeCioo4YTQvcwa-Pvp8dRrQL7BbpeVO0EL5QO0YBEE-gSvcQEIrAtpkOJsB7C0-_6r0u901XKnRsJsmAGnhWqGiQKqjYkAYGjVCIsbq8ssI7rs7pVHCiLLLOrXvos";
@@ -50,9 +51,15 @@ export default function BillingSuccessPage() {
 
     async function checkPayment() {
       try {
-        const res = await axiosInstance.get<{ transactions: CreditTransaction[] }>(
-          "/api/subtitles/credits/history?limit=3"
-        );
+        // We treat BOTH of these as authoritative signals:
+        // - credits ledger shows a recent subscription/purchase grant
+        // - current-plan reports an active subscription (billing provider sync may be faster than ledger write)
+        const [plan, res] = await Promise.all([
+          fetchCurrentPlan(),
+          axiosInstance.get<{ transactions: CreditTransaction[] }>(
+            "/api/subtitles/credits/history?limit=10",
+          ),
+        ]);
         const txs = res.data.transactions || [];
 
         // Look for a very recent valid purchase/subscription credit transaction
@@ -62,13 +69,16 @@ export default function BillingSuccessPage() {
           return isTargetType && isRecent;
         });
 
-        if (recentPurchase) {
+        if (recentPurchase || plan?.status === "active") {
           setSuccessData({
-            amountAdded: recentPurchase.amount,
-            balanceAfter: recentPurchase.balanceAfter,
-            planMessage: recentPurchase.source.includes("subscription")
-              ? "Subscription Active"
-              : "Credits Added",
+            amountAdded: recentPurchase?.amount ?? 0,
+            balanceAfter: recentPurchase?.balanceAfter ?? 0,
+            planMessage:
+              plan?.status === "active"
+                ? "Subscription Active"
+                : recentPurchase?.source?.includes("subscription")
+                  ? "Subscription Active"
+                  : "Credits Added",
           });
           setLoading(false);
           return; // Success! Stop polling.
@@ -206,7 +216,7 @@ export default function BillingSuccessPage() {
               ))}
             </div>
 
-            <div className="relative w-full rounded-2xl overflow-hidden aspect-[21/7] border border-white/5">
+            <div className="relative w-full rounded-2xl overflow-hidden aspect-21/7 border border-white/5">
               <Image
                 src={HERO_IMAGE}
                 alt="Professional interface"
@@ -214,7 +224,7 @@ export default function BillingSuccessPage() {
                 width={1000}
                 height={1000}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0b14] via-[#0a0b14]/40 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-linear-to-r from-[#0a0b14] via-[#0a0b14]/40 to-transparent pointer-events-none" />
               <div className="absolute inset-y-0 left-8 flex flex-col justify-center max-w-[240px] z-10">
                 <p className="text-[10px] font-bold text-[#d4af37] tracking-widest uppercase mb-1">Pro Feature</p>
                 <h4 className="text-white font-headline font-bold text-lg leading-tight">Studio Grade Precision</h4>
