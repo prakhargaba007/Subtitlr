@@ -367,14 +367,18 @@ async function runDubbingPipelineFromInput(
 
   const sourceLanguage = (req.body.sourceLanguage || "").trim() || null;
 
-  emit({ stage: "validating", message: "Checking file and credits…" });
-
   const isVideo = String(inputMimeType || "").startsWith("video/");
   const ext =
     path.extname(originalFileName || "") || (isVideo ? ".mp4" : ".mp3");
 
   const duration = await getFileDuration(tmpInput);
   const creditsNeeded = calculateDubbingCredits(duration);
+
+  emit({
+    stage: "validating",
+    message: "Checking file and credits…",
+    durationSec: duration,
+  });
 
   const user = await User.findById(req.userId);
   if (!user) {
@@ -758,16 +762,153 @@ exports.startDubbingJob = async (req, res) => {
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  const emit = (data) => {
+  const emitRaw = (data) => {
     try {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     } catch (_) {}
+  };
+
+  // Smooth, time-based overall progress (0–100). Dubbing throughput varies with input duration:
+  // - >= 60s content: ~1s dubbing work takes ~1.25s wall time
+  // - <  60s content: ~1s dubbing work takes ~1.8s wall time (estimate)
+  //
+  // We use stage "targets" as caps so progress does not jump instantly between steps.
+  const STAGE_TARGET_PROGRESS = {
+    validating: 5,
+    extracting: 15,
+    uploading: 25,
+    transcribing: 30,
+    separating: 28,
+    translating: 40,
+    generating: 55,
+    syncing: 72,
+    merging: 88,
+    lipsync: 92,
+    saving: 94,
+    done: 100,
+  };
+
+  const progressState = {
+    startedAtMs: Date.now(),
+    expectedTotalSec: null, // becomes available once we know input duration
+    value: 0,
+    target: 0,
+    lastEmittedInt: -1,
+    stage: "validating",
+    message: "Preparing…",
+    tickId: null,
+    lastTickAtMs: Date.now(),
+  };
+
+  const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+  const setExpectedFromDuration = (durationSec) => {
+    const d = Number(durationSec);
+    if (!Number.isFinite(d) || d <= 0) return;
+    const ratio = d < 60 ? 1.8 : 1.25;
+    // keep a small floor so tiny files don't race to 100
+    progressState.expectedTotalSec = Math.max(12, d * ratio);
+  };
+
+  const setStageTarget = (stage) => {
+    if (!stage) return;
+    const t = STAGE_TARGET_PROGRESS[stage];
+    if (typeof t === "number") progressState.target = Math.max(progressState.target, t);
+  };
+
+  const emitProgressFrameIfChanged = () => {
+    const pInt = Math.round(clamp(progressState.value, 0, 100));
+    if (pInt === progressState.lastEmittedInt) return;
+    progressState.lastEmittedInt = pInt;
+    emitRaw({
+      stage: progressState.stage,
+      message: progressState.message,
+      progress: pInt,
+    });
+  };
+
+  const tickProgress = () => {
+    const nowMs = Date.now();
+    const dtSec = Math.max(0, Math.min(0.5, (nowMs - progressState.lastTickAtMs) / 1000));
+    progressState.lastTickAtMs = nowMs;
+
+    const expected = progressState.expectedTotalSec;
+    const elapsedSec = Math.max(0, (nowMs - progressState.startedAtMs) / 1000);
+    const timeBasedCap =
+      typeof expected === "number" ? clamp((elapsedSec / expected) * 100, 0, 99) : 0;
+
+    // Always cap by time *and* stage target, so progress can't jump early.
+    const desired = Math.min(progressState.target, timeBasedCap);
+
+    // Max step per tick to avoid "instant" jumps even if we fall behind.
+    const pctPerSec = typeof expected === "number" ? 100 / expected : 4;
+    const maxStep = Math.max(0.4, pctPerSec * dtSec * 1.15);
+
+    const diff = desired - progressState.value;
+    const step = clamp(diff, -maxStep, maxStep);
+    progressState.value = clamp(progressState.value + step, 0, 99.5);
+
+    emitProgressFrameIfChanged();
+  };
+
+  const startProgressTicker = () => {
+    if (progressState.tickId) return;
+    progressState.lastTickAtMs = Date.now();
+    progressState.tickId = setInterval(tickProgress, 250);
+  };
+
+  const stopProgressTicker = () => {
+    if (progressState.tickId) clearInterval(progressState.tickId);
+    progressState.tickId = null;
+  };
+
+  const emit = (data) => {
+    // If duration is provided on any frame, use it to calibrate progress speed early.
+    if (data && typeof data === "object") {
+      const d =
+        typeof data.durationSec === "number"
+          ? data.durationSec
+          : typeof data.duration === "number"
+            ? data.duration
+            : null;
+      if (typeof d === "number") setExpectedFromDuration(d);
+    }
+
+    // Preserve transcription sub-progress semantics (frontend maps it into overall).
+    if (data && data.stage === "transcribing" && typeof data.progress === "number") {
+      progressState.stage = data.stage;
+      progressState.message = data.message ?? progressState.message;
+      setStageTarget(data.stage);
+      startProgressTicker();
+      return emitRaw(data);
+    }
+
+    if (data && typeof data.stage === "string") {
+      progressState.stage = data.stage;
+      progressState.message = data.message ?? progressState.message;
+      setStageTarget(data.stage);
+      startProgressTicker();
+    }
+
+    // Attach the current overall progress to non-transcribing frames.
+    const payload =
+      data && typeof data === "object"
+        ? { ...data, progress: Math.round(clamp(progressState.value, 0, 100)) }
+        : data;
+
+    return emitRaw(payload);
   };
 
   const tmpPaths = [];
   let job = null;
 
   try {
+    // Use reserved duration estimate (if present) to avoid fast early progress.
+    if (typeof req.dubbingDurationSeconds === "number") {
+      setExpectedFromDuration(req.dubbingDurationSeconds);
+    }
+
     const hasDiskInput = Boolean(
       req.dubbingTmpProbeFile && fs.existsSync(req.dubbingTmpProbeFile),
     );
@@ -817,6 +958,9 @@ exports.startDubbingJob = async (req, res) => {
       thumbPromise,
       origUploadPromise,
     } = prepared;
+
+    // Now that we know the media duration, calibrate progress speed.
+    setExpectedFromDuration(duration);
 
     // ── Step 5: Match each speaker to a TTS voice (OpenAI, Inworld, Smallest, or ElevenLabs) ─
     emit({ stage: "generating", message: "Matching speakers to voices…" });
@@ -1526,6 +1670,7 @@ exports.startDubbingJob = async (req, res) => {
       message: "Dubbing complete!",
       job: finalJob,
       dubbedUrl: dubbedAudioKey,
+      progress: 100,
     });
 
     // Best-effort completion email (send once per job).
@@ -1593,6 +1738,7 @@ exports.startDubbingJob = async (req, res) => {
       res.end();
     } catch (_) {}
   } finally {
+    stopProgressTicker();
     // Ensure background uploads that read temp files finish before cleanup.
     try {
       const bg = [];

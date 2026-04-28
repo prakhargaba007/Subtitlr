@@ -225,11 +225,30 @@ export default function ProcessingView() {
           return;
         }
 
-        if (event.stage === "transcribing" && typeof event.progress === "number") {
-          setProgress(30 + Math.round((event.progress / 100) * 55));
-        } else {
-          setProgress(STAGE_PROGRESS[event.stage] ?? 0);
-        }
+        // Never allow UI progress to go backwards (e.g. upload (25) → extracting (15)).
+        setProgress((prev) => {
+          let nextProgress: number;
+
+          if (event.stage === "transcribing" && typeof event.progress === "number") {
+            // `transcribing.progress` is a 0–100 sub-progress (not overall).
+            // Grow from current progress so we don't instantly jump to a fixed baseline.
+            const upper =
+              mode === "dubbing"
+                ? 55 // dubbing: transcription is earlier portion
+                : 85; // subtitles: transcription covers most of the work
+            const base = Math.max(prev, STAGE_PROGRESS.transcribing ?? 0);
+            const span = Math.max(0, upper - base);
+            nextProgress = base + Math.round((event.progress / 100) * span);
+          } else if (typeof event.progress === "number") {
+            // For all other stages, if backend sends overall progress, trust it.
+            nextProgress = Math.max(0, Math.min(100, Math.round(event.progress)));
+          } else {
+            nextProgress = STAGE_PROGRESS[event.stage] ?? 0;
+          }
+
+          if (event.stage === "error") return prev;
+          return Math.max(prev, nextProgress);
+        });
 
         setStageLabel(event.message ?? "");
 

@@ -241,6 +241,7 @@ function LiveTranscription({ job }: { job: EditorJob }) {
           {segments.map((seg, idx) => {
             const original = (seg.originalText ?? "").trim();
             const translated = (seg.translatedText ?? "").trim();
+            const translatedDisplay = translated.replace(/\[[^\]]*]/g, "").trim();
             const key = seg.segmentId || `seg-${seg.start}-${seg.end}-${idx}`;
 
             return (
@@ -263,7 +264,7 @@ function LiveTranscription({ job }: { job: EditorJob }) {
                   {original || "—"}
                 </p>
                 <p className="font-bold text-primary leading-relaxed text-base">
-                  {translated || "—"}
+                  {translatedDisplay || "—"}
                 </p>
               </div>
             );
