@@ -77,6 +77,7 @@ exports.getCurrentPlan = async (req, res, next) => {
 /** POST /api/billing/cancel */
 exports.cancelMySubscription = async (req, res, next) => {
   try {
+    console.log("[Billing][cancel] start", { userId: req.userId });
     const user = await User.findById(req.userId).populate({
       path: "activeSubscriptionId",
       populate: { path: "planCatalog", select: "key displayName" },
@@ -84,15 +85,35 @@ exports.cancelMySubscription = async (req, res, next) => {
 
     const activeSub = user?.activeSubscriptionId;
     if (!activeSub || !activeSub.dodoSubscriptionId) {
+      console.warn("[Billing][cancel] no active subscription", {
+        userId: req.userId,
+        hasActiveSubscriptionId: Boolean(user?.activeSubscriptionId),
+      });
       return res.status(404).json({ message: "No active subscription found." });
     }
 
+    console.log("[Billing][cancel] active subscription", {
+      userId: req.userId,
+      subscriptionId: String(activeSub._id),
+      dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      status: String(activeSub.status || ""),
+      cancelAtNextBillingDate: Boolean(activeSub.cancelAtNextBillingDate),
+      nextBillingDate: activeSub.nextBillingDate ? new Date(activeSub.nextBillingDate).toISOString() : null,
+      planKey: activeSub?.planCatalog?.key,
+    });
+
     if (activeSub.cancelAtNextBillingDate) {
+      console.log("[Billing][cancel] already scheduled", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+        dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      });
       return res.status(200).json({ success: true, message: "Already set to cancel at next billing date." });
     }
 
     const client = getDodoClient();
     if (!client) {
+      console.error("[Billing][cancel] dodo client not configured", { userId: req.userId });
       return res.status(503).json({ message: "Billing provider is not configured." });
     }
 
@@ -101,11 +122,29 @@ exports.cancelMySubscription = async (req, res, next) => {
     let cancelled = false;
     try {
       if (typeof client.subscriptions?.cancel === "function") {
+        console.log("[Billing][cancel] provider call", {
+          userId: req.userId,
+          method: "subscriptions.cancel",
+          dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+        });
         await client.subscriptions.cancel(activeSub.dodoSubscriptionId);
         cancelled = true;
       } else if (typeof client.subscriptions?.update === "function") {
+        console.log("[Billing][cancel] provider call", {
+          userId: req.userId,
+          method: "subscriptions.update",
+          dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+          payload: { cancel_at_next_billing_date: true },
+        });
         await client.subscriptions.update(activeSub.dodoSubscriptionId, { cancel_at_next_billing_date: true });
         cancelled = true;
+      } else {
+        console.error("[Billing][cancel] provider client missing cancel/update", {
+          userId: req.userId,
+          hasSubscriptions: Boolean(client.subscriptions),
+          cancelType: typeof client.subscriptions?.cancel,
+          updateType: typeof client.subscriptions?.update,
+        });
       }
     } catch (err) {
       console.error("Failed to cancel subscription:", err);
@@ -114,14 +153,120 @@ exports.cancelMySubscription = async (req, res, next) => {
     }
 
     if (cancelled) {
+      console.log("[Billing][cancel] provider call ok, updating local record", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+      });
       await UserSubscription.updateOne(
         { _id: activeSub._id },
         { $set: { cancelAtNextBillingDate: true } }
       );
+      console.log("[Billing][cancel] done", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+        dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      });
+    } else {
+      console.warn("[Billing][cancel] provider call not executed", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+        dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      });
     }
 
     return res.status(200).json({ success: true });
   } catch (err) {
+    console.error("[Billing][cancel] unexpected error", { userId: req.userId, err });
+    next(err);
+  }
+};
+
+/** POST /api/billing/resume */
+exports.resumeMySubscription = async (req, res, next) => {
+  try {
+    console.log("[Billing][resume] start", { userId: req.userId });
+    const user = await User.findById(req.userId).populate({
+      path: "activeSubscriptionId",
+      populate: { path: "planCatalog", select: "key displayName" },
+    });
+
+    const activeSub = user?.activeSubscriptionId;
+    if (!activeSub || !activeSub.dodoSubscriptionId) {
+      console.warn("[Billing][resume] no active subscription", {
+        userId: req.userId,
+        hasActiveSubscriptionId: Boolean(user?.activeSubscriptionId),
+      });
+      return res.status(404).json({ message: "No active subscription found." });
+    }
+
+    console.log("[Billing][resume] active subscription", {
+      userId: req.userId,
+      subscriptionId: String(activeSub._id),
+      dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      status: String(activeSub.status || ""),
+      cancelAtNextBillingDate: Boolean(activeSub.cancelAtNextBillingDate),
+      nextBillingDate: activeSub.nextBillingDate ? new Date(activeSub.nextBillingDate).toISOString() : null,
+      planKey: activeSub?.planCatalog?.key,
+    });
+
+    if (!activeSub.cancelAtNextBillingDate) {
+      return res.status(200).json({ success: true, message: "Subscription is not scheduled for cancellation." });
+    }
+
+    const client = getDodoClient();
+    if (!client) {
+      console.error("[Billing][resume] dodo client not configured", { userId: req.userId });
+      return res.status(503).json({ message: "Billing provider is not configured." });
+    }
+
+    let resumed = false;
+    try {
+      if (typeof client.subscriptions?.update === "function") {
+        console.log("[Billing][resume] provider call", {
+          userId: req.userId,
+          method: "subscriptions.update",
+          dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+          payload: { cancel_at_next_billing_date: false },
+        });
+        await client.subscriptions.update(activeSub.dodoSubscriptionId, { cancel_at_next_billing_date: false });
+        resumed = true;
+      } else {
+        console.error("[Billing][resume] provider client missing update()", {
+          userId: req.userId,
+          hasSubscriptions: Boolean(client.subscriptions),
+          updateType: typeof client.subscriptions?.update,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to resume subscription:", err);
+      return res.status(502).json({ message: "Could not resume subscription. Please try again." });
+    }
+
+    if (resumed) {
+      console.log("[Billing][resume] provider call ok, updating local record", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+      });
+      await UserSubscription.updateOne(
+        { _id: activeSub._id },
+        { $set: { cancelAtNextBillingDate: false } }
+      );
+      console.log("[Billing][resume] done", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+        dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      });
+    } else {
+      console.warn("[Billing][resume] provider call not executed", {
+        userId: req.userId,
+        subscriptionId: String(activeSub._id),
+        dodoSubscriptionId: String(activeSub.dodoSubscriptionId),
+      });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("[Billing][resume] unexpected error", { userId: req.userId, err });
     next(err);
   }
 };

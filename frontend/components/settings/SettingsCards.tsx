@@ -1,11 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Toggle from "@/components/settings/Toggle";
 import { s3Url } from "@/utils/axios";
 import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
 import axiosInstance from "@/utils/axios";
+
+function formatUserAgent(ua?: string) {
+  if (!ua) return "Unknown device";
+  const s = ua.trim();
+  if (!s) return "Unknown device";
+
+  const isMobile = /\bMobile\b/i.test(s);
+
+  const os =
+    /\bAndroid\b/i.test(s)
+      ? "Android"
+      : /\b(iPhone|iPad|iPod)\b/i.test(s)
+        ? "iOS"
+        : /\bWindows NT\b/i.test(s)
+          ? "Windows"
+          : /\bMac OS X\b/i.test(s)
+            ? "macOS"
+            : /\bLinux\b/i.test(s)
+              ? "Linux"
+              : "Unknown OS";
+
+  // Order matters: some UAs contain multiple tokens.
+  const browser = /\bEdg\//i.test(s)
+    ? "Edge"
+    : /\bOPR\//i.test(s)
+      ? "Opera"
+      : /\bChrome\//i.test(s)
+        ? "Chrome"
+        : /\bFirefox\//i.test(s)
+          ? "Firefox"
+          : /\bSafari\//i.test(s) && /\bVersion\//i.test(s)
+            ? "Safari"
+            : "Browser";
+
+  const browserLabel = isMobile && browser === "Safari" ? "Safari Mobile" : isMobile ? `${browser} Mobile` : browser;
+
+  if (os === "Unknown OS" && browser === "Browser") return "Unknown device";
+  if (os === "Unknown OS") return browserLabel;
+  if (browser === "Browser") return os;
+  return `${browserLabel} on ${os}`;
+}
 
 export function Card({
   title,
@@ -96,7 +137,7 @@ export function ProfileCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-5">
         <div>
           <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
             Full name
@@ -109,7 +150,7 @@ export function ProfileCard({
           />
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
             What should Kili call you? <span className="text-primary">*</span>
           </label>
@@ -119,7 +160,7 @@ export function ProfileCard({
             placeholder="e.g. Prakhar"
             className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body"
           />
-        </div>
+        </div> */}
       </div>
 
       <div className="mt-5">
@@ -153,19 +194,6 @@ export function ProfileCard({
             expand_more
           </span>
         </div>
-      </div>
-
-      <div className="mt-5">
-        <label className="block text-xs font-bold font-headline text-on-surface-variant mb-2">
-          What personal preferences should Kili consider in responses?
-        </label>
-        <textarea
-          value={responsePreferences}
-          onChange={(e) => onResponsePreferencesChange(e.target.value)}
-          rows={4}
-          placeholder="e.g. keep explanations brief and to the point"
-          className="w-full resize-none px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body leading-relaxed"
-        />
       </div>
     </Card>
   );
@@ -288,21 +316,53 @@ export function SecurityCard({
           </div>
         ) : (
           sessions.map((s) => (
-            <div key={s._id} className="px-4 py-4 flex items-start justify-between gap-4 bg-surface-container-lowest">
-              <div className="min-w-0">
-                <p className="text-sm font-headline font-bold text-on-surface truncate">
-                  {s.userAgent ? s.userAgent : "Unknown device"}
-                </p>
-                <p className="text-xs text-on-surface-variant font-body mt-1">
-                  {s.ipAddress ? `IP: ${s.ipAddress} • ` : ""}
-                  {s.lastUsedAt ? `Last used: ${new Date(s.lastUsedAt).toLocaleString()}` : ""}
-                </p>
+            <div
+              key={s._id}
+              className="px-4 py-4 flex items-center justify-between gap-4 bg-surface-container-lowest hover:bg-surface-container-low transition-colors"
+            >
+              <div className="min-w-0 flex items-start gap-3">
+                <div className="mt-0.5 h-9 w-9 rounded-2xl bg-surface-container-low border border-outline-variant/15 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-lg text-on-surface-variant">
+                    devices
+                  </span>
+                </div>
+
+                <div className="min-w-0">
+                  <p
+                    className="text-sm font-headline font-bold text-on-surface truncate max-w-[500px]"
+                    title={s.userAgent || "Unknown device"}
+                  >
+                    {formatUserAgent(s.userAgent)}
+                  </p>
+
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {/* {s.ipAddress ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/15 text-[11px] leading-4 text-on-surface-variant font-body">
+                        <span className="material-symbols-outlined text-[14px] leading-none">
+                          public
+                        </span>
+                        {s.ipAddress}
+                      </span>
+                    ) : null} */}
+
+                    {s.lastUsedAt ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/15 text-[11px] leading-4 text-on-surface-variant font-body">
+                        <span className="material-symbols-outlined text-[14px] leading-none">
+                          schedule
+                        </span>
+                        <b>Last used:</b> {new Date(s.lastUsedAt).toLocaleString()}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => onLogoutSession(s._id)}
                 disabled={busySessionId === s._id}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface text-xs font-headline font-bold hover:bg-surface-container transition-colors disabled:opacity-60 disabled:pointer-events-none"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-transparent border border-error/35 text-error text-xs font-headline font-bold hover:bg-error-container hover:text-on-error-container hover:border-error-container transition-colors disabled:opacity-60 disabled:pointer-events-none"
+                aria-label={`Log out this session${s.userAgent ? ` (${s.userAgent})` : ""}`}
               >
                 {busySessionId === s._id ? "Logging out…" : "Log out"}
               </button>
@@ -330,6 +390,21 @@ export function BillingCard({
     }>
   >([]);
   const [cancelling, setCancelling] = useState(false);
+  const [resuming, setResuming] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menuOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -374,6 +449,11 @@ export function BillingCard({
     currentPlan?.status === "active" &&
     currentPlan?.cancelAtNextBillingDate === false;
 
+  const canResume =
+    Boolean(currentPlan) &&
+    currentPlan?.status === "active" &&
+    currentPlan?.cancelAtNextBillingDate === true;
+
   const cancelPlan = async () => {
     if (!canCancel || cancelling) return;
     setCancelling(true);
@@ -386,11 +466,90 @@ export function BillingCard({
     }
   };
 
+  const resumePlan = async () => {
+    if (!canResume || resuming) return;
+    setResuming(true);
+    try {
+      await axiosInstance.post("/api/billing/resume");
+      const plan = await fetchCurrentPlan();
+      setCurrentPlan(plan);
+    } finally {
+      setResuming(false);
+    }
+  };
+
   return (
     <Card title="Billing">
-      <p className="text-sm text-on-surface-variant font-body mb-4">
-        Manage your plan and invoices.
-      </p>
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <p className="text-sm text-on-surface-variant font-body">
+          Manage your plan and invoices.
+        </p>
+
+        {currentPlan ? (
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              aria-label="Billing actions"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+              className="shrink-0 w-9 h-9 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+            </button>
+
+            {menuOpen ? (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-lowest shadow-xl"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    void onOpenBilling();
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm font-body hover:bg-surface-container transition-colors flex items-center gap-3"
+                >
+                  <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                  Open billing
+                </button>
+
+                <div className="h-px bg-outline-variant/10" />
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canResume || resuming}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    void resumePlan();
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm font-body hover:bg-surface-container transition-colors flex items-center gap-3 disabled:opacity-60 disabled:pointer-events-none"
+                >
+                  <span className="material-symbols-outlined text-[18px]">restart_alt</span>
+                  {resuming ? "Resuming…" : "Resume subscription"}
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={!canCancel || cancelling}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setConfirmCancelOpen(true);
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm font-body hover:bg-surface-container transition-colors flex items-center gap-3 text-red-500 disabled:opacity-60 disabled:pointer-events-none"
+                >
+                  <span className="material-symbols-outlined text-[18px]">cancel</span>
+                  Cancel plan
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {loading ? (
         <div className="text-sm text-on-surface-variant font-body mb-4">Loading billing info…</div>
@@ -457,14 +616,60 @@ export function BillingCard({
       </div>
 
       {currentPlan ? (
-        <button
-          type="button"
-          onClick={cancelPlan}
-          disabled={!canCancel || cancelling}
-          className="mb-3 w-full px-4 py-2 rounded-xl bg-error-container text-on-error-container border border-outline-variant/20 text-sm font-headline font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:pointer-events-none"
-        >
-          {currentPlan.cancelAtNextBillingDate ? "Cancellation scheduled" : cancelling ? "Cancelling…" : "Cancel plan"}
-        </button>
+        <div className="mb-3 space-y-2">
+          {currentPlan.cancelAtNextBillingDate ? (
+            <button
+              type="button"
+              onClick={resumePlan}
+              disabled={!canResume || resuming}
+              className="w-full px-4 py-2 rounded-xl bg-secondary-container text-on-secondary-container border border-outline-variant/20 text-sm font-headline font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:pointer-events-none"
+            >
+              {resuming ? "Resuming…" : "Resume subscription"}
+            </button>
+          ) : (
+            <div className="text-xs text-on-surface-variant font-body">
+              To cancel your plan, use the menu in the top-right.
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {confirmCancelOpen ? (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setConfirmCancelOpen(false)}
+          />
+          <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-2xl">
+            <h3 className="text-lg font-extrabold font-headline text-on-surface">Cancel plan?</h3>
+            <p className="mt-2 text-sm text-on-surface-variant font-body">
+              We’ll schedule cancellation for your next billing date. You’ll keep access until then.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmCancelOpen(false)}
+                className="px-4 py-2 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface text-sm font-headline font-bold hover:bg-surface-container transition-colors"
+              >
+                Keep plan
+              </button>
+              <button
+                type="button"
+                disabled={cancelling || !canCancel}
+                onClick={async () => {
+                  await cancelPlan();
+                  setConfirmCancelOpen(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-error-container text-on-error-container border border-outline-variant/20 text-sm font-headline font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:pointer-events-none"
+              >
+                {cancelling ? "Cancelling…" : "Yes, cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <button

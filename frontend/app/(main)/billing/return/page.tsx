@@ -56,7 +56,7 @@ export default function BillingSuccessPage() {
         // - current-plan reports an active subscription (billing provider sync may be faster than ledger write)
         const [plan, res] = await Promise.all([
           fetchCurrentPlan(),
-          axiosInstance.get<{ transactions: CreditTransaction[] }>(
+          axiosInstance.get<{ transactions:  [] }>(
             "/api/subtitles/credits/history?limit=10",
           ),
         ]);

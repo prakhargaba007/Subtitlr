@@ -7,6 +7,7 @@ const router = express.Router();
 router.get("/subscription", isAuth, billingController.getMySubscription);
 router.get("/current-plan", isAuth, billingController.getCurrentPlan);
 router.post("/cancel", isAuth, billingController.cancelMySubscription);
+router.post("/resume", isAuth, billingController.resumeMySubscription);
 router.post("/dodo/checkout-session", isAuth, billingController.createDodoCheckoutSession);
 
 module.exports = router;

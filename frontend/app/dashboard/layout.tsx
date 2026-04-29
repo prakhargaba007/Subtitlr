@@ -21,7 +21,7 @@ export default function DashboardLayout({
       <DashboardSidebar />
       {/* <DashboardHeader /> */}
 
-      <main className="ml-20 lg:ml-64 h-screen overflow-y-auto custom-scrollbar relative">
+      <main className="ml-24 lg:ml-72 h-screen overflow-y-auto custom-scrollbar relative">
         {children}
       </main>
 

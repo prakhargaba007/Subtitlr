@@ -170,7 +170,7 @@ export default function ProjectCard({
         )}
         {onAction ? (
           <div className="flex items-center gap-0.5 shrink-0">
-            {!isArchived ? (
+            {/* {!isArchived ? (
               <button
                 type="button"
                 onClick={(e) => {
@@ -184,7 +184,7 @@ export default function ProjectCard({
               >
                 <span className="material-symbols-outlined text-sm">delete</span>
               </button>
-            ) : null}
+            ) : null} */}
             <div className="relative" ref={menuRef}>
             <button
               type="button"

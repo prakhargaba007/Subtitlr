@@ -9,6 +9,7 @@ import type { RootState } from "@/redux/store";
 import { clearUserDetails } from "@/redux/slices/userSlice";
 import axiosInstance from "@/utils/axios";
 import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
+import ProjectList from "./ProjectList";
 
 const NAV_ITEMS = [
   { icon: "dashboard", label: "Launchpad", href: "/dashboard" },
@@ -33,7 +34,6 @@ export default function DashboardSidebar() {
   const userInfo = useSelector((state: RootState) => state.user.userInfo);
   
   const displayName = userInfo?.name ?? "User";
-  console.log("profilePicture", userInfo?.profilePicture);
   
   const initials = displayName.charAt(0).toUpperCase();
   
@@ -94,13 +94,12 @@ export default function DashboardSidebar() {
     credits !== null ? Math.round(((MAX_CREDITS - credits) / MAX_CREDITS) * 100) : 0;
 
   return (
-    <aside className="h-screen w-20 lg:w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col py-8 px-4 z-50 transition-all duration-300">
-
+    <aside className="h-screen w-[72px] lg:w-72 fixed left-0 top-0 bg-surface-container-lowest/95 supports-backdrop-filter:bg-surface-container-lowest/75 supports-backdrop-filter:backdrop-blur-xl border-r border-outline-variant/20 flex flex-col py-7 px-3 lg:px-4 z-50 transition-all duration-300">
       {/* Logo – wide */}
-      <div className="mb-10 px-4 hidden lg:block cursor-pointer" onClick={() => router.push("/dashboard")}>
-        <div className="flex items-center gap-2">
-          <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={60} height={60} priority />
-          <p className="font-headline text-3xl font-extrabold text-primary tracking-tight">
+      <div className="mb-8 px-2 hidden lg:block cursor-pointer select-none" onClick={() => router.push("/dashboard")}>
+        <div className="flex items-center gap-2.5">
+          <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={44} height={44} priority />
+          <p className="font-headline text-2xl font-extrabold text-primary tracking-tight">
             Kili Labs
           </p>
         </div>
@@ -110,8 +109,8 @@ export default function DashboardSidebar() {
       </div>
 
       {/* Logo – collapsed */}
-      <div className="mb-10 lg:hidden flex justify-center">
-        <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={40} height={40} priority />
+      <div className="mb-8 lg:hidden flex justify-center">
+        <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={36} height={36} priority />
       </div>
 
       {/* Main nav */}
@@ -123,14 +122,27 @@ export default function DashboardSidebar() {
               key={label}
               href={href}
               className={[
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-body",
+                "group flex items-center justify-center lg:justify-start gap-3 px-3.5 py-2.5 rounded-2xl transition-colors text-sm font-body",
                 active
-                  ? "text-primary bg-primary/8 font-semibold"
-                  : "text-on-surface-variant hover:text-primary hover:bg-surface-container",
+                  ? "text-primary bg-primary/10 font-semibold shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container",
               ].join(" ")}
             >
-              <span className="material-symbols-outlined text-[20px]">{icon}</span>
-              <span className="hidden lg:block">{label}</span>
+              <span
+                className={[
+                  "material-symbols-outlined text-[20px] transition-colors",
+                  active ? "text-primary" : "text-on-surface-variant group-hover:text-on-surface",
+                ].join(" ")}
+              >
+                {icon}
+              </span>
+              <span className="hidden lg:block flex-1">{label}</span>
+              <span
+                className={[
+                  "hidden lg:block h-1.5 w-1.5 rounded-full transition-opacity",
+                  active ? "bg-primary opacity-100" : "bg-on-surface-variant opacity-0 group-hover:opacity-40",
+                ].join(" ")}
+              />
             </Link>
           );
         })}
@@ -147,32 +159,34 @@ export default function DashboardSidebar() {
       </div> */}
 
       {/* Direct links */}
-      <div className="space-y-0.5 flex-1">
+      <div className="space-y-1 flex-1">
         {DIRECT_LINKS.map(({ icon, label, href }) => (
           <Link
             key={label}
             href={href}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-body text-on-surface-variant hover:text-primary hover:bg-surface-container"
+            className="group flex items-center justify-center lg:justify-start gap-3 px-3.5 py-2.5 rounded-2xl transition-colors text-xs font-body text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
           >
-            <span className="material-symbols-outlined text-[18px]">{icon}</span>
+            <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-on-surface transition-colors">
+              {icon}
+            </span>
             <span className="hidden lg:block">{label}</span>
           </Link>
         ))}
       </div>
-
+      {/* <ProjectList title="Recent Projects" pageSize={9} showSeeAll={true} layout="list" /> */}
       {/* User card + popup */}
       <div className="mt-4 px-1 relative" ref={menuRef}>
 
         {/* Popup menu — opens above */}
         {menuOpen && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-outline-variant/20 rounded-2xl shadow-xl overflow-hidden z-50">
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-surface-container-lowest border border-outline-variant/20 rounded-3xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] overflow-hidden z-50">
             <div className="hidden lg:block space-y-2 px-4 py-3">
               {creditsLoading ? (
                 <div className="flex items-center justify-center py-3">
                   <div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
                 </div>
               ) : (
-                <div className="bg-surface-container rounded-2xl px-4 py-3 space-y-2">
+                <div className="bg-surface-container rounded-3xl px-4 py-3 space-y-2.5 border border-outline-variant/10">
                   <div className="flex items-center justify-between">
                     <span className="text-xl font-extrabold text-on-surface font-headline leading-none">
                       {credits ?? "—"}
@@ -189,7 +203,7 @@ export default function DashboardSidebar() {
                   </div>
                   <button
                     onClick={() => router.push("/dashboard/billing")}
-                    className="w-full mt-1 py-1.5 bg-primary/10 text-primary text-[11px] font-headline font-bold rounded-xl hover:bg-primary/20 transition-colors"
+                    className="w-full mt-1 py-2 bg-primary/10 text-primary text-[11px] font-headline font-bold rounded-2xl hover:bg-primary/20 transition-colors"
                   >
                     Upgrade Plan
                   </button>
@@ -218,9 +232,12 @@ export default function DashboardSidebar() {
         {/* Clickable user card */}
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="w-full flex items-center gap-3 p-2 rounded-2xl border border-outline-variant/20 bg-surface-container-low hover:bg-surface-container transition-colors"
+          className={[
+            "w-full flex items-center gap-3 p-2 rounded-3xl border bg-surface-container-low hover:bg-surface-container transition-colors",
+            menuOpen ? "border-primary/30 shadow-[0_0_0_4px_rgba(99,102,241,0.08)]" : "border-outline-variant/20",
+          ].join(" ")}
         >
-          <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center">
             {userInfo?.profilePicture ? (
               <Image
                 alt={displayName}
@@ -249,7 +266,7 @@ export default function DashboardSidebar() {
               </p>
             </div>
             <span className="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0">
-              {menuOpen ? "expand_more" : "expand_less"}
+              {menuOpen ? "expand_less" : "expand_more"}
             </span>
           </div>
         </button>
