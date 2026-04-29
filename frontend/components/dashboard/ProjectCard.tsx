@@ -61,12 +61,12 @@ export default function ProjectCard({
     }> = [
       { id: "open", label: "Open", icon: "open_in_new" },
       { id: "copyLink", label: "Copy link", icon: "link" },
-      {
-        id: "download",
-        label: "Download",
-        icon: "download",
-        hidden: !isReady,
-      },
+      // {
+      //   id: "download",
+      //   label: "Download",
+      //   icon: "download",
+      //   hidden: !isReady,
+      // },
       { id: "details", label: "Details", icon: "info" },
       { id: "rename", label: "Rename", icon: "edit" },
       isPinned

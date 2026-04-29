@@ -133,7 +133,7 @@ function VideoPreview({ job }: { job: EditorJob }) {
 
     const onPlay = () => {
       audio.currentTime = video.currentTime;
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
     };
     const onPause = () => audio.pause();
     const onSeeked = () => { audio.currentTime = video.currentTime; };
@@ -169,7 +169,7 @@ function VideoPreview({ job }: { job: EditorJob }) {
         video.muted = true;
         if (audio) {
           audio.currentTime = video.currentTime;
-          if (!video.paused) audio.play().catch(() => {});
+          if (!video.paused) audio.play().catch(() => { });
         }
       }
     }
@@ -198,11 +198,10 @@ function VideoPreview({ job }: { job: EditorJob }) {
         <div className="absolute top-6 left-6 z-20">
           <button
             onClick={handleToggle}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 shadow-lg backdrop-blur-sm ${
-              useOriginal
-                ? "bg-surface/90 text-on-surface hover:bg-surface"
-                : "bg-primary text-white hover:bg-primary/90"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 shadow-lg backdrop-blur-sm ${useOriginal
+              ? "bg-surface/90 text-on-surface hover:bg-surface"
+              : "bg-primary text-white hover:bg-primary/90"
+              }`}
           >
             {useOriginal ? (
               <Volume2 size={12} className="shrink-0" />
@@ -464,9 +463,8 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
   if (!jobId) {
     return (
       <div
-        className={`flex items-center justify-center p-6 text-on-surface bg-background ${
-          inDashboard ? "h-[calc(100vh-100px)] rounded-3xl" : "h-screen"
-        }`}
+        className={`flex items-center justify-center p-6 text-on-surface bg-background ${inDashboard ? "h-[calc(100vh-100px)] rounded-3xl" : "h-screen"
+          }`}
       >
         <div className="max-w-md w-full text-center space-y-8 bg-surface-container border border-outline-variant/20 p-12 rounded-[2rem]">
           <div className="mx-auto w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center">
@@ -602,7 +600,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
               <div className="bg-surface p-6 rounded-4xl space-y-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10">
                 <div className="flex items-center justify-between">
                   <span className="text-on-surface-variant text-sm font-bold">Credits Spent</span>
-                  <span className="font-bold text-on-surface text-sm">{job.duration ? Math.ceil(job.duration / 60) * 5 : 10} pts</span>
+                  <span className="font-bold text-on-surface text-sm">{job.creditsUsed} pts</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-on-surface-variant text-sm font-bold">Engine</span>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import axiosInstance from "@/utils/axios";
 import ProjectCard, { type Project, type ProjectAction } from "./ProjectCard";
 import Pagination from "@/components/Pagination";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface SubtitleJob {
   _id: string;
@@ -190,6 +191,19 @@ export default function ProjectList({
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [detailsProject, setDetailsProject] = useState<Project | null>(null);
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    type: "delete" | "rename" | "unpin" | null;
+    project: Project | null;
+    inputValue: string;
+    isConfirming: boolean;
+  }>({
+    isOpen: false,
+    type: null,
+    project: null,
+    inputValue: "",
+    isConfirming: false,
+  });
 
   const effectivePageSize = pageSize ?? limit ?? 5;
   const effectiveFetchPage = useMemo(
@@ -278,26 +292,52 @@ export default function ProjectList({
       return;
     }
 
+    if (action === "rename" || action === "unpin" || action === "delete") {
+      setModalState({
+        isOpen: true,
+        type: action,
+        project,
+        inputValue: action === "rename" ? project.name : "",
+        isConfirming: false,
+      });
+      return;
+    }
+
     try {
-      if (action === "rename") {
-        const nextName = window.prompt("Rename project", project.name);
-        if (nextName === null) return;
-        const payload = { displayName: nextName.trim() ? nextName.trim() : null };
-        await axiosInstance.patch(`/api/projects/${project.projectId}`, payload);
-      } else if (action === "pin" || action === "unpin") {
-        const op = action === "pin" ? "pin" : "unpin";
-        await axiosInstance.post(`/api/projects/${project.projectId}/${op}`);
-      } else if (action === "delete" || action === "restore") {
-        if (action === "delete") {
-          const ok = window.confirm("Delete this project? You can restore it later.");
-          if (!ok) return;
-          setProjects((prev) => prev.filter((p) => p.id !== project.id));
-        }
-        const op = action === "delete" ? "archive" : "restore";
-        await axiosInstance.post(`/api/projects/${project.projectId}/${op}`);
+      if (action === "pin") {
+        await axiosInstance.post(`/api/projects/${project.projectId}/pin`);
+      } else if (action === "restore") {
+        await axiosInstance.post(`/api/projects/${project.projectId}/restore`);
       }
     } finally {
       setRefreshNonce((n) => n + 1);
+    }
+  };
+
+  const confirmAction = async () => {
+    if (!modalState.project || !modalState.type) return;
+    setModalState((s) => ({ ...s, isConfirming: true }));
+    try {
+      if (modalState.type === "rename") {
+        const nextName = modalState.inputValue.trim();
+        if (!nextName) {
+          setModalState((s) => ({ ...s, isConfirming: false }));
+          return;
+        }
+        await axiosInstance.patch(`/api/projects/${modalState.project.projectId}`, {
+          displayName: nextName,
+        });
+      } else if (modalState.type === "unpin") {
+        await axiosInstance.post(`/api/projects/${modalState.project.projectId}/unpin`);
+      } else if (modalState.type === "delete") {
+        setProjects((prev) => prev.filter((p) => p.id !== modalState.project!.id));
+        await axiosInstance.post(`/api/projects/${modalState.project.projectId}/archive`);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRefreshNonce((n) => n + 1);
+      setModalState((s) => ({ ...s, isOpen: false, isConfirming: false }));
     }
   };
 
@@ -499,6 +539,62 @@ export default function ProjectList({
           </button>
         </div>
       ) : null}
+
+      <ConfirmModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState((s) => ({ ...s, isOpen: false }))}
+        title={
+          modalState.type === "delete"
+            ? "Delete project?"
+            : modalState.type === "rename"
+            ? "Rename project"
+            : "Unpin project?"
+        }
+        description={
+          modalState.type === "rename" ? (
+            <div className="mt-2">
+              <input
+                type="text"
+                autoFocus
+                value={modalState.inputValue}
+                onChange={(e) => setModalState((s) => ({ ...s, inputValue: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all font-body"
+                placeholder="Project name"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    confirmAction();
+                  }
+                }}
+              />
+            </div>
+          ) : modalState.type === "delete" ? (
+            "Delete this project? You can restore it later."
+          ) : (
+            "Are you sure you want to unpin this project?"
+          )
+        }
+        confirmText={
+          modalState.type === "delete"
+            ? "Yes, delete"
+            : modalState.type === "rename"
+            ? "Save changes"
+            : "Yes, unpin"
+        }
+        confirmingText={
+          modalState.type === "delete"
+            ? "Deleting..."
+            : modalState.type === "rename"
+            ? "Saving..."
+            : "Unpinning..."
+        }
+        cancelText="Cancel"
+        isConfirming={modalState.isConfirming}
+        confirmVariant={
+          modalState.type === "delete" || modalState.type === "unpin" ? "danger" : "primary"
+        }
+        onConfirm={confirmAction}
+      />
     </section>
   );
 }

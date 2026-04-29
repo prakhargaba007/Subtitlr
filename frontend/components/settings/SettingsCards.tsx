@@ -6,6 +6,7 @@ import Toggle from "@/components/settings/Toggle";
 import { s3Url } from "@/utils/axios";
 import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
 import axiosInstance from "@/utils/axios";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 function formatUserAgent(ua?: string) {
   if (!ua) return "Unknown device";
@@ -626,51 +627,26 @@ export function BillingCard({
             >
               {resuming ? "Resuming…" : "Resume subscription"}
             </button>
-          ) : (
-            <div className="text-xs text-on-surface-variant font-body">
-              To cancel your plan, use the menu in the top-right.
-            </div>
-          )}
+          ) : null}
         </div>
       ) : null}
 
-      {confirmCancelOpen ? (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            aria-label="Close"
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setConfirmCancelOpen(false)}
-          />
-          <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-2xl">
-            <h3 className="text-lg font-extrabold font-headline text-on-surface">Cancel plan?</h3>
-            <p className="mt-2 text-sm text-on-surface-variant font-body">
-              We’ll schedule cancellation for your next billing date. You’ll keep access until then.
-            </p>
-
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmCancelOpen(false)}
-                className="px-4 py-2 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface text-sm font-headline font-bold hover:bg-surface-container transition-colors"
-              >
-                Keep plan
-              </button>
-              <button
-                type="button"
-                disabled={cancelling || !canCancel}
-                onClick={async () => {
-                  await cancelPlan();
-                  setConfirmCancelOpen(false);
-                }}
-                className="px-4 py-2 rounded-xl bg-error-container text-on-error-container border border-outline-variant/20 text-sm font-headline font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:pointer-events-none"
-              >
-                {cancelling ? "Cancelling…" : "Yes, cancel"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmModal
+        isOpen={confirmCancelOpen}
+        onClose={() => setConfirmCancelOpen(false)}
+        title="Cancel plan?"
+        description="We’ll schedule cancellation for your next billing date. You’ll keep access until then."
+        cancelText="Keep plan"
+        confirmText="Yes, cancel"
+        confirmingText="Cancelling…"
+        isConfirming={cancelling}
+        confirmDisabled={!canCancel}
+        onConfirm={async () => {
+          await cancelPlan();
+          setConfirmCancelOpen(false);
+        }}
+        confirmVariant="danger"
+      />
 
       <button
         type="button"

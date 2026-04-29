@@ -30,6 +30,7 @@ export type EditorJob = {
   dubbedAudioKey?: string | null;
   dubbedVideoUrl?: string | null;
   dubbedAudioUrl?: string | null;
+  creditsUsed?: number;
   speakerProfiles: SpeakerProfile[];
   segments: DubbingSegment[];
   error?: string | null;
