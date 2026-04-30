@@ -66,12 +66,19 @@ const generateTokens = async (user, req, res, familyId = null) => {
      await RefreshToken.findByIdAndUpdate(activeSessions[0]._id, { isRevoked: true });
   }
 
+  // Parse user agent
+  const userAgentString = req.get('User-Agent') || "";
+  const UAParser = require('ua-parser-js');
+  const parser = new UAParser(userAgentString);
+  const deviceInfo = parser.getResult();
+
   await RefreshToken.create({
     user: user._id,
     tokenHash: tokenHash,
     familyId: tokenFamily,
     ipAddress: req.ip,
-    userAgent: req.get('User-Agent'),
+    userAgent: userAgentString,
+    deviceInfo: deviceInfo,
     expiresAt,
     lastUsedAt: Date.now(),
   });

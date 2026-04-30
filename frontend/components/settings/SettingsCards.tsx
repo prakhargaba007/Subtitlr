@@ -49,6 +49,26 @@ function formatUserAgent(ua?: string) {
   return `${browserLabel} on ${os}`;
 }
 
+function formatSessionDevice(session: SessionInfo) {
+  if (session.deviceInfo && (session.deviceInfo.browser?.name || session.deviceInfo.os?.name || session.deviceInfo.device?.vendor)) {
+    const { browser, os, device } = session.deviceInfo;
+    const deviceStr = device?.vendor && device?.model 
+      ? `${device.vendor} ${device.model}`
+      : device?.vendor 
+        ? `${device.vendor} Device`
+        : '';
+        
+    const osStr = os?.name ? os.name : '';
+    const browserStr = browser?.name ? browser.name : '';
+    
+    const parts = [deviceStr, osStr, browserStr].filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(" • ");
+    }
+  }
+  return formatUserAgent(session.userAgent);
+}
+
 export function Card({
   title,
   children,
@@ -254,6 +274,11 @@ export type SessionInfo = {
   _id: string;
   ipAddress?: string;
   userAgent?: string;
+  deviceInfo?: {
+    browser?: { name?: string; version?: string };
+    os?: { name?: string; version?: string };
+    device?: { vendor?: string; model?: string; type?: string };
+  };
   createdAt?: string;
   lastUsedAt?: string;
 };
@@ -333,7 +358,7 @@ export function SecurityCard({
                     className="text-sm font-headline font-bold text-on-surface truncate max-w-[500px]"
                     title={s.userAgent || "Unknown device"}
                   >
-                    {formatUserAgent(s.userAgent)}
+                    {formatSessionDevice(s)}
                   </p>
 
                   <div className="mt-1 flex flex-wrap items-center gap-2">

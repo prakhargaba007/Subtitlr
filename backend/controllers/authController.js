@@ -795,7 +795,7 @@ exports.logoutAllDevices = async (req, res, next) => {
 exports.getSessions = async (req, res, next) => {
   try {
     const sessions = await RefreshToken.find({ user: req.userId, isRevoked: false })
-      .select('ipAddress userAgent createdAt lastUsedAt familyId');
+      .select('ipAddress userAgent deviceInfo createdAt lastUsedAt familyId');
     res.status(200).json({ success: true, sessions });
   } catch (err) { 
     next(err); 

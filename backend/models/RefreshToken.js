@@ -7,6 +7,7 @@ const RefreshTokenSchema = new Schema({
   familyId: { type: String, required: true, index: true },
   ipAddress: { type: String },
   userAgent: { type: String },
+  deviceInfo: { type: Object, default: {} },
   isRevoked: { type: Boolean, default: false },
   lastUsedAt: { type: Date, default: Date.now },
   expiresAt: { type: Date, required: true }
