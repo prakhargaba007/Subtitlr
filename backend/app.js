@@ -14,6 +14,15 @@ const port = process.env.PORT || 8080;
 // Ensure correct req.ip / x-forwarded-proto behavior behind proxies (Render/NGINX/Cloudflare/etc.)
 app.set("trust proxy", 1);
 
+// Accept-CH Headers for User-Agent Client Hints
+app.use((req, res, next) => {
+  res.setHeader(
+    "Accept-CH",
+    "Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List"
+  );
+  next();
+});
+
 // Security Headers with Strict CSP
 app.use(helmet({
   contentSecurityPolicy: {

@@ -814,3 +814,28 @@ exports.revokeSession = async (req, res, next) => {
     next(err); 
   }
 };
+
+exports.updateDeviceInfo = async (req, res, next) => {
+  try {
+    const rawToken = req.cookies?.refreshToken;
+    if (!rawToken) {
+      return res.status(401).json({ success: false, message: "No refresh token" });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const { deviceInfo } = req.body;
+
+    if (!deviceInfo) {
+      return res.status(400).json({ success: false, message: "Device info is required" });
+    }
+
+    await RefreshToken.findOneAndUpdate(
+      { tokenHash, user: req.userId, isRevoked: false },
+      { $set: { deviceInfo } }
+    );
+
+    res.status(200).json({ success: true, message: "Device info updated" });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -41,36 +41,58 @@ const generateTokens = async (user, req, res, familyId = null) => {
   const jti = crypto.randomUUID();
 
   // 1. Access Token (15 minutes) - includes tokenVersion
-  const payload = { 
-    user: { 
-      id: user._id, 
-      role: user.role, 
-      accessPermissions: user.accessPermissions || [] 
+  const payload = {
+    user: {
+      id: user._id,
+      role: user.role,
+      accessPermissions: user.accessPermissions || [],
     },
     tokenVersion: user.tokenVersion || 0,
-    jti
+    jti,
   };
-  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "15m" });
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
 
   // 2. Refresh Token (Opaque string, 7 days)
   const rawRefreshToken = crypto.randomBytes(40).toString("hex");
-  const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(rawRefreshToken)
+    .digest("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  
+
   const tokenFamily = familyId || crypto.randomUUID();
 
   // Enforce Max 5 Sessions Per User
-  const activeSessions = await RefreshToken.find({ user: user._id, isRevoked: false }).sort({ createdAt: 1 });
+  const activeSessions = await RefreshToken.find({
+    user: user._id,
+    isRevoked: false,
+  }).sort({ createdAt: 1 });
   if (activeSessions.length >= 5) {
-     // Revoke the oldest session
-     await RefreshToken.findByIdAndUpdate(activeSessions[0]._id, { isRevoked: true });
+    // Revoke the oldest session
+    await RefreshToken.findByIdAndUpdate(activeSessions[0]._id, {
+      isRevoked: true,
+    });
   }
 
-  // Parse user agent
-  const userAgentString = req.get('User-Agent') || "";
-  const UAParser = require('ua-parser-js');
-  const parser = new UAParser(userAgentString);
-  const deviceInfo = parser.getResult();
+  // Minimal fallback: grab client hint headers if present
+  const userAgentString = req.get("User-Agent") || "";
+  const getHeaderStr = (name) => {
+    const val = req.get(name);
+    return val ? val.replace(/^"|"$/g, "") : "";
+  };
+  
+  const platform = getHeaderStr("Sec-CH-UA-Platform");
+  const model = getHeaderStr("Sec-CH-UA-Model");
+  
+  let initialDeviceInfo = {};
+  if (platform || model) {
+    initialDeviceInfo = {
+      os: { name: platform },
+      device: { model: model },
+    };
+  }
 
   await RefreshToken.create({
     user: user._id,
@@ -78,7 +100,7 @@ const generateTokens = async (user, req, res, familyId = null) => {
     familyId: tokenFamily,
     ipAddress: req.ip,
     userAgent: userAgentString,
-    deviceInfo: deviceInfo,
+    deviceInfo: initialDeviceInfo,
     expiresAt,
     lastUsedAt: Date.now(),
   });

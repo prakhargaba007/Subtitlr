@@ -176,4 +176,7 @@ router.get("/sessions", isAuth, authController.getSessions);
 // Route: POST /api/auth/logout-session/:sessionId
 router.post("/logout-session/:sessionId", isAuth, authController.revokeSession);
 
+// Route: POST /api/auth/device-info
+router.post("/device-info", isAuth, authController.updateDeviceInfo);
+
 module.exports = router;

@@ -50,18 +50,35 @@ function formatUserAgent(ua?: string) {
 }
 
 function formatSessionDevice(session: SessionInfo) {
-  if (session.deviceInfo && (session.deviceInfo.browser?.name || session.deviceInfo.os?.name || session.deviceInfo.device?.vendor)) {
-    const { browser, os, device } = session.deviceInfo;
-    const deviceStr = device?.vendor && device?.model 
-      ? `${device.vendor} ${device.model}`
-      : device?.vendor 
-        ? `${device.vendor} Device`
-        : '';
+  if (session.deviceInfo) {
+    const { browser, os, device, brands, mobile } = session.deviceInfo;
+    
+    // Attempt to extract a reliable brand name from UA-CH 'brands'
+    let brandName = "";
+    if (brands && Array.isArray(brands) && brands.length > 0) {
+      // Filter out grease characters like 'Not A;Brand'
+      const validBrands = brands.filter(b => !b.brand.includes("Not") && !b.brand.includes("A;Brand"));
+      if (validBrands.length > 0) {
+        brandName = validBrands[0].brand;
+      } else {
+        brandName = brands[0].brand;
+      }
+    }
+    
+    // Fallback to legacy structure if present
+    if (!brandName && browser?.name) {
+      brandName = browser.name;
+    }
+
+    const deviceStr = device?.model 
+      ? device.model
+      : device?.type 
+        ? `${device.type} Device`
+        : mobile ? "Mobile Device" : '';
         
     const osStr = os?.name ? os.name : '';
-    const browserStr = browser?.name ? browser.name : '';
     
-    const parts = [deviceStr, osStr, browserStr].filter(Boolean);
+    const parts = [deviceStr, osStr, brandName].filter(Boolean);
     if (parts.length > 0) {
       return parts.join(" • ");
     }
@@ -275,9 +292,11 @@ export type SessionInfo = {
   ipAddress?: string;
   userAgent?: string;
   deviceInfo?: {
-    browser?: { name?: string; version?: string };
+    mobile?: boolean;
+    brands?: { brand: string; version: string }[];
+    browser?: { name?: string; version?: string; fullVersionList?: { brand: string; version: string }[] };
     os?: { name?: string; version?: string };
-    device?: { vendor?: string; model?: string; type?: string };
+    device?: { vendor?: string; model?: string; type?: string; architecture?: string };
   };
   createdAt?: string;
   lastUsedAt?: string;
