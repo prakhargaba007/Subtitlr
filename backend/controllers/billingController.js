@@ -3,6 +3,7 @@ const PlanCatalog = require("../models/PlanCatalog");
 const UserSubscription = require("../models/UserSubscription");
 const { getDodoClient } = require("../utils/dodoClient");
 const CheckoutLock = require("../models/CheckoutLock");
+const UserUsage = require("../models/UserUsage");
 
 /** GET /api/billing/subscription */
 exports.getMySubscription = async (req, res, next) => {
@@ -25,13 +26,16 @@ exports.getCurrentPlan = async (req, res, next) => {
   try {
     const user = await User.findById(req.userId).populate({
       path: "activeSubscriptionId",
-      populate: { path: "planCatalog", select: "key displayName creditsPerPeriod interval features sortOrder" }
+      populate: { path: "planCatalog", select: "key displayName creditsPerPeriod interval features featureFlags sortOrder" }
     }).lean();
 
     const activeSub = user?.activeSubscriptionId;
 
+    const usage = await UserUsage.findOne({ user: req.userId }).select("activeJobsCount").lean();
+    const activeJobsCount = usage?.activeJobsCount || 0;
+
     if (!activeSub || !activeSub.planCatalog) {
-      return res.json({ currentPlan: null });
+      return res.json({ currentPlan: null, activeJobsCount });
     }
 
     // 6. RECONCILIATION MECHANISM (Auto-fix missing callbacks)
@@ -63,11 +67,13 @@ exports.getCurrentPlan = async (req, res, next) => {
         creditsPerPeriod: activeSub.planCatalog.creditsPerPeriod,
         interval: activeSub.planCatalog.interval,
         features: activeSub.planCatalog.features || [],
+        featureFlags: activeSub.planCatalog.featureFlags || {},
         sortOrder: activeSub.planCatalog.sortOrder || 0,
         status: activeSub.status,
         nextBillingDate: activeSub.nextBillingDate,
         cancelAtNextBillingDate: activeSub.cancelAtNextBillingDate,
-      }
+      },
+      activeJobsCount
     });
   } catch (err) {
     next(err);

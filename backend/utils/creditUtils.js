@@ -12,16 +12,16 @@ const CreditTransaction = require("../models/CreditTransaction");
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Credits awarded to a temporary (anonymous) user on first visit. */
-const DEFAULT_CREDITS = 0;
+const DEFAULT_CREDITS = 500;
 
 /** Credits awarded when a user creates a verified account (OTP, Google, email). */
-const SIGNUP_CREDITS = 60;
+const SIGNUP_CREDITS = 500;
 
 /** How many credits one "unit" costs for subtitles. 5 credits = 1 started minute (rounded up). */
 const CREDITS_PER_MINUTE = 5;
 
 /** Target balance for the one-time welcome top-up. */
-const WELCOME_CREDITS_TARGET = 60;
+const WELCOME_CREDITS_TARGET = 500;
 
 // ─── Calculation helpers ──────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ const hasEnoughCredits = (user, creditsNeeded) =>
 const assertEnoughCredits = (user, creditsNeeded) => {
   if (!hasEnoughCredits(user, creditsNeeded)) {
     const err = new Error(
-      `Insufficient credits. You need ${creditsNeeded} credit(s) but only have ${user.credits ?? 0}.`
+      `Insufficient credits. You need ${creditsNeeded} credit(s) but only have ${user.credits ?? 0}.`,
     );
     err.statusCode = 402;
     throw err;
@@ -96,8 +96,12 @@ async function withTransactionRetry(action, maxRetries = 3) {
       return result;
     } catch (error) {
       await session.abortTransaction();
-      if (error.hasErrorLabel && error.hasErrorLabel('TransientTransactionError') && attempt < maxRetries) {
-        await new Promise(res => setTimeout(res, 100 * attempt));
+      if (
+        error.hasErrorLabel &&
+        error.hasErrorLabel("TransientTransactionError") &&
+        attempt < maxRetries
+      ) {
+        await new Promise((res) => setTimeout(res, 100 * attempt));
         continue;
       }
       throw error;
@@ -117,7 +121,13 @@ async function withTransactionRetry(action, maxRetries = 3) {
  * @param {object} [metadata]   - optional extra data (jobId, fileName, duration, …)
  * @returns {Promise<number>} The new balance after deduction
  */
-const deductCredits = async (userId, amount, source, description = "", metadata = {}) => {
+const deductCredits = async (
+  userId,
+  amount,
+  source,
+  description = "",
+  metadata = {},
+) => {
   const abs = Math.abs(amount);
   let balanceAfter = 0;
 
@@ -126,7 +136,7 @@ const deductCredits = async (userId, amount, source, description = "", metadata 
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId, credits: { $gte: abs } },
       { $inc: { credits: -abs } },
-      { new: true, session }
+      { new: true, session },
     );
 
     // 2) Handle failure securely
@@ -147,16 +157,21 @@ const deductCredits = async (userId, amount, source, description = "", metadata 
     balanceAfter = updatedUser.credits || 0;
     const balanceBefore = balanceAfter + abs;
 
-    await CreditTransaction.create([{
-      user: userId,
-      type: "debit",
-      amount: abs,
-      balanceBefore,
-      balanceAfter,
-      source,
-      description,
-      metadata,
-    }], { session });
+    await CreditTransaction.create(
+      [
+        {
+          user: userId,
+          type: "debit",
+          amount: abs,
+          balanceBefore,
+          balanceAfter,
+          source,
+          description,
+          metadata,
+        },
+      ],
+      { session },
+    );
   });
 
   return balanceAfter;
@@ -173,7 +188,13 @@ const deductCredits = async (userId, amount, source, description = "", metadata 
  * @param {object} [metadata]   - optional extra data (paymentId, plan, …)
  * @returns {Promise<number>} The new balance after addition
  */
-const addCredits = async (userId, amount, source, description = "", metadata = {}) => {
+const addCredits = async (
+  userId,
+  amount,
+  source,
+  description = "",
+  metadata = {},
+) => {
   const abs = Math.abs(amount);
   let balanceAfter = 0;
 
@@ -182,7 +203,7 @@ const addCredits = async (userId, amount, source, description = "", metadata = {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $inc: { credits: abs } },
-      { new: true, session }
+      { new: true, session },
     );
 
     if (!updatedUser) {
@@ -195,16 +216,21 @@ const addCredits = async (userId, amount, source, description = "", metadata = {
     balanceAfter = updatedUser.credits || 0;
     const balanceBefore = Math.max(0, balanceAfter - abs);
 
-    await CreditTransaction.create([{
-      user: userId,
-      type: "credit",
-      amount: abs,
-      balanceBefore,
-      balanceAfter,
-      source,
-      description,
-      metadata,
-    }], { session });
+    await CreditTransaction.create(
+      [
+        {
+          user: userId,
+          type: "credit",
+          amount: abs,
+          balanceBefore,
+          balanceAfter,
+          source,
+          description,
+          metadata,
+        },
+      ],
+      { session },
+    );
   });
 
   return balanceAfter;
@@ -222,9 +248,12 @@ const addCredits = async (userId, amount, source, description = "", metadata = {
  * @returns {Promise<{ granted: boolean, added: number, target: number }>}
  */
 async function grantWelcomeCreditsOnce(userId, opts = {}) {
-  const reason = String(opts.reason || "welcome_topup").trim() || "welcome_topup";
+  const reason =
+    String(opts.reason || "welcome_topup").trim() || "welcome_topup";
 
-  const user = await User.findById(userId).select("credits welcomeCreditsGranted").lean();
+  const user = await User.findById(userId)
+    .select("credits welcomeCreditsGranted")
+    .lean();
   if (!user) {
     const err = new Error("User not found when granting welcome credits.");
     err.statusCode = 404;
@@ -245,7 +274,10 @@ async function grantWelcomeCreditsOnce(userId, opts = {}) {
     .lean();
 
   if (existingWelcome) {
-    await User.updateOne({ _id: userId }, { $set: { welcomeCreditsGranted: true } });
+    await User.updateOne(
+      { _id: userId },
+      { $set: { welcomeCreditsGranted: true } },
+    );
     return { granted: false, added: 0, target: WELCOME_CREDITS_TARGET };
   }
 
@@ -262,7 +294,10 @@ async function grantWelcomeCreditsOnce(userId, opts = {}) {
     );
   }
 
-  await User.updateOne({ _id: userId }, { $set: { welcomeCreditsGranted: true } });
+  await User.updateOne(
+    { _id: userId },
+    { $set: { welcomeCreditsGranted: true } },
+  );
 
   return { granted: true, added: toAdd, target: WELCOME_CREDITS_TARGET };
 }
@@ -276,12 +311,15 @@ const processRefundAtomic = async (userId, paymentId, idempotencyKey) => {
   await withTransactionRetry(async (session) => {
     // 1) Evaluate explicit transaction bounds and user capacity synchronously
     const originalTx = await CreditTransaction.findOne({
-      user: userId, type: "credit", "metadata.paymentId": paymentId
+      user: userId,
+      type: "credit",
+      "metadata.paymentId": paymentId,
     }).session(session);
 
     if (!originalTx) return;
 
-    const maxRefundable = originalTx.amount - (originalTx.metadata.refundedAmount || 0);
+    const maxRefundable =
+      originalTx.amount - (originalTx.metadata.refundedAmount || 0);
     if (maxRefundable <= 0) return;
 
     const userNow = await User.findById(userId).session(session);
@@ -290,23 +328,28 @@ const processRefundAtomic = async (userId, paymentId, idempotencyKey) => {
 
     // 2) Bounded increment locked mathematically against static maximum capacity
     const updatedOriginal = await CreditTransaction.findOneAndUpdate(
-      { 
-        _id: originalTx._id, 
+      {
+        _id: originalTx._id,
         $or: [
           { "metadata.refundedAmount": { $exists: false } },
-          { "metadata.refundedAmount": { $lte: originalTx.amount - actualDeduction } }
-        ]
+          {
+            "metadata.refundedAmount": {
+              $lte: originalTx.amount - actualDeduction,
+            },
+          },
+        ],
       },
       { $inc: { "metadata.refundedAmount": actualDeduction } },
-      { new: true, session }
+      { new: true, session },
     );
-    if (!updatedOriginal) throw new Error("Refund atomic safety limits breached");
+    if (!updatedOriginal)
+      throw new Error("Refund atomic safety limits breached");
 
     // 3) Strict atomic $gte read-and-decrement
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId, credits: { $gte: actualDeduction } },
       { $inc: { credits: -actualDeduction } },
-      { new: true, session }
+      { new: true, session },
     );
     if (!updatedUser) throw new Error("Atomic balance validation failed");
 
@@ -314,16 +357,21 @@ const processRefundAtomic = async (userId, paymentId, idempotencyKey) => {
     const balanceAfter = updatedUser.credits || 0;
     const balanceBefore = balanceAfter + actualDeduction;
 
-    await CreditTransaction.create([{
-      user: userId,
-      type: "debit",
-      amount: actualDeduction,
-      balanceBefore,
-      balanceAfter,
-      source: "refund",
-      description: `Refund processed for payment ${paymentId}`,
-      metadata: { originalPaymentId: paymentId, idempotencyKey },
-    }], { session });
+    await CreditTransaction.create(
+      [
+        {
+          user: userId,
+          type: "debit",
+          amount: actualDeduction,
+          balanceBefore,
+          balanceAfter,
+          source: "refund",
+          description: `Refund processed for payment ${paymentId}`,
+          metadata: { originalPaymentId: paymentId, idempotencyKey },
+        },
+      ],
+      { session },
+    );
   });
 };
 

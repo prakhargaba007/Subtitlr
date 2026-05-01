@@ -12,6 +12,27 @@ const {
 const { generateTokens, clearAuthCookies } = require("../utils/authTokens");
 const RefreshToken = require("../models/RefreshToken");
 const crypto = require("crypto");
+const PlanCatalog = require("../models/PlanCatalog");
+const UserSubscription = require("../models/UserSubscription");
+
+async function enrollInFreePlan(user) {
+  const freePlan = await PlanCatalog.findOne({ key: "free" }).sort({ version: -1 });
+  if (freePlan && !user.activeSubscriptionId) {
+    const dodoSubscriptionId = `free_${user._id}_${Date.now()}`;
+    const newSub = new UserSubscription({
+      user: user._id,
+      dodoSubscriptionId,
+      status: "active",
+      creditsPerRenewal: 0, // not monthly
+      planCatalog: freePlan._id,
+      planCatalogVersionAtSignup: freePlan.version,
+      pricingCohort: "free_signup",
+    });
+    await newSub.save();
+    user.activeSubscriptionId = newSub._id;
+    await user.save();
+  }
+}
 
 exports.optGenerte = async (req, res, next) => {
   try {
@@ -149,6 +170,7 @@ exports.signup = async (req, res, next) => {
 
     // Save the user to the database
     await user.save();
+    await enrollInFreePlan(user);
     await grantWelcomeCreditsOnce(user._id, { reason: "signup" });
 
     await generateTokens(user, req, res);
@@ -223,12 +245,8 @@ exports.login = async (req, res, next) => {
           profilePicture: photo,
         });
         await user.save();
-        await addCredits(
-          user._id,
-          DEFAULT_CREDITS,
-          "signup_bonus",
-          "Welcome credits",
-        );
+        await enrollInFreePlan(user);
+        await grantWelcomeCreditsOnce(user._id, { reason: "login" });
       } else {
         const error = new Error("Invalid credentials");
         error.statusCode = 400;
@@ -497,6 +515,7 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
 
     await user.save();
 
+    await enrollInFreePlan(user);
     await grantWelcomeCreditsOnce(user._id, { reason: "otp_verify" });
 
     await generateTokens(user, req, res);
@@ -695,6 +714,10 @@ exports.googleExchange = async (req, res, next) => {
         profilePicture: picture,
       });
       await user.save();
+
+      // Enroll in the free plan
+      await enrollInFreePlan(user);
+
       await grantWelcomeCreditsOnce(user._id, { reason: "google_first" });
     } else {
       // Update profile image/name if changed

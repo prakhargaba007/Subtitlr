@@ -183,11 +183,15 @@ function UploadCardInner({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [dragOver, setDragOver] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
   const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [language, setLanguage] = useState("");
   const [authChecking, setAuthChecking] = useState(false);
+  const [maxFileSizeMB, setMaxFileSizeMB] = useState<number | null>(null);
+  const [maxInputMinutes, setMaxInputMinutes] = useState<number | null>(null);
+  const [maxConcurrentJobs, setMaxConcurrentJobs] = useState<number | null>(null);
+  const [activeJobsCount, setActiveJobsCount] = useState<number>(0);
   const [languageBundle, setLanguageBundle] = useState<{
     mode: "subtitles" | "dubbing";
     languages: ApiLanguage[];
@@ -283,16 +287,131 @@ function UploadCardInner({
     };
   }, [mode]);
 
-  const handleFile = useCallback((file: File | undefined | null) => {
+  useEffect(() => {
+    let cancelled = false;
+    axiosInstance
+      .get("/api/billing/current-plan")
+      .then((res) => {
+        if (cancelled) return;
+        if (typeof res.data?.activeJobsCount === "number") {
+          setActiveJobsCount(res.data.activeJobsCount);
+        }
+
+        const flags = res.data?.currentPlan?.featureFlags;
+        if (flags) {
+          if (typeof flags.maxFileSizeMB === "number") {
+            setMaxFileSizeMB(flags.maxFileSizeMB);
+          }
+          if (typeof flags.maxInputMinutes === "number") {
+            setMaxInputMinutes(flags.maxInputMinutes);
+          }
+          if (typeof flags.maxConcurrentJobs === "number") {
+            setMaxConcurrentJobs(flags.maxConcurrentJobs);
+          }
+        }
+      })
+      .catch(() => { });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleFile = useCallback(async (file: File | undefined | null) => {
     if (!file) return;
     setError(null);
     if (!ACCEPTED_MIME.has(file.type)) {
       setError("Unsupported file type. Please upload a video or audio file (MP4, MOV, MP3, WAV…).");
       return;
     }
+    console.log("file.size", file.size);
+    console.log("maxConcurrentJobs", maxConcurrentJobs);
+    console.log("activeJobsCount", activeJobsCount);
+    console.log("maxFileSizeMB", maxFileSizeMB);
+    console.log("maxInputMinutes", maxInputMinutes);
+
+
+
+    if (maxConcurrentJobs !== null && activeJobsCount >= maxConcurrentJobs) {
+      setError(
+        <span>
+          You already have {activeJobsCount} active job(s). Your plan allows a maximum of {maxConcurrentJobs} concurrent job(s).{" "}
+          <button
+            type="button"
+            className="underline font-semibold text-primary hover:text-primary/80"
+            onClick={() => router.push("/dashboard/billing")}
+          >
+            Upgrade your plan
+          </button>{" "}
+          to process more files at once.
+        </span>
+      );
+      return;
+    }
+
+    if (maxFileSizeMB !== null && file.size > maxFileSizeMB * 1024 * 1024) {
+      setError(
+        <span>
+          File size {(file.size / 1024 / 1024).toFixed(1)} MB exceeds your plan limit of {maxFileSizeMB} MB.{" "}
+          <button
+            type="button"
+            className="underline font-semibold text-primary hover:text-primary/80"
+            onClick={() => router.push("/dashboard/billing")}
+          >
+            Upgrade your plan
+          </button>{" "}
+          to process larger files.
+        </span>
+      );
+      return;
+    }
+
+    if (maxInputMinutes !== null) {
+      const getDuration = (): Promise<number> => {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const media = document.createElement(file.type.startsWith('video/') ? 'video' : 'audio');
+          media.onloadedmetadata = () => {
+            URL.revokeObjectURL(url);
+            resolve(media.duration);
+          };
+          media.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Failed to read media duration"));
+          };
+          media.src = url;
+        });
+      };
+
+      try {
+        const durationSeconds = await getDuration();
+        console.log("durationSeconds", durationSeconds);
+        console.log("maxInputMinutes", maxInputMinutes);
+        console.log("durationSeconds > maxInputMinutes * 60", durationSeconds > maxInputMinutes * 60);
+
+        if (durationSeconds > maxInputMinutes * 60) {
+          setError(
+            <span>
+              File duration {Math.ceil(durationSeconds / 60)} min exceeds your plan limit of {maxInputMinutes} min.{" "}
+              <button
+                type="button"
+                className="underline font-semibold text-primary hover:text-primary/80"
+                onClick={() => router.push("/dashboard/billing")}
+              >
+                Upgrade your plan
+              </button>{" "}
+              to process longer files.
+            </span>
+          );
+          return;
+        }
+      } catch (err) {
+        console.warn("Could not read duration on frontend, deferring to backend.", err);
+      }
+    }
+
     setInternalSelectedFile(file);
     onSelectedFileChange?.(file);
-  }, [onSelectedFileChange]);
+  }, [maxFileSizeMB, maxInputMinutes, maxConcurrentJobs, activeJobsCount, onSelectedFileChange, router]);
 
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {

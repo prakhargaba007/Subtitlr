@@ -85,9 +85,9 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10 md:mb-12">
         <div className="text-center sm:text-left">
           <h2 className={`font-headline font-bold mb-2 ${titleClass}`}>Transparent Pricing</h2>
-          <p className="text-on-surface-variant text-body max-w-xl">
+          {/* <p className="text-on-surface-variant text-body max-w-xl">
             Compare plans. Prices are for display; billing runs through Dodo at checkout.
-          </p>
+          </p> */}
         </div>
 
         <div

@@ -191,7 +191,7 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/coming-soon", comingSoonRoutes);
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error("[Global Error Logger]", error); // Log full error internally
+  // console.error("[Global Error Logger]", error); // Log full error internally
 
   const status = error.statusCode || 500;
   // Mask generic 500 errors to prevent leakage, but allow custom error messages
@@ -216,7 +216,7 @@ app.use((error, req, res, next) => {
       await errorLog.save();
 
       // Send email to admin
-      const adminEmail = process.env.ADMIN_EMAIL || "founder.kililabs@prakhargaba.com";
+      const adminEmail = process.env.ADMIN_EMAIL || "prakhargaba@gmail.com";
       const subject = `[Backend Error] ${status} - ${error.message}`;
       const textBody = `An error occurred in the backend:\n\nStatus: ${status}\nMessage: ${error.message}\nPath: ${req.method} ${req.originalUrl || req.path}\n\nStack:\n${error.stack}`;
       const htmlBody = `
@@ -225,7 +225,7 @@ app.use((error, req, res, next) => {
         <p><strong>Message:</strong> ${error.message}</p>
         <p><strong>Path:</strong> ${req.method} ${req.originalUrl || req.path}</p>
         <p><strong>IP:</strong> ${req.ip}</p>
-        <p><strong>User:</strong> ${req.user ? req.user._id : 'N/A'}</p>
+        <p><strong>User:</strong> ${req.userId ? req.userId : "N/A"}</p>
         <h4>Stack Trace:</h4>
         <pre>${error.stack}</pre>
         <h4>Request Body:</h4>
