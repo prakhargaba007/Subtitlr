@@ -85,7 +85,7 @@ exports.getProjects = async (req, res, next) => {
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
         job: await attachThumbToJob(job),
-      }))
+      })),
     );
 
     const pagesOut = Math.max(1, Math.ceil(total / limit) || 1);

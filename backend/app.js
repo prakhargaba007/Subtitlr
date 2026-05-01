@@ -8,6 +8,9 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
+const ErrorLog = require("./models/ErrorLog");
+const sendEmail = require("./utils/mailer");
+
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -194,6 +197,46 @@ app.use((error, req, res, next) => {
   // Mask generic 500 errors to prevent leakage, but allow custom error messages
   const message = status === 500 ? "Something went wrong" : error.message;
   const data = status === 500 ? null : error.data;
+
+  // Asynchronously save error log and send email notification
+  (async () => {
+    try {
+      const errorLog = new ErrorLog({
+        message: error.message,
+        stack: error.stack,
+        statusCode: status,
+        path: req.originalUrl || req.path,
+        method: req.method,
+        body: req.body,
+        query: req.query,
+        params: req.params,
+        ip: req.ip,
+        user: req.user ? req.user._id : undefined,
+      });
+      await errorLog.save();
+
+      // Send email to admin
+      const adminEmail = process.env.ADMIN_EMAIL || "founder.kililabs@prakhargaba.com";
+      const subject = `[Backend Error] ${status} - ${error.message}`;
+      const textBody = `An error occurred in the backend:\n\nStatus: ${status}\nMessage: ${error.message}\nPath: ${req.method} ${req.originalUrl || req.path}\n\nStack:\n${error.stack}`;
+      const htmlBody = `
+        <h3>Backend Error</h3>
+        <p><strong>Status:</strong> ${status}</p>
+        <p><strong>Message:</strong> ${error.message}</p>
+        <p><strong>Path:</strong> ${req.method} ${req.originalUrl || req.path}</p>
+        <p><strong>IP:</strong> ${req.ip}</p>
+        <p><strong>User:</strong> ${req.user ? req.user._id : 'N/A'}</p>
+        <h4>Stack Trace:</h4>
+        <pre>${error.stack}</pre>
+        <h4>Request Body:</h4>
+        <pre>${JSON.stringify(req.body, null, 2)}</pre>
+      `;
+
+      await sendEmail(adminEmail, subject, textBody, htmlBody);
+    } catch (logError) {
+      console.error("[Error Logger Failed]:", logError);
+    }
+  })();
 
   res.status(status).send({ success: false, message: message, data: data });
 });
