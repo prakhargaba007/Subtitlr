@@ -76,31 +76,12 @@ const generateTokens = async (user, req, res, familyId = null) => {
     });
   }
 
-  // Minimal fallback: grab client hint headers if present
-  const userAgentString = req.get("User-Agent") || "";
-  const getHeaderStr = (name) => {
-    const val = req.get(name);
-    return val ? val.replace(/^"|"$/g, "") : "";
-  };
-  
-  const platform = getHeaderStr("Sec-CH-UA-Platform");
-  const model = getHeaderStr("Sec-CH-UA-Model");
-  
-  let initialDeviceInfo = {};
-  if (platform || model) {
-    initialDeviceInfo = {
-      os: { name: platform },
-      device: { model: model },
-    };
-  }
-
   await RefreshToken.create({
     user: user._id,
     tokenHash: tokenHash,
     familyId: tokenFamily,
     ipAddress: req.ip,
-    userAgent: userAgentString,
-    deviceInfo: initialDeviceInfo,
+    userAgent: req.get("User-Agent"),
     expiresAt,
     lastUsedAt: Date.now(),
   });

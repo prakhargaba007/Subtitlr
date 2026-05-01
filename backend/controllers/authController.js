@@ -36,16 +36,18 @@ exports.optGenerte = async (req, res, next) => {
 
     // Find user by email
     let user = await User.findOne({ email: email.toLowerCase() });
-    
+
     // If user doesn't exist, create a temporary user for OTP verification
     if (!user) {
       // Generate a temporary username from email
       const baseUserName = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "");
       let candidateUserName = baseUserName || "USER";
       let suffix = 0;
-      
+
       // Ensure username uniqueness
-      while (await User.findOne({ userName: candidateUserName.toUpperCase() })) {
+      while (
+        await User.findOne({ userName: candidateUserName.toUpperCase() })
+      ) {
         suffix += 1;
         candidateUserName = `${baseUserName}${suffix}`;
       }
@@ -58,7 +60,12 @@ exports.optGenerte = async (req, res, next) => {
         isVerified: false, // Will be verified after OTP confirmation
       });
       await user.save();
-      await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
+      await addCredits(
+        user._id,
+        DEFAULT_CREDITS,
+        "signup_bonus",
+        "Welcome credits",
+      );
     }
 
     // Create and send OTP
@@ -216,8 +223,12 @@ exports.login = async (req, res, next) => {
           profilePicture: photo,
         });
         await user.save();
-        await addCredits(user._id, DEFAULT_CREDITS, "signup_bonus", "Welcome credits");
-
+        await addCredits(
+          user._id,
+          DEFAULT_CREDITS,
+          "signup_bonus",
+          "Welcome credits",
+        );
       } else {
         const error = new Error("Invalid credentials");
         error.statusCode = 400;
@@ -236,7 +247,9 @@ exports.login = async (req, res, next) => {
     }
 
     // One-time welcome credits top-up (first login only; never again).
-    await grantWelcomeCreditsOnce(user._id, { reason: "login" }).catch(() => {});
+    await grantWelcomeCreditsOnce(user._id, { reason: "login" }).catch(
+      () => {},
+    );
 
     await generateTokens(user, req, res);
 
@@ -333,7 +346,7 @@ exports.resetPassword = async (req, res, next) => {
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
       const error = new Error(
-        "New password must be different from the current password"
+        "New password must be different from the current password",
       );
       error.statusCode = 400;
       throw error;
@@ -386,7 +399,7 @@ exports.verifyOTPAndResetPassword = async (req, res, next) => {
       const isSamePassword = await bcrypt.compare(newPassword, user.password);
       if (isSamePassword) {
         const error = new Error(
-          "New password must be different from the current password"
+          "New password must be different from the current password",
         );
         error.statusCode = 400;
         throw error;
@@ -444,11 +457,13 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
     if (tempUserId && tempUserId !== user._id.toString()) {
       const tempUser = await User.findById(tempUserId);
       if (tempUser && tempUser.tempUser) {
-
         if (user.isVerified && !user.tempUser) {
           // RETURNING USER: real account already exists.
           // Migrate any subtitle jobs created during the temp session then discard the temp user.
-          await SubtitleJob.updateMany({ user: tempUser._id }, { user: user._id });
+          await SubtitleJob.updateMany(
+            { user: tempUser._id },
+            { user: user._id },
+          );
           await User.findByIdAndDelete(tempUser._id);
           // `user` keeps pointing to the real account — no reassignment needed.
         } else {
@@ -458,7 +473,8 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
           tempUser.isVerified = true;
           tempUser.tempUser = false;
           if (user.name && !tempUser.name) tempUser.name = user.name;
-          if (user.profilePicture && !tempUser.profilePicture) tempUser.profilePicture = user.profilePicture;
+          if (user.profilePicture && !tempUser.profilePicture)
+            tempUser.profilePicture = user.profilePicture;
           await tempUser.save();
           await User.findByIdAndDelete(user._id);
           user = tempUser;
@@ -473,12 +489,12 @@ exports.verifyOTPForSignIn = async (req, res, next) => {
     if (!user.isVerified) {
       user.isVerified = true;
     }
-    
+
     // Remove tempUser flag if it exists
     if (user.tempUser) {
       user.tempUser = false;
     }
-    
+
     await user.save();
 
     await grantWelcomeCreditsOnce(user._id, { reason: "otp_verify" });
@@ -543,24 +559,33 @@ exports.googleExchange = async (req, res, next) => {
       throw error;
     }
     // console.log("env", process.env.GOOGLE_CLIENT_ID, process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
-    
 
-    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId =
+      process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = "postmessage"; // popup/code flow
 
     if (!clientId || !clientSecret) {
-      const error = new Error("Google OAuth client credentials are not configured");
+      const error = new Error(
+        "Google OAuth client credentials are not configured",
+      );
       error.statusCode = 500;
       throw error;
     }
 
-    const oauth2Client = new OAuth2Client({ clientId, clientSecret, redirectUri });
+    const oauth2Client = new OAuth2Client({
+      clientId,
+      clientSecret,
+      redirectUri,
+    });
 
     // Exchange code for tokens
     let tokenResponse;
     try {
-      tokenResponse = await oauth2Client.getToken({ code, redirect_uri: redirectUri });
+      tokenResponse = await oauth2Client.getToken({
+        code,
+        redirect_uri: redirectUri,
+      });
     } catch (e) {
       console.error("Error exchanging code for tokens:", e);
       const error = new Error("Failed to exchange authorization code");
@@ -610,16 +635,18 @@ exports.googleExchange = async (req, res, next) => {
 
     // Upsert user
     let user = await User.findOne({ email });
-    
+
     // If tempUserId is provided, decide how to merge the temp session
     if (tempUserId && (!user || user._id.toString() !== tempUserId)) {
       const tempUser = await User.findById(tempUserId);
       if (tempUser && tempUser.tempUser) {
-
         if (user && user.isVerified && !user.tempUser) {
           // RETURNING USER: real account already exists.
           // Migrate any subtitle jobs created during the temp session then discard the temp user.
-          await SubtitleJob.updateMany({ user: tempUser._id }, { user: user._id });
+          await SubtitleJob.updateMany(
+            { user: tempUser._id },
+            { user: user._id },
+          );
           await User.findByIdAndDelete(tempUser._id);
           // `user` keeps pointing to the real account — update profile details from Google.
           if (picture && !user.profilePicture) user.profilePicture = picture;
@@ -631,7 +658,8 @@ exports.googleExchange = async (req, res, next) => {
           tempUser.profilePicture = picture || tempUser.profilePicture;
           tempUser.isVerified = true;
           tempUser.tempUser = false;
-          if (user.profilePicture && !tempUser.profilePicture) tempUser.profilePicture = user.profilePicture;
+          if (user.profilePicture && !tempUser.profilePicture)
+            tempUser.profilePicture = user.profilePicture;
           await tempUser.save();
           await User.findByIdAndDelete(user._id);
           user = tempUser;
@@ -647,13 +675,15 @@ exports.googleExchange = async (req, res, next) => {
         }
       }
     }
-    
+
     if (!user) {
       // generate unique username based on email local part
       const baseUserName = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "");
       let candidateUserName = baseUserName || "USER";
       let suffix = 0;
-      while (await User.findOne({ userName: candidateUserName.toUpperCase() })) {
+      while (
+        await User.findOne({ userName: candidateUserName.toUpperCase() })
+      ) {
         suffix += 1;
         candidateUserName = `${baseUserName}${suffix}`;
       }
@@ -668,7 +698,9 @@ exports.googleExchange = async (req, res, next) => {
       await grantWelcomeCreditsOnce(user._id, { reason: "google_first" });
     } else {
       // Update profile image/name if changed
-      const shouldUpdate = (picture && user.profilePicture !== picture) || (displayName && user.name !== displayName);
+      const shouldUpdate =
+        (picture && user.profilePicture !== picture) ||
+        (displayName && user.name !== displayName);
       if (shouldUpdate) {
         user.profilePicture = picture || user.profilePicture;
         user.name = displayName || user.name;
@@ -679,7 +711,9 @@ exports.googleExchange = async (req, res, next) => {
       }
       await user.save();
       // One-time welcome credits top-up (first login only; never again).
-      await grantWelcomeCreditsOnce(user._id, { reason: "google_login" }).catch(() => {});
+      await grantWelcomeCreditsOnce(user._id, { reason: "google_login" }).catch(
+        () => {},
+      );
     }
 
     await generateTokens(user, req, res);
@@ -708,32 +742,46 @@ exports.refresh = async (req, res, next) => {
     if (!rawToken) return res.status(401).json({ message: "No refresh token" });
 
     // Hash token to query DB
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
     // ATOMIC OPERATION: Claim the unrevoked token
     const tokenDoc = await RefreshToken.findOneAndUpdate(
       { tokenHash, isRevoked: false },
       { isRevoked: true }, // Atomically mark it as used
-      { new: false } // Return the original document
-    ).populate('user');
+      { new: false }, // Return the original document
+    ).populate("user");
 
     if (!tokenDoc) {
       // It didn't exist OR it was already revoked (Reuse)
       const existingToken = await RefreshToken.findOne({ tokenHash });
-      
+
       if (existingToken && existingToken.isRevoked) {
-        console.warn(`[CRITICAL] Refresh Token Reuse Detected! Family: ${existingToken.familyId}, IP: ${req.ip}`);
-        
+        console.warn(
+          `[CRITICAL] Refresh Token Reuse Detected! Family: ${existingToken.familyId}, IP: ${req.ip}`,
+        );
+
         // 1. Revoke the entire token family
-        await RefreshToken.updateMany({ familyId: existingToken.familyId }, { isRevoked: true });
-        
+        await RefreshToken.updateMany(
+          { familyId: existingToken.familyId },
+          { isRevoked: true },
+        );
+
         // 2. Increment user tokenVersion to kill all active access tokens
         if (existingToken.user) {
-           await User.findByIdAndUpdate(existingToken.user, { $inc: { tokenVersion: 1 } });
+          await User.findByIdAndUpdate(existingToken.user, {
+            $inc: { tokenVersion: 1 },
+          });
         }
 
         clearAuthCookies(req, res);
-        return res.status(401).json({ message: "Security violation detected. Please log in again." });
+        return res
+          .status(401)
+          .json({
+            message: "Security violation detected. Please log in again.",
+          });
       }
 
       // Token doesn't exist at all
@@ -762,11 +810,17 @@ exports.logout = async (req, res, next) => {
   try {
     const rawToken = req.cookies?.refreshToken;
     if (rawToken) {
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenHash = crypto
+        .createHash("sha256")
+        .update(rawToken)
+        .digest("hex");
       const tokenDoc = await RefreshToken.findOne({ tokenHash });
       if (tokenDoc) {
         // Revoke entire device family on logout
-        await RefreshToken.updateMany({ familyId: tokenDoc.familyId }, { isRevoked: true });
+        await RefreshToken.updateMany(
+          { familyId: tokenDoc.familyId },
+          { isRevoked: true },
+        );
       }
     }
 
@@ -784,7 +838,7 @@ exports.logoutAllDevices = async (req, res, next) => {
     await RefreshToken.updateMany({ user: req.userId }, { isRevoked: true });
     // Invalidate all access tokens
     await User.findByIdAndUpdate(req.userId, { $inc: { tokenVersion: 1 } });
-    
+
     clearAuthCookies(req, res);
     res.status(200).json({ success: true });
   } catch (err) {
@@ -794,11 +848,13 @@ exports.logoutAllDevices = async (req, res, next) => {
 
 exports.getSessions = async (req, res, next) => {
   try {
-    const sessions = await RefreshToken.find({ user: req.userId, isRevoked: false })
-      .select('ipAddress userAgent deviceInfo createdAt lastUsedAt familyId');
+    const sessions = await RefreshToken.find({
+      user: req.userId,
+      isRevoked: false,
+    }).select("ipAddress userAgent createdAt lastUsedAt familyId");
     res.status(200).json({ success: true, sessions });
-  } catch (err) { 
-    next(err); 
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -807,34 +863,9 @@ exports.revokeSession = async (req, res, next) => {
     const { sessionId } = req.params;
     await RefreshToken.findOneAndUpdate(
       { _id: sessionId, user: req.userId },
-      { isRevoked: true }
+      { isRevoked: true },
     );
     res.status(200).json({ success: true, message: "Session revoked" });
-  } catch (err) { 
-    next(err); 
-  }
-};
-
-exports.updateDeviceInfo = async (req, res, next) => {
-  try {
-    const rawToken = req.cookies?.refreshToken;
-    if (!rawToken) {
-      return res.status(401).json({ success: false, message: "No refresh token" });
-    }
-
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-    const { deviceInfo } = req.body;
-
-    if (!deviceInfo) {
-      return res.status(400).json({ success: false, message: "Device info is required" });
-    }
-
-    await RefreshToken.findOneAndUpdate(
-      { tokenHash, user: req.userId, isRevoked: false },
-      { $set: { deviceInfo } }
-    );
-
-    res.status(200).json({ success: true, message: "Device info updated" });
   } catch (err) {
     next(err);
   }

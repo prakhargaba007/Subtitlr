@@ -130,7 +130,9 @@ const transliterateToHinglish = async (segments) => {
         responseMimeType: "application/json",
       },
     });
+    const usage = response.response.usageMetadata;
     parsed = parseGeminiJsonResponse(response);
+    return { segments: segments.map((s, i) => ({ ...s, text: (parsed.results || [])[i] ?? s.text })), usage };
   } else {
     const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
@@ -142,14 +144,8 @@ const transliterateToHinglish = async (segments) => {
       ],
     });
     parsed = JSON.parse(response.choices[0].message.content);
+    return { segments: segments.map((s, i) => ({ ...s, text: (parsed.results || [])[i] ?? s.text })), usage: response.usage };
   }
-
-  const results = parsed.results || [];
-
-  return segments.map((s, i) => ({
-    ...s,
-    text: results[i] ?? s.text,
-  }));
 };
 
 // ─── Subtitle Format Generators ───────────────────────────────────────────────

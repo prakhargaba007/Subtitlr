@@ -610,7 +610,7 @@ async function transcribeGeminiChunk(
     );
   }
 
-  const modelName = "gemini-3.1-pro-preview";
+  const modelName = "gemini-3.1-flash-lite-preview";
   console.log(`[transcribeGeminiChunk] Using model: ${modelName}`);
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
@@ -664,9 +664,10 @@ async function transcribeGeminiChunk(
 
     console.log("[transcribeGeminiChunk] Gemini transcribing…");
     const result = await model.generateContent([mediaPart, { text: prompt }]);
+    const usage = result.response.usageMetadata;
     const text = result.response.text();
     console.log(
-      `[transcribeGeminiChunk] Gemini response received, length=${text.length}`,
+      `[transcribeGeminiChunk] Gemini response received, length=${text.length}, tokens=${JSON.stringify(usage)}`,
     );
     const parsed = parseJsonFromModelText(text);
     if (!Array.isArray(parsed.transcript)) {
@@ -687,7 +688,7 @@ async function transcribeGeminiChunk(
     console.log(
       `[transcribeGeminiChunk] Speaker profiles built: count=${Object.keys(speaker_profiles).length}`,
     );
-    return { segments, speaker_profiles };
+    return { segments, speaker_profiles, usage };
   } catch (err) {
     console.error(
       "[transcribeGeminiChunk] Error during Gemini chunk transcription:",
@@ -752,7 +753,7 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
       vocalsPath,
       { vadIntervals },
     );
-    console.log("finalized", finalized);
+    return { ...finalized, usage: r.usage ? [r.usage] : [] };
   } else {
     const bytesPerSecond = vocalsSize / duration;
     const chunkSeconds = Math.max(
@@ -777,6 +778,7 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
 
     const allSegments = [];
     const allProfiles = [];
+    const allUsage = [];
     let timeOffset = 0;
 
     for (let i = 0; i < chunkFiles.length; i++) {
@@ -792,6 +794,7 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
       );
       allSegments.push(...result.segments);
       allProfiles.push(result.speaker_profiles);
+      if (result.usage) allUsage.push(result.usage);
 
       if (i < chunkFiles.length - 1) {
         timeOffset += Math.max(0, chunkDuration - CHUNK_OVERLAP_SECONDS);
@@ -813,7 +816,7 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
   //   speaker_profiles: finalized.speaker_profiles,
   // });
 
-  return finalized;
+  return { ...finalized, usage: allUsage.length ? allUsage : [] };
 };
 
 module.exports = { transcribeWithSpeakers };

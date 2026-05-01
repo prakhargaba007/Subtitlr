@@ -97,6 +97,10 @@ const {
 } = require("../utils/smallestTtsUtils");
 const { loadLocalInworldVoices } = require("../utils/localInworldVoices");
 const { createProjectForDubbingJob } = require("../utils/projectUtils");
+const {
+  findProjectIdByJobId,
+  recordProjectUsage,
+} = require("../utils/usageTracker");
 const { downloadYoutubeVideo } = require("../utils/youtubeDownloadUtils");
 
 // Dubbing credits: 1 credit per second (rounded up to the next whole second).
@@ -147,26 +151,54 @@ async function synthesizeDubbingTts(
   const iwText = textForInworldTts(text, targetLanguage);
   if (ttsProviderResolved === "openai") {
     const o = await generateSpeechOpenAI(plain, voiceKey);
-    return { audioPath: o.audioPath, wordTimestamps: [] };
+    return {
+      audioPath: o.audioPath,
+      wordTimestamps: [],
+      usage: { model: "tts-1", outputCharacters: o.characterCount },
+    };
   }
   if (ttsProviderResolved === "sarvam") {
     const o = await synthesizeSarvamTts(plain, voiceKey, targetLanguage);
-    return { audioPath: o.audioPath, wordTimestamps: [] };
+    return {
+      audioPath: o.audioPath,
+      wordTimestamps: [],
+      usage: { model: "bulbul:v3", outputCharacters: plain.length },
+    };
   }
   if (ttsProviderResolved === "inworld") {
     const o = await synthesizeInworldTts(iwText, voiceKey);
-    return { audioPath: o.audioPath, wordTimestamps: o.wordTimestamps || [] };
+    return {
+      audioPath: o.audioPath,
+      wordTimestamps: o.wordTimestamps || [],
+      usage: { model: "inworld-tts-1.5-max", outputCharacters: iwText.length },
+    };
   }
   if (ttsProviderResolved === "smallest") {
     const o = await synthesizeSmallestTts(plain, voiceKey);
-    return { audioPath: o.audioPath, wordTimestamps: [] };
+    return {
+      audioPath: o.audioPath,
+      wordTimestamps: [],
+      usage: { model: "lightning", seconds: o.durationSeconds },
+    };
   }
   if (ttsProviderResolved === "gemini") {
     const o = await synthesizeGeminiTts(textForGeminiTts(text), voiceKey);
-    return { audioPath: o.audioPath, wordTimestamps: [] };
+    return {
+      audioPath: o.audioPath,
+      wordTimestamps: [],
+      usage: {
+        model: "gemini-3.1-flash-tts-preview",
+        inputTokens: o.usage?.promptTokenCount,
+        outputTokens: o.usage?.candidatesTokenCount,
+      },
+    };
   }
   const o = await generateSpeech(plain, voiceKey);
-  return { audioPath: o.audioPath, wordTimestamps: [] };
+  return {
+    audioPath: o.audioPath,
+    wordTimestamps: [],
+    usage: { model: "eleven_flash_v2_5", outputCharacters: o.characterCount },
+  };
 }
 
 function getDubbingSegmentPipelineConcurrency() {
@@ -197,6 +229,7 @@ async function pipelineTtsSyncUploadForDubbing({
   segmentAudioKeys,
   userId,
   pathCollector,
+  projectId,
 }) {
   const n = ttsRows.length;
   const rawDubbedPaths = new Array(n);
@@ -229,12 +262,19 @@ async function pipelineTtsSyncUploadForDubbing({
       message: `Generating speech: clip ${k + 1}/${n}…`,
     });
 
-    const { audioPath, wordTimestamps } = await synthesizeDubbingTts(
+    const {
+      audioPath,
+      wordTimestamps,
+      usage: ttsUsage,
+    } = await synthesizeDubbingTts(
       synthesizeProvider,
       row.text,
       voiceKey,
       targetLanguage,
     );
+    if (ttsUsage && projectId) {
+      await recordProjectUsage(projectId, ttsUsage);
+    }
     tmpPaths.push(audioPath);
     rawDubbedPaths[k] = audioPath;
     wordTsForRows[k] = wordTimestamps;
@@ -472,6 +512,7 @@ async function runDubbingPipelineFromInput(
   });
 
   await createProjectForDubbingJob(req.userId, job._id);
+  const projectId = await findProjectIdByJobId(job._id, "dubbing");
 
   emit({ stage: "validating", message: "Job created.", jobId: job._id });
 
@@ -498,7 +539,10 @@ async function runDubbingPipelineFromInput(
           await storage.saveFile(fs.readFileSync(tmpThumb), key, "image/jpeg");
           await DubbingJob.findByIdAndUpdate(job._id, { thumbnailKey: key });
         } catch (thumbErr) {
-          console.warn("[dubbing] thumbnail generation failed:", thumbErr.message);
+          console.warn(
+            "[dubbing] thumbnail generation failed:",
+            thumbErr.message,
+          );
         }
       })()
     : Promise.resolve();
@@ -524,7 +568,11 @@ async function runDubbingPipelineFromInput(
       let videoKey = null;
       if (existingOriginalS3Key) {
         videoKey = existingOriginalS3Key;
-      } else if (inputBuffer && Buffer.isBuffer(inputBuffer) && inputBuffer.length) {
+      } else if (
+        inputBuffer &&
+        Buffer.isBuffer(inputBuffer) &&
+        inputBuffer.length
+      ) {
         const key = `dubbing/${req.userId}/${uuidv4()}${ext}`;
         await storage.saveFile(inputBuffer, key, inputMimeType);
         videoKey = key;
@@ -537,13 +585,20 @@ async function runDubbingPipelineFromInput(
       }
 
       const audioOrigKey = `dubbing/${req.userId}/${uuidv4()}_original_audio.mp3`;
-      await storage.saveFile(fs.readFileSync(audioPath), audioOrigKey, "audio/mpeg");
+      await storage.saveFile(
+        fs.readFileSync(audioPath),
+        audioOrigKey,
+        "audio/mpeg",
+      );
 
       const update = { originalAudioKey: audioOrigKey };
       if (videoKey) update.originalVideoKey = videoKey;
       await DubbingJob.findByIdAndUpdate(job._id, update);
     } catch (uploadErr) {
-      console.warn("[dubbing] Original asset upload failed:", uploadErr.message);
+      console.warn(
+        "[dubbing] Original asset upload failed:",
+        uploadErr.message,
+      );
     }
   })();
 
@@ -560,7 +615,9 @@ async function runDubbingPipelineFromInput(
 
   const sepPromise = separateVocalsAndBackground(audioPath, separationDir).then(
     async (result) => {
-      console.log(`[dubbing:timing] separation done: ${Date.now() - _tSepStart}ms`);
+      console.log(
+        `[dubbing:timing] separation done: ${Date.now() - _tSepStart}ms`,
+      );
       emit({
         stage: "separating",
         message: `Audio separated (${result.method === "replicate" ? "Demucs" : "ElevenLabs fallback"}).`,
@@ -573,12 +630,20 @@ async function runDubbingPipelineFromInput(
         const [vocalsKey, backgroundKey] = await Promise.all([
           (async () => {
             const key = `dubbing/${req.userId}/${uuidv4()}_vocals.mp3`;
-            await storage.saveFile(fs.readFileSync(result.vocalsPath), key, "audio/mpeg");
+            await storage.saveFile(
+              fs.readFileSync(result.vocalsPath),
+              key,
+              "audio/mpeg",
+            );
             return key;
           })(),
           (async () => {
             const key = `dubbing/${req.userId}/${uuidv4()}_background.mp3`;
-            await storage.saveFile(fs.readFileSync(result.backgroundPath), key, "audio/mpeg");
+            await storage.saveFile(
+              fs.readFileSync(result.backgroundPath),
+              key,
+              "audio/mpeg",
+            );
             return key;
           })(),
         ]);
@@ -591,6 +656,21 @@ async function runDubbingPipelineFromInput(
         console.warn("Stems S3 upload failed:", uploadErr.message);
       }
 
+      // Record Separation Usage
+      if (projectId) {
+        if (result.method === "replicate") {
+          await recordProjectUsage(projectId, {
+            model: "ryan5453/demucs",
+            seconds: duration,
+          });
+        } else if (result.method === "elevenlabs_fallback") {
+          await recordProjectUsage(projectId, {
+            model: "audio-isolation",
+            seconds: duration,
+          });
+        }
+      }
+
       return result;
     },
   );
@@ -601,7 +681,9 @@ async function runDubbingPipelineFromInput(
   // Set DUBBING_TRANSCRIBE_SOURCE=vocals to wait for stems and use clean vocals.
   const transcribeSource = String(
     process.env.DUBBING_TRANSCRIBE_SOURCE || "original",
-  ).trim().toLowerCase();
+  )
+    .trim()
+    .toLowerCase();
 
   emit({
     stage: "transcribing",
@@ -618,8 +700,21 @@ async function runDubbingPipelineFromInput(
   }
 
   const _tTrStart = Date.now();
-  const { segments: rawSegments, speaker_profiles } =
-    await transcribeWithSpeakers(transcribeInputPath, sourceLanguage);
+  const {
+    segments: rawSegments,
+    speaker_profiles,
+    usage: transcribeUsage,
+  } = await transcribeWithSpeakers(transcribeInputPath, sourceLanguage);
+
+  if (Array.isArray(transcribeUsage) && projectId) {
+    for (const u of transcribeUsage) {
+      await recordProjectUsage(projectId, {
+        model: "gemini-3.1-flash-lite-preview",
+        inputTokens: u.promptTokenCount,
+        outputTokens: u.candidatesTokenCount,
+      });
+    }
+  }
   console.log(`[dubbing:timing] transcribe done: ${Date.now() - _tTrStart}ms`);
 
   emit({
@@ -647,15 +742,26 @@ async function runDubbingPipelineFromInput(
 
   const translationMode =
     String(req.body.translationMode || "auto").trim() || "auto";
-  const translatedSegments = await translateToSpeechReady(
-    segmentsForTranslate,
-    targetLanguage,
-    speaker_profiles,
-    { sourceLanguage, translationMode },
-  );
+  const { results: translatedSegments, usage: translationUsage } =
+    await translateToSpeechReady(
+      segmentsForTranslate,
+      targetLanguage,
+      speaker_profiles,
+      { sourceLanguage, translationMode },
+    );
+
+  if (translationUsage && projectId) {
+    await recordProjectUsage(projectId, {
+      model: "gpt-4o-mini",
+      inputTokens: translationUsage.prompt_tokens,
+      outputTokens: translationUsage.completion_tokens,
+    });
+  }
 
   emit({ stage: "translating", message: "Translation complete." });
-  console.log(`[dubbing:timing] translate done: ${Date.now() - _t0}ms elapsed total`);
+  console.log(
+    `[dubbing:timing] translate done: ${Date.now() - _t0}ms elapsed total`,
+  );
 
   // Separation may still be running; it will be awaited in startDubbingJob
   // immediately before layerSpeechOverBackground (which needs backgroundPath).
@@ -679,6 +785,7 @@ async function runDubbingPipelineFromInput(
     // Best-effort background tasks that read temp files; await before cleanup.
     thumbPromise,
     origUploadPromise,
+    projectId,
   };
 }
 
@@ -707,10 +814,14 @@ exports.requestDubbingUploadUrl = async (req, res, next) => {
       });
     }
     if (!AUDIO_VIDEO_MIMES.has(mimeType)) {
-      return res.status(415).json({ message: `Unsupported mime type: ${mimeType}` });
+      return res
+        .status(415)
+        .json({ message: `Unsupported mime type: ${mimeType}` });
     }
     if (!Number.isFinite(byteSize) || byteSize <= 0) {
-      return res.status(400).json({ message: "byteSize must be a positive number." });
+      return res
+        .status(400)
+        .json({ message: "byteSize must be a positive number." });
     }
 
     const user = await User.findById(req.userId)
@@ -814,7 +925,8 @@ exports.startDubbingJob = async (req, res) => {
   const setStageTarget = (stage) => {
     if (!stage) return;
     const t = STAGE_TARGET_PROGRESS[stage];
-    if (typeof t === "number") progressState.target = Math.max(progressState.target, t);
+    if (typeof t === "number")
+      progressState.target = Math.max(progressState.target, t);
   };
 
   const emitProgressFrameIfChanged = () => {
@@ -830,13 +942,18 @@ exports.startDubbingJob = async (req, res) => {
 
   const tickProgress = () => {
     const nowMs = Date.now();
-    const dtSec = Math.max(0, Math.min(0.5, (nowMs - progressState.lastTickAtMs) / 1000));
+    const dtSec = Math.max(
+      0,
+      Math.min(0.5, (nowMs - progressState.lastTickAtMs) / 1000),
+    );
     progressState.lastTickAtMs = nowMs;
 
     const expected = progressState.expectedTotalSec;
     const elapsedSec = Math.max(0, (nowMs - progressState.startedAtMs) / 1000);
     const timeBasedCap =
-      typeof expected === "number" ? clamp((elapsedSec / expected) * 100, 0, 99) : 0;
+      typeof expected === "number"
+        ? clamp((elapsedSec / expected) * 100, 0, 99)
+        : 0;
 
     // Always cap by time *and* stage target, so progress can't jump early.
     const desired = Math.min(progressState.target, timeBasedCap);
@@ -876,7 +993,11 @@ exports.startDubbingJob = async (req, res) => {
     }
 
     // Preserve transcription sub-progress semantics (frontend maps it into overall).
-    if (data && data.stage === "transcribing" && typeof data.progress === "number") {
+    if (
+      data &&
+      data.stage === "transcribing" &&
+      typeof data.progress === "number"
+    ) {
       progressState.stage = data.stage;
       progressState.message = data.message ?? progressState.message;
       setStageTarget(data.stage);
@@ -912,7 +1033,9 @@ exports.startDubbingJob = async (req, res) => {
     const hasDiskInput = Boolean(
       req.dubbingTmpProbeFile && fs.existsSync(req.dubbingTmpProbeFile),
     );
-    const hasBufferInput = Boolean(req.file && req.file.buffer && req.file.buffer.length);
+    const hasBufferInput = Boolean(
+      req.file && req.file.buffer && req.file.buffer.length,
+    );
     if (!req.file || (!hasBufferInput && !hasDiskInput)) {
       emit({ stage: "error", message: "No file uploaded.", statusCode: 422 });
       return res.end();
@@ -957,6 +1080,7 @@ exports.startDubbingJob = async (req, res) => {
       _t0,
       thumbPromise,
       origUploadPromise,
+      projectId,
     } = prepared;
 
     // Now that we know the media duration, calibrate progress speed.
@@ -1212,6 +1336,7 @@ exports.startDubbingJob = async (req, res) => {
         segmentAudioKeys: audioKeys,
         userId: req.userId,
         pathCollector,
+        projectId,
       });
       return {
         rawDubbedPaths: out.rawDubbedPaths,
@@ -1519,7 +1644,9 @@ exports.startDubbingJob = async (req, res) => {
       }
     }
 
-    console.log(`[dubbing:timing] TTS+sync done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`);
+    console.log(
+      `[dubbing:timing] TTS+sync done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`,
+    );
 
     // ── Step 8: Await stems (may already be done) then mix ────────────────────
     emit({
@@ -1564,7 +1691,9 @@ exports.startDubbingJob = async (req, res) => {
     const mixedAudioForOutput = mixResult.path;
 
     saveArtifact(jobIdStr, "dubbed_mix.mp3", mixedAudioForOutput);
-    console.log(`[dubbing:timing] mix done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`);
+    console.log(
+      `[dubbing:timing] mix done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`,
+    );
 
     // ── Step 9 (v1): Upload dubbed audio only — video mux is done client-side ─
     // Lip-sync and server-side video mux are deferred to a future opt-in path.
@@ -1583,7 +1712,9 @@ exports.startDubbingJob = async (req, res) => {
     }
 
     saveArtifact(jobIdStr, "final_dubbed.mp3", mixedAudioForOutput);
-    console.log(`[dubbing:timing] upload done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`);
+    console.log(
+      `[dubbing:timing] upload done: ${Date.now() - (_t0 || Date.now())}ms elapsed total`,
+    );
 
     // ── Step 10: Confirm usage reservation + Deduct credits + finalise job ────
     emit({ stage: "saving", message: "Saving results…" });
@@ -1663,7 +1794,9 @@ exports.startDubbingJob = async (req, res) => {
       { new: true },
     );
 
-    console.log(`[dubbing:timing] TOTAL pipeline: ${Date.now() - (_t0 || Date.now())}ms`);
+    console.log(
+      `[dubbing:timing] TOTAL pipeline: ${Date.now() - (_t0 || Date.now())}ms`,
+    );
 
     emit({
       stage: "done",
@@ -1681,7 +1814,8 @@ exports.startDubbingJob = async (req, res) => {
           .select("email preferences.emailNotifications")
           .lean();
         const emailOk =
-          Boolean(user?.email) && user?.preferences?.emailNotifications !== false;
+          Boolean(user?.email) &&
+          user?.preferences?.emailNotifications !== false;
         if (emailOk) {
           await sendDubbingCompletedEmail({
             email: user.email,
@@ -1697,8 +1831,6 @@ exports.startDubbingJob = async (req, res) => {
     } catch (e) {
       console.warn("[dubbing] completion email failed (non-fatal):", e.message);
     }
-
-  
 
     res.end();
   } catch (err) {
@@ -1743,7 +1875,8 @@ exports.startDubbingJob = async (req, res) => {
     try {
       const bg = [];
       if (typeof thumbPromise?.then === "function") bg.push(thumbPromise);
-      if (typeof origUploadPromise?.then === "function") bg.push(origUploadPromise);
+      if (typeof origUploadPromise?.then === "function")
+        bg.push(origUploadPromise);
       await Promise.allSettled(bg);
     } catch (_) {}
 
@@ -2051,6 +2184,15 @@ Constraints:
       throw err;
     }
 
+    const projectId = await findProjectIdByJobId(job._id, "dubbing");
+    if (projectId && response.usage) {
+      await recordProjectUsage(projectId, {
+        model: "gpt-4o-mini",
+        inputTokens: response.usage.prompt_tokens,
+        outputTokens: response.usage.completion_tokens,
+      });
+    }
+
     res.json({ improvedText });
   } catch (err) {
     if (!err.statusCode) err.statusCode = 500;
@@ -2098,13 +2240,18 @@ exports.regenerateDubbingSegment = async (req, res, next) => {
     const syncOpts = { maxAtempo };
 
     // Step 1: Generate raw TTS
-    const { audioPath: ttsPath } = await synthesizeDubbingTts(
+    const { audioPath: ttsPath, usage: ttsUsage } = await synthesizeDubbingTts(
       provider,
       rawText,
       voiceKey,
       job.targetLanguage,
     );
     tmpPaths.push(ttsPath);
+
+    const projectId = await findProjectIdByJobId(job._id, "dubbing");
+    if (projectId && ttsUsage) {
+      await recordProjectUsage(projectId, ttsUsage);
+    }
 
     // Step 2: Sync timing to segment slot
     const originalDuration = (seg.end ?? 0) - (seg.start ?? 0);

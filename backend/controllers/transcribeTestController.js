@@ -80,7 +80,7 @@ exports.testTranscribe = async (req, res, next) => {
       };
 
       if (targetLanguage) {
-        const translatedSegments = await translateToSpeechReady(
+        const { results: translatedSegments } = await translateToSpeechReady(
           segments,
           targetLanguage,
           speaker_profiles,

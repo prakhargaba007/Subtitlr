@@ -6,6 +6,7 @@
  */
 const flattenTranslatedSegmentsForTts = (segments) => {
   const rows = [];
+  if (!segments) return rows;
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
     const slot = Math.max(0.05, seg.end - seg.start);

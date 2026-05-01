@@ -41,6 +41,31 @@ const projectSchema = new Schema(
       type: Date,
       default: null,
     },
+    /** AI usage metrics and estimated cost for this project. */
+    aiUsage: [
+      {
+        model: { type: String, required: true },
+        provider: { type: String, required: true },
+        type: {
+          type: String,
+          enum: ["transcription", "translation_reasoning", "source_separation", "tts"],
+          required: true,
+        },
+        inputTokens: { type: Number, default: 0 },
+        outputTokens: { type: Number, default: 0 },
+        inputCharacters: { type: Number, default: 0 },
+        outputCharacters: { type: Number, default: 0 },
+        seconds: { type: Number, default: 0 },
+        costUsd: { type: Number, default: 0 },
+        meta: { type: Schema.Types.Mixed }, // Tiered pricing or other provider-specific metadata
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    totalCostUsd: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
   },
   { timestamps: true }
 );

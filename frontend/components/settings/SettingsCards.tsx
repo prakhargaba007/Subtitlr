@@ -49,43 +49,6 @@ function formatUserAgent(ua?: string) {
   return `${browserLabel} on ${os}`;
 }
 
-function formatSessionDevice(session: SessionInfo) {
-  if (session.deviceInfo) {
-    const { browser, os, device, brands, mobile } = session.deviceInfo;
-    
-    // Attempt to extract a reliable brand name from UA-CH 'brands'
-    let brandName = "";
-    if (brands && Array.isArray(brands) && brands.length > 0) {
-      // Filter out grease characters like 'Not A;Brand'
-      const validBrands = brands.filter(b => !b.brand.includes("Not") && !b.brand.includes("A;Brand"));
-      if (validBrands.length > 0) {
-        brandName = validBrands[0].brand;
-      } else {
-        brandName = brands[0].brand;
-      }
-    }
-    
-    // Fallback to legacy structure if present
-    if (!brandName && browser?.name) {
-      brandName = browser.name;
-    }
-
-    const deviceStr = device?.model 
-      ? device.model
-      : device?.type 
-        ? `${device.type} Device`
-        : mobile ? "Mobile Device" : '';
-        
-    const osStr = os?.name ? os.name : '';
-    
-    const parts = [deviceStr, osStr, brandName].filter(Boolean);
-    if (parts.length > 0) {
-      return parts.join(" • ");
-    }
-  }
-  return formatUserAgent(session.userAgent);
-}
-
 export function Card({
   title,
   children,
@@ -291,13 +254,6 @@ export type SessionInfo = {
   _id: string;
   ipAddress?: string;
   userAgent?: string;
-  deviceInfo?: {
-    mobile?: boolean;
-    brands?: { brand: string; version: string }[];
-    browser?: { name?: string; version?: string; fullVersionList?: { brand: string; version: string }[] };
-    os?: { name?: string; version?: string };
-    device?: { vendor?: string; model?: string; type?: string; architecture?: string };
-  };
   createdAt?: string;
   lastUsedAt?: string;
 };
@@ -377,7 +333,7 @@ export function SecurityCard({
                     className="text-sm font-headline font-bold text-on-surface truncate max-w-[500px]"
                     title={s.userAgent || "Unknown device"}
                   >
-                    {formatSessionDevice(s)}
+                    {formatUserAgent(s.userAgent)}
                   </p>
 
                   <div className="mt-1 flex flex-wrap items-center gap-2">

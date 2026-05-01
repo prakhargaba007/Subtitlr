@@ -62,7 +62,7 @@ const translateToSpeechReady = async (
   speakerProfiles = [],
   options = {},
 ) => {
-  if (!segments.length) return [];
+  if (!segments.length) return { results: [], usage: null };
 
   const mode =
     options.translationMode === "auto" || !options.translationMode
@@ -182,7 +182,7 @@ ${jsonShape}`;
     resultMap[r.index] = r;
   }
 
-  return segments.map((seg, i) => {
+  const finalResults = segments.map((seg, i) => {
     const r = resultMap[i];
     const translatedText = (r && r.translated_text) || seg.text;
     const rawSubs = r && Array.isArray(r.sub_segments) ? r.sub_segments : [];
@@ -210,6 +210,8 @@ ${jsonShape}`;
       translationMode: mode,
     };
   });
+
+  return { results: finalResults, usage: response.usage };
 };
 
 module.exports = { translateToSpeechReady, inferTranslationMode };

@@ -47,6 +47,10 @@ const {
   refineSegmentsWithVadTimeline,
 } = require("../utils/sileroVadUtils");
 const { createProjectForSubtitleJob } = require("../utils/projectUtils");
+const {
+  findProjectIdByJobId,
+  recordProjectUsage,
+} = require("../utils/usageTracker");
 
 // Whisper hard limit is 25 MB — keep chunks safely below it
 const WHISPER_MAX_BYTES = 24 * 1024 * 1024;
@@ -301,7 +305,16 @@ exports.generateSubtitles = async (req, res, next) => {
 
     if (langLabel === "hinglish") {
       emit({ stage: "transliterating", message: "Converting to Hinglish script…" });
-      allSegments = await transliterateToHinglish(allSegments);
+      const tResult = await transliterateToHinglish(allSegments);
+      allSegments = tResult.segments;
+      if (projectId && tResult.usage) {
+        const isGemini = !!tResult.usage.promptTokenCount;
+        await recordProjectUsage(projectId, {
+          model: isGemini ? (process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview") : "gpt-4o-mini",
+          inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
+          outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
+        });
+      }
     }
 
     emit({ stage: "saving", message: "Saving results…" });
@@ -338,6 +351,14 @@ exports.generateSubtitles = async (req, res, next) => {
     });
 
     await createProjectForSubtitleJob(req.userId, job._id);
+    const projectId = await findProjectIdByJobId(job._id, "subtitle");
+
+    if (projectId) {
+      await recordProjectUsage(projectId, {
+        model: "whisper-1",
+        seconds: duration,
+      });
+    }
 
     emit({
       stage: "done",

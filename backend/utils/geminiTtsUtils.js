@@ -267,7 +267,9 @@ const synthesizeGeminiTts = async (text, voiceName) => {
         throw new Error("Gemini TTS: output MP3 has invalid duration.");
       }
 
-      return { audioPath: mp3Path, wordTimestamps: [] };
+      const usage = response.response.usageMetadata;
+
+      return { audioPath: mp3Path, wordTimestamps: [], usage };
     } catch (err) {
       lastErr = err;
       if (attempt < maxAttempts && isRetryableTtsError(err)) {

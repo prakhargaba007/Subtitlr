@@ -14,26 +14,19 @@ const port = process.env.PORT || 8080;
 // Ensure correct req.ip / x-forwarded-proto behavior behind proxies (Render/NGINX/Cloudflare/etc.)
 app.set("trust proxy", 1);
 
-// Accept-CH Headers for User-Agent Client Hints
-app.use((req, res, next) => {
-  res.setHeader(
-    "Accept-CH",
-    "Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List"
-  );
-  next();
-});
-
 // Security Headers with Strict CSP
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
     },
-  },
-}));
+  }),
+);
 // Parse Cookies
 app.use(cookieParser());
 
@@ -196,12 +189,12 @@ app.use("/api/coming-soon", comingSoonRoutes);
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.error("[Global Error Logger]", error); // Log full error internally
-  
+
   const status = error.statusCode || 500;
   // Mask generic 500 errors to prevent leakage, but allow custom error messages
   const message = status === 500 ? "Something went wrong" : error.message;
   const data = status === 500 ? null : error.data;
-  
+
   res.status(status).send({ success: false, message: message, data: data });
 });
 

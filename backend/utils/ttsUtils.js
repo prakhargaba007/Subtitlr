@@ -270,8 +270,9 @@ const generateSpeech = async (text, voiceId, options = {}) => {
   fs.writeFileSync(outputPath, audioBuffer);
 
   const durationSeconds = await getFileDuration(outputPath);
+  const characterCount = text.length;
 
-  return { audioPath: outputPath, durationSeconds };
+  return { audioPath: outputPath, durationSeconds, characterCount };
 };
 
 /**
@@ -303,8 +304,9 @@ const generateSpeechOpenAI = async (text, voiceName) => {
   fs.writeFileSync(outputPath, buf);
 
   const durationSeconds = await getFileDuration(outputPath);
+  const characterCount = input.length;
 
-  return { audioPath: outputPath, durationSeconds };
+  return { audioPath: outputPath, durationSeconds, characterCount };
 };
 
 module.exports = {

@@ -10,22 +10,26 @@ const userRateLimiter = rateLimit({
   max: 5, // 5 attempts
   keyGenerator: (req) => {
     // Rate limit per email or fallback to IP headers to avoid library regex false positive
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+    const ip =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
     return req.body.email || req.body.id || String(ip);
   },
-  message: { success: false, message: "Too many attempts. Please try again later." }
+  message: {
+    success: false,
+    message: "Too many attempts. Please try again later.",
+  },
 });
 
 const refreshLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 20,
   keyGenerator: (req) => {
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
+    const ip =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown";
     return String(ip);
   },
-  message: { success: false, message: "Too many refresh attempts." }
+  message: { success: false, message: "Too many refresh attempts." },
 });
-
 
 // Route: POST /api/auth/opt-generate
 router.post(
@@ -37,7 +41,7 @@ router.post(
       .normalizeEmail()
       .withMessage("Valid email is required"),
   ],
-  authController.optGenerte
+  authController.optGenerte,
 );
 
 // Route: POST /api/auth/signup
@@ -72,7 +76,7 @@ router.post(
         return true;
       }),
   ],
-  authController.signup
+  authController.signup,
 );
 
 // Route: POST /api/auth/login
@@ -93,7 +97,7 @@ router.post(
       return true;
     }),
   ],
-  authController.login
+  authController.login,
 );
 
 // Route: POST /api/auth/google-exchange (OAuth code → tokens → user)
@@ -109,7 +113,7 @@ router.post(
       .normalizeEmail()
       .withMessage("Valid email is required"),
   ],
-  authController.forgotPassword
+  authController.forgotPassword,
 );
 
 // Route: POST /api/auth/reset-password
@@ -121,7 +125,7 @@ router.put(
       .withMessage("Password must be at least 6 characters long"),
   ],
   isAuth,
-  authController.resetPassword
+  authController.resetPassword,
 );
 
 // Route: POST /api/auth/verify-otp-reset-password
@@ -140,7 +144,7 @@ router.post(
       .isLength({ min: 6 })
       .withMessage("Password must be at least 6 characters long"),
   ],
-  authController.verifyOTPAndResetPassword
+  authController.verifyOTPAndResetPassword,
 );
 
 // Route: POST /api/auth/verify-otp
@@ -156,7 +160,7 @@ router.post(
       .isLength({ min: 6, max: 6 })
       .withMessage("OTP must be 6 digits"),
   ],
-  authController.verifyOTPForSignIn
+  authController.verifyOTPForSignIn,
 );
 
 router.get("/verify", isAuth, authController.verify);
@@ -175,8 +179,5 @@ router.get("/sessions", isAuth, authController.getSessions);
 
 // Route: POST /api/auth/logout-session/:sessionId
 router.post("/logout-session/:sessionId", isAuth, authController.revokeSession);
-
-// Route: POST /api/auth/device-info
-router.post("/device-info", isAuth, authController.updateDeviceInfo);
 
 module.exports = router;
