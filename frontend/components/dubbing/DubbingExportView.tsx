@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,8 +17,6 @@ import {
   Mic,
   Subtitles,
   ListVideo,
-  Volume2,
-  VolumeX,
   X,
   FileText,
   FileCode2,
@@ -27,6 +25,7 @@ import {
 import axiosInstance, { s3Url } from "@/utils/axios";
 import type { EditorJob } from "@/components/dubbingEditor/types";
 import { fmtTimeShort } from "@/components/dubbingEditor/types";
+import DubbingVideoPlayer from "@/components/dubbing/DubbingVideoPlayer";
 
 /** Server uploaded a muxed dubbed MP4 (not v1 placeholder where dubbedVideoKey === originalVideoKey). */
 function hasMuxedDubbedVideoFile(job: EditorJob): boolean {
@@ -174,122 +173,6 @@ function ProcessingStepper({ status }: { status: string }) {
   );
 }
 
-function VideoPreview({ job }: { job: EditorJob }) {
-  // "original" = unmuted video; "dubbed" = muted video + synced external audio
-  const [useOriginal, setUseOriginal] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  // Prefer the original video for playback (always the same visual stream).
-  // Fall back to legacy dubbedVideoUrl for old jobs that have no originalVideoKey.
-  const videoSrc = job.originalVideoKey
-    ? s3Url(job.originalVideoKey).split("?")[0]
-    : job.dubbedVideoUrl
-      ? s3Url(job.dubbedVideoUrl).split("?")[0]
-      : null;
-
-  const dubbedAudioSrc = job.dubbedAudioKey
-    ? s3Url(job.dubbedAudioKey).split("?")[0]
-    : null;
-
-  // Whether we're in sync mode: showing original video + external dubbed audio.
-  const syncMode = !useOriginal && !!dubbedAudioSrc && !!job.originalVideoKey;
-
-  // Keep video muted state in sync (React's `muted` attr is unreliable).
-  useEffect(() => {
-    if (videoRef.current) videoRef.current.muted = syncMode;
-  }, [syncMode]);
-
-  // Wire video play/pause/seek events to the external audio element (dubbed mode).
-  useEffect(() => {
-    const video = videoRef.current;
-    const audio = audioRef.current;
-    if (!video || !audio || !syncMode) return;
-
-    const onPlay = () => {
-      audio.currentTime = video.currentTime;
-      audio.play().catch(() => { });
-    };
-    const onPause = () => audio.pause();
-    const onSeeked = () => { audio.currentTime = video.currentTime; };
-    const onRateChange = () => { audio.playbackRate = video.playbackRate; };
-
-    video.addEventListener("play", onPlay);
-    video.addEventListener("pause", onPause);
-    video.addEventListener("seeked", onSeeked);
-    video.addEventListener("ratechange", onRateChange);
-
-    return () => {
-      video.removeEventListener("play", onPlay);
-      video.removeEventListener("pause", onPause);
-      video.removeEventListener("seeked", onSeeked);
-      video.removeEventListener("ratechange", onRateChange);
-    };
-  }, [syncMode]);
-
-  // When the user toggles modes, hand off playback smoothly.
-  const handleToggle = () => {
-    const video = videoRef.current;
-    const audio = audioRef.current;
-    const next = !useOriginal;
-    setUseOriginal(next);
-
-    if (video) {
-      if (next) {
-        // Switching to original: unmute video, stop external audio.
-        video.muted = false;
-        audio?.pause();
-      } else {
-        // Switching to dubbed: mute video, sync external audio.
-        video.muted = true;
-        if (audio) {
-          audio.currentTime = video.currentTime;
-          if (!video.paused) audio.play().catch(() => { });
-        }
-      }
-    }
-  };
-
-  if (!videoSrc) return null;
-
-  const showToggle = !!job.originalVideoKey && !!dubbedAudioSrc;
-
-  return (
-    <div className="relative group aspect-video rounded-4xl overflow-hidden bg-black border border-outline-variant/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        playsInline
-        controls
-        className="w-full h-full object-contain"
-      />
-
-      {/* External dubbed audio — synced to video via JS events */}
-      {syncMode && dubbedAudioSrc && (
-        <audio ref={audioRef} src={dubbedAudioSrc} preload="auto" />
-      )}
-
-      {showToggle && (
-        <div className="absolute top-6 left-6 z-20">
-          <button
-            onClick={handleToggle}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 shadow-lg backdrop-blur-sm ${useOriginal
-              ? "bg-surface/90 text-on-surface hover:bg-surface"
-              : "bg-primary text-white hover:bg-primary/90"
-              }`}
-          >
-            {useOriginal ? (
-              <Volume2 size={12} className="shrink-0" />
-            ) : (
-              <VolumeX size={12} className="shrink-0" />
-            )}
-            {useOriginal ? "Original" : "Dubbed"}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function LiveTranscription({ job }: { job: EditorJob }) {
   const segments = [...(job.segments ?? [])].sort((a, b) => a.start - b.start);
@@ -927,7 +810,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
             </div>
           ) : (
             <div className="animate-in fade-in zoom-in-95 duration-700 w-full">
-              <VideoPreview job={job} />
+              <DubbingVideoPlayer job={job} />
               <LiveTranscription job={job} />
               {/* <StatCards /> */}
             </div>
