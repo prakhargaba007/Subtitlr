@@ -18,8 +18,6 @@ import { s3Url } from "@/utils/axios";
 const DRIFT_THRESHOLD = 0.08;
 const CONTROLS_HIDE_MS = 3000;
 
-type SubtitleMode = "off" | "dubbed" | "original";
-
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(s: number) {
@@ -42,18 +40,6 @@ function getActiveSeg(
   return null;
 }
 
-function nextSubtitleMode(cur: SubtitleMode): SubtitleMode {
-  if (cur === "off") return "dubbed";
-  if (cur === "dubbed") return "original";
-  return "off";
-}
-
-const SUBTITLE_MODE_LABEL: Record<SubtitleMode, string> = {
-  off: "CC off",
-  dubbed: "Dubbed",
-  original: "Original",
-};
-
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
@@ -61,7 +47,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
   const [useOriginal, setUseOriginal] = useState(false);
 
   // ── subtitle mode ─────────────────────────────────────────────────────────
-  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>("dubbed");
+  const [subtitlesOn, setSubtitlesOn] = useState(true);
 
   // ── playback state ────────────────────────────────────────────────────────
   const [playing, setPlaying] = useState(false);
@@ -106,20 +92,19 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
   const segments = job.segments ?? [];
   const hasSubtitles = segments.length > 0;
 
-  // ── active subtitle ───────────────────────────────────────────────────────
+  // ── active subtitle: dubbed text when dubbed audio plays, original otherwise
   const activeSeg =
-    subtitleMode !== "off" && hasSubtitles
-      ? getActiveSeg(segments, currentTime)
-      : null;
+    subtitlesOn && hasSubtitles ? getActiveSeg(segments, currentTime) : null;
 
-  const subtitleText = activeSeg
-    ? subtitleMode === "dubbed"
-      ? (activeSeg.translatedText ?? activeSeg.originalText ?? "")
-      : (activeSeg.originalText ?? activeSeg.translatedText ?? "")
-    : "";
-
-  // clean bracket tags from TTS
-  const subtitleDisplay = subtitleText.replace(/\[[^\]]*]/g, "").trim();
+  const subtitleDisplay = (
+    activeSeg
+      ? syncMode
+        ? (activeSeg.translatedText ?? activeSeg.originalText ?? "")
+        : (activeSeg.originalText ?? activeSeg.translatedText ?? "")
+      : ""
+  )
+    .replace(/\[[^\]]*]/g, "")
+    .trim();
 
   // ── controls auto-hide ────────────────────────────────────────────────────
   const showControls = useCallback(() => {
@@ -340,7 +325,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
         toggleFullscreen();
       } else if (e.key === "c" || e.key === "C") {
         e.preventDefault();
-        setSubtitleMode((m) => nextSubtitleMode(m));
+        setSubtitlesOn((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -501,11 +486,11 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
                 : "bg-primary/90 text-white hover:bg-primary"
             }`}
           >
-            {useOriginal ? (
+            {/* {useOriginal ? (
               <Volume2 size={9} className="shrink-0" />
             ) : (
               <VolumeX size={9} className="shrink-0" />
-            )}
+            )} */}
             {useOriginal ? "Original" : "Dubbed"}
           </button>
         </div>
@@ -625,19 +610,17 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
             {hasSubtitles && (
               <button
                 type="button"
-                onClick={() => setSubtitleMode((m) => nextSubtitleMode(m))}
+                onClick={() => setSubtitlesOn((v) => !v)}
                 className={`flex items-center gap-1 px-2 h-7 rounded-md text-[10px] font-bold tracking-wide uppercase transition-all shrink-0 ${
-                  subtitleMode !== "off"
+                  subtitlesOn
                     ? "bg-primary/20 text-primary ring-1 ring-primary/40"
                     : "text-white/50 hover:text-white/80"
                 }`}
                 aria-label="Toggle subtitles (C)"
-                title={`Subtitles: ${SUBTITLE_MODE_LABEL[subtitleMode]} (press C)`}
+                title={`Subtitles: ${subtitlesOn ? "On" : "Off"} (press C)`}
               >
                 <Subtitles size={14} />
-                <span className="hidden sm:inline">
-                  {SUBTITLE_MODE_LABEL[subtitleMode]}
-                </span>
+                <span className="hidden sm:inline">CC</span>
               </button>
             )}
 
