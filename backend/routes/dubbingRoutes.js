@@ -21,6 +21,7 @@ const {
   addDubbingSegment,
   rebuildDubbingJob,
   listLocalInworldVoices,
+  getDubbingSubtitles,
 } = require("../controllers/dubbingController");
 
 const upload = multer({
@@ -90,6 +91,9 @@ router.post("/:id/segments/:segmentId/regenerate", isAuth, regenerateDubbingSegm
 
 // POST /api/dubbing/:id/rebuild — rebuild full mix/video
 router.post("/:id/rebuild", isAuth, rebuildDubbingJob);
+
+// GET /api/dubbing/:id/subtitles?format=srt|vtt|ass&lang=translated|original
+router.get("/:id/subtitles", isAuth, getDubbingSubtitles);
 
 // GET /api/dubbing/:id  — get a specific job by ID
 router.get("/:id", isAuth, getDubbingJob);

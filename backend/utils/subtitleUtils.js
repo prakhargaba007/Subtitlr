@@ -1,6 +1,7 @@
 const fs = require("fs");
 const OpenAI = require("openai");
 const { GoogleGenAI } = require("@google/genai");
+const { callWithRetry: geminiCallWithRetry } = require("./geminiKeyManager");
 
 let _openai = null;
 const getOpenAI = () => {
@@ -116,24 +117,38 @@ const transliterateToHinglish = async (segments) => {
   const texts = segments.map((s) => s.text);
   const userPayload = JSON.stringify({ texts });
 
-  let parsed;
-  const gemini = getGemini();
-  if (gemini) {
-    const model =
-      process.env.SUBTITLE_TRANSLITERATION_MODEL ||
-      "gemini-3.1-flash-lite-preview";
-    const response = await gemini.models.generateContent({
-      model,
-      contents: `${HINGLISH_SYSTEM_PROMPT}\n\n${userPayload}`,
-      generationConfig: {
-        temperature: 0,
-        responseMimeType: "application/json",
-      },
+  const model =
+    process.env.SUBTITLE_TRANSLITERATION_MODEL ||
+    "gemini-3.1-flash-lite-preview";
+
+  try {
+    const response = await geminiCallWithRetry(async (apiKey) => {
+      const gemini = new GoogleGenAI({ apiKey });
+      return await gemini.models.generateContent({
+        model,
+        contents: `${HINGLISH_SYSTEM_PROMPT}\n\n${userPayload}`,
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: "application/json",
+        },
+      });
     });
-    const usage = response.response.usageMetadata;
-    parsed = parseGeminiJsonResponse(response);
-    return { segments: segments.map((s, i) => ({ ...s, text: (parsed.results || [])[i] ?? s.text })), usage };
-  } else {
+
+    const usage = response.response?.usageMetadata ?? response.usageMetadata;
+    const parsed = parseGeminiJsonResponse(response);
+    return {
+      segments: segments.map((s, i) => ({
+        ...s,
+        text: (parsed.results || [])[i] ?? s.text,
+      })),
+      usage,
+    };
+  } catch (err) {
+    // If Gemini key manager is not configured or fails, try OpenAI fallback
+    console.warn(
+      "[subtitles] Gemini transliteration failed or not configured, trying OpenAI fallback:",
+      err.message,
+    );
     const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0,
@@ -143,8 +158,14 @@ const transliterateToHinglish = async (segments) => {
         { role: "user", content: userPayload },
       ],
     });
-    parsed = JSON.parse(response.choices[0].message.content);
-    return { segments: segments.map((s, i) => ({ ...s, text: (parsed.results || [])[i] ?? s.text })), usage: response.usage };
+    const parsed = JSON.parse(response.choices[0].message.content);
+    return {
+      segments: segments.map((s, i) => ({
+        ...s,
+        text: (parsed.results || [])[i] ?? s.text,
+      })),
+      usage: response.usage,
+    };
   }
 };
 

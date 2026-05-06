@@ -3,6 +3,7 @@ const path = require("path");
 const os = require("os");
 const { v4: uuidv4 } = require("uuid");
 const { GoogleGenAI } = require("@google/genai");
+const { callWithRetry: geminiCallWithRetry } = require("./geminiKeyManager");
 const { getFileDuration } = require("./audioUtils");
 
 /**
@@ -320,10 +321,6 @@ const selectBestInworldVoice = async (
   const fallback = getDefaultInworldVoice();
 
   try {
-    const gemini = getGemini();
-    if (!gemini) {
-      throw new Error("GOOGLE_API_KEY or GEMINI_API_KEY not set");
-    }
     const model =
       String(process.env.GEMINI_MODEL || "").trim() || "gemini-2.0-flash";
     const systemPrompt =
@@ -337,14 +334,19 @@ const selectBestInworldVoice = async (
       voiceOptions: pool,
       alreadyAssignedVoiceIds: [...excludeSet],
     });
-    const response = await gemini.models.generateContent({
-      model,
-      contents: `${systemPrompt}\n\n${userPayload}`,
-      generationConfig: {
-        temperature: 0,
-        responseMimeType: "application/json",
-      },
+
+    const response = await geminiCallWithRetry(async (apiKey) => {
+      const gemini = new GoogleGenAI({ apiKey });
+      return await gemini.models.generateContent({
+        model,
+        contents: `${systemPrompt}\n\n${userPayload}`,
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: "application/json",
+        },
+      });
     });
+
     const parsed = parseGeminiJsonResponse(response);
     const id = String(parsed.voiceId || "").trim();
     if (voiceIds.includes(id) && !excludeSet.has(id)) {

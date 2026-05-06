@@ -7,6 +7,7 @@ const OpenAI = require("openai");
 const { GoogleGenAI, Modality } = require("@google/genai");
 const ffmpegStatic = require("ffmpeg-static");
 const { getFileDuration } = require("./audioUtils");
+const { callWithRetry: geminiCallWithRetry } = require("./geminiKeyManager");
 
 const VOICES_JSON = path.join(__dirname, "..", "config", "gemini_3_1_tts_voices.json");
 
@@ -183,11 +184,6 @@ const isRetryableTtsError = (err) => {
  * @returns {Promise<{ audioPath: string, wordTimestamps: [] }>}
  */
 const synthesizeGeminiTts = async (text, voiceName) => {
-  const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    throw new Error("GOOGLE_API_KEY or GEMINI_API_KEY is required for Gemini TTS.");
-  }
-
   let input = String(text || "").trim();
   if (!input) {
     throw new Error("Gemini TTS: empty text.");
@@ -200,24 +196,26 @@ const synthesizeGeminiTts = async (text, voiceName) => {
   }
 
   const model = getGeminiTtsModel();
-  const ai = new GoogleGenAI({ apiKey });
   const voice = String(voiceName || DEFAULT_GEMINI_VOICE).trim() || DEFAULT_GEMINI_VOICE;
 
   const maxAttempts = 3;
   let lastErr;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: input,
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: voice },
+      const response = await geminiCallWithRetry(async (apiKey) => {
+        const ai = new GoogleGenAI({ apiKey });
+        return await ai.models.generateContent({
+          model,
+          contents: input,
+          config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: voice },
+              },
             },
           },
-        },
+        });
       });
 
       const audio = extractInlineAudio(response);
@@ -249,17 +247,13 @@ const synthesizeGeminiTts = async (text, voiceName) => {
             { encoding: "utf8" },
           );
           if (wr.status !== 0) {
-            throw new Error(`ffmpeg WAV→MP3 failed: ${(wr.stderr || "").slice(0, 400)}`);
+            throw new Error(`ffmpeg WAV\u2192MP3 failed: ${(wr.stderr || "").slice(0, 400)}`);
           }
         } else {
           pcmRawToMp3(rawPath, mp3Path);
         }
       } finally {
-        try {
-          fs.unlinkSync(rawPath);
-        } catch {
-          /* ignore */
-        }
+        try { fs.unlinkSync(rawPath); } catch { /* ignore */ }
       }
 
       const durationSeconds = await getFileDuration(mp3Path);
@@ -267,8 +261,7 @@ const synthesizeGeminiTts = async (text, voiceName) => {
         throw new Error("Gemini TTS: output MP3 has invalid duration.");
       }
 
-      const usage = response.response.usageMetadata;
-
+      const usage = response.response?.usageMetadata ?? response.usageMetadata;
       return { audioPath: mp3Path, wordTimestamps: [], usage };
     } catch (err) {
       lastErr = err;

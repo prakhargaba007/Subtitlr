@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const OpenAI = require("openai");
 
 const DubbingJob = require("../models/DubbingJob");
+const { generateSRT, generateVTT, generateASS } = require("../utils/subtitleUtils");
 const User = require("../models/User");
 const UserSubscription = require("../models/UserSubscription");
 const PlanCatalog = require("../models/PlanCatalog");
@@ -49,7 +50,16 @@ const {
   isGeminiTtsConfigured,
   selectBestGeminiVoice,
   synthesizeGeminiTts,
+  getGeminiTtsModel,
 } = require("../utils/geminiTtsUtils");
+const {
+  buildBatchScript,
+  buildMultiSpeakerScript,
+  synthesizePerSpeakerBatch,
+  synthesizeMultiSpeakerGemini,
+  recoverTimestampsViaRetranscription,
+  sliceAudioSegment,
+} = require("../utils/geminiBatchTtsUtils");
 const {
   flattenTranslatedSegmentsForTts,
   flattenJobSegmentForTts,
@@ -429,7 +439,9 @@ async function runDubbingPipelineFromInput(
 
   assertEnoughCredits(user, creditsNeeded);
 
-  let ttsProvider = getTtsProvider();
+  // Prefer provider from request body if present, else use .env default.
+  let ttsProvider = (req.body.ttsProvider || getTtsProvider()).toLowerCase();
+
   const sarvamSupportedLanguages = Object.keys(BCP_47_MAP);
   if (
     sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase()) &&
@@ -1380,13 +1392,174 @@ exports.startDubbingJob = async (req, res) => {
         segmentAudioKeys,
       } = await runSegmentPipeline("sarvam"));
     } else if (ttsProvider === "gemini") {
-      ({
-        rawDubbedPaths,
-        wordTsForRows,
-        syncedBuffers,
-        segmentIds,
-        segmentAudioKeys,
-      } = await runSegmentPipeline("gemini"));
+      // ── New Gemini Batch TTS Path ──────────────────────────────────────────
+      // Instead of 1 TTS call per segment, we batch all lines per speaker into
+      // a single call, then re-transcribe to recover per-segment cut timestamps.
+      emit({ stage: "generating", message: "Building Gemini batch TTS scripts…" });
+
+      segmentIds = translatedSegments.map(() => uuidv4());
+      const audioKeys = new Map();
+      segmentAudioKeys = audioKeys;
+
+      const n = ttsRows.length;
+      rawDubbedPaths = new Array(n);
+      wordTsForRows  = new Array(n).fill([]);
+      syncedBuffers  = new Array(n);
+
+      // Build per-speaker segment groups (preserve original ttsRows index)
+      const speakerGroups = new Map(); // speakerId → [{ rowIndex, row }]
+      for (let k = 0; k < n; k++) {
+        const row = ttsRows[k];
+        if (!speakerGroups.has(row.speaker_id)) speakerGroups.set(row.speaker_id, []);
+        speakerGroups.get(row.speaker_id).push({ rowIndex: k, row });
+      }
+
+      const speakerList = [...speakerGroups.keys()];
+      const usedMultiSpeaker =
+        speakerList.length === 2 && String(process.env.GEMINI_MULTISPEAKER_DISABLED || "") !== "1";
+
+      // ── Path A: ≤2 speakers — attempt single multi-speaker call ──────────
+      if (usedMultiSpeaker) {
+        emit({
+          stage: "generating",
+          message: `Generating multi-speaker Gemini audio (${speakerList.length} speaker(s))…`,
+        });
+        try {
+          const msScript = buildMultiSpeakerScript(
+            ttsRows.map((r) => ({ speaker_id: r.speaker_id, text: r.text, tts_performance_hint: r.tts_performance_hint })),
+          );
+          const msVoiceMap = {};
+          const msPersonaMap = {};
+          for (const profile of speaker_profiles) {
+            msVoiceMap[profile.speaker_id]   = voiceMap[profile.speaker_id] || "Kore";
+            msPersonaMap[profile.speaker_id] = profile.voice_description || "";
+          }
+
+          const { audioPath: msAudioPath, usage: msUsage } =
+            await synthesizeMultiSpeakerGemini(msScript, msVoiceMap, msPersonaMap);
+          tmpPaths.push(msAudioPath);
+          if (msUsage && projectId) await recordProjectUsage(projectId, { model: getGeminiTtsModel?.() || "gemini-tts", ...msUsage });
+
+          emit({ stage: "generating", message: "Recovering per-segment timestamps from multi-speaker audio…" });
+          const msExpectedTexts = ttsRows.map((r) => r.text);
+          const msTimestamps = await recoverTimestampsViaRetranscription(msAudioPath, n, msExpectedTexts);
+
+          emit({ stage: "syncing", message: "Slicing and speed-adjusting multi-speaker audio…" });
+          await DubbingJob.findByIdAndUpdate(job._id, { status: "syncing" });
+
+          let msProcessed = 0;
+          for (let k = 0; k < n; k++) {
+            const row = ttsRows[k];
+            const ts  = msTimestamps[k] || { start: 0, end: 0.1 };
+            const durSec = Math.max(0.05, ts.end - ts.start);
+            const slicedPath = path.join(os.tmpdir(), `gbatch_slice_${uuidv4()}.mp3`);
+            sliceAudioSegment(msAudioPath, ts.start, durSec, slicedPath);
+            tmpPaths.push(slicedPath);
+            rawDubbedPaths[k] = slicedPath;
+
+            const originalDuration = Math.max(0.05, row.end - row.start);
+            const synced = await syncSegmentTiming(slicedPath, originalDuration, { maxAtempo });
+            tmpPaths.push(synced.adjustedPath);
+            syncedBuffers[k] = synced;
+
+            // Upload per-segment clip to S3 (so individual segments can be played in UI)
+            if (row.subIndex < 0) {
+              try {
+                const segId  = segmentIds[row.parentIndex];
+                const segKey = `dubbing/${req.userId}/${job._id}/segments/${segId}_r0.mp3`;
+                await storage.saveFile(fs.readFileSync(synced.adjustedPath), segKey, "audio/mpeg");
+                audioKeys.set(row.parentIndex, segKey);
+              } catch (uploadErr) {
+                console.warn(`[dubbing:gemini] Segment ${row.parentIndex} upload failed:`, uploadErr.message);
+              }
+            }
+
+            msProcessed++;
+            emit({ stage: "syncing", message: `Clips ready: ${msProcessed}/${n}…`, progress: Math.round((msProcessed / n) * 100) });
+          }
+        } catch (msErr) {
+          if (msErr.code === "MULTI_SPEAKER_UNSUPPORTED") {
+            console.warn("[dubbing:gemini] Multi-speaker not supported on this model — falling back to per-speaker batch");
+            // Fall through to per-speaker path by resetting arrays
+            rawDubbedPaths = new Array(n);
+            wordTsForRows  = new Array(n).fill([]);
+            syncedBuffers  = new Array(n);
+            audioKeys.clear();
+          } else {
+            throw msErr;
+          }
+        }
+      }
+
+      // ── Path B: 3+ speakers (or multi-speaker fallback) — one call per speaker
+      const needsPerSpeaker = !usedMultiSpeaker || syncedBuffers.some((b) => b === undefined);
+      if (needsPerSpeaker) {
+        let speakersDone = 0;
+        let segmentsProcessed = 0;
+        const totalSpeakers = speakerGroups.size;
+
+        for (const [speakerId, entries] of speakerGroups) {
+          emit({
+            stage: "generating",
+            message: `Generating Gemini batch audio for ${speakerId} (${++speakersDone}/${totalSpeakers})…`,
+          });
+
+          const speakerProfile = speaker_profiles.find((p) => p.speaker_id === speakerId) || {};
+          const persona    = speakerProfile.voice_description || "";
+          const voiceName  = voiceMap[speakerId] || "Kore";
+          const speakerSegs = entries.map(({ row }) => ({
+            text: row.text,
+            tts_performance_hint: row.tts_performance_hint,
+          }));
+
+          const batchScript = buildBatchScript(speakerSegs);
+          const { audioPath: batchAudio, usage: batchUsage } =
+            await synthesizePerSpeakerBatch(batchScript, voiceName, persona);
+          tmpPaths.push(batchAudio);
+          if (batchUsage && projectId) await recordProjectUsage(projectId, { model: "gemini-tts-batch", ...batchUsage });
+
+          emit({ stage: "generating", message: `Recovering timestamps for ${speakerId}…` });
+          const bExpectedTexts = entries.map(({ row }) => row.text);
+          const timestamps = await recoverTimestampsViaRetranscription(batchAudio, entries.length, bExpectedTexts);
+
+          emit({ stage: "syncing", message: `Slicing and speed-adjusting clips for ${speakerId}…` });
+          if (!syncedBuffers.some((b) => b !== undefined)) {
+            await DubbingJob.findByIdAndUpdate(job._id, { status: "syncing" });
+          }
+
+          for (let i = 0; i < entries.length; i++) {
+            const { rowIndex, row } = entries[i];
+            const ts      = timestamps[i] || { start: 0, end: 0.1 };
+            const durSec  = Math.max(0.05, ts.end - ts.start);
+            const slicedPath = path.join(os.tmpdir(), `gbatch_slice_${uuidv4()}.mp3`);
+            sliceAudioSegment(batchAudio, ts.start, durSec, slicedPath);
+            tmpPaths.push(slicedPath);
+            rawDubbedPaths[rowIndex] = slicedPath;
+
+            const originalDuration = Math.max(0.05, row.end - row.start);
+            const synced = await syncSegmentTiming(slicedPath, originalDuration, { maxAtempo });
+            tmpPaths.push(synced.adjustedPath);
+            syncedBuffers[rowIndex] = synced;
+
+            // Upload per-segment clip to S3 (same as old pipeline)
+            if (row.subIndex < 0) {
+              try {
+                const segId  = segmentIds[row.parentIndex];
+                const segKey = `dubbing/${req.userId}/${job._id}/segments/${segId}_r0.mp3`;
+                await storage.saveFile(fs.readFileSync(synced.adjustedPath), segKey, "audio/mpeg");
+                audioKeys.set(row.parentIndex, segKey);
+              } catch (uploadErr) {
+                console.warn(`[dubbing:gemini] Segment ${row.parentIndex} upload failed:`, uploadErr.message);
+              }
+            }
+
+            segmentsProcessed++;
+            emit({ stage: "syncing", message: `Clips ready: ${segmentsProcessed}/${n}…`, progress: Math.round((segmentsProcessed / n) * 100) });
+          }
+        }
+      }
+
+      emit({ stage: "syncing", message: "All Gemini batch clips ready." });
     } else if (ttsProvider === "auto") {
       let autoDone = false;
       const iwPaths = [];
@@ -2670,5 +2843,96 @@ exports.rebuildDubbingJob = async (req, res, next) => {
     next(err);
   } finally {
     tmpPaths.forEach(cleanupPath);
+  }
+};
+
+/**
+ * GET /api/dubbing/:id/subtitles
+ * Query params:
+ *   format  – "srt" | "vtt" | "ass"  (default: "srt")
+ *   lang    – "translated" | "original"  (default: "translated")
+ *
+ * Returns the subtitle file as a download attachment.
+ */
+exports.getDubbingSubtitles = async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const err = new Error("Dubbing job not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const job = await DubbingJob.findById(req.params.id).select(
+      "user status originalFileName segments",
+    );
+    if (!job) {
+      const err = new Error("Dubbing job not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+    if (job.user.toString() !== req.userId) {
+      const err = new Error("Access denied.");
+      err.statusCode = 403;
+      throw err;
+    }
+    if (job.status !== "completed") {
+      const err = new Error("Subtitles are only available for completed jobs.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const format = (req.query.format || "srt").toLowerCase().trim();
+    if (!["srt", "vtt", "ass"].includes(format)) {
+      const err = new Error("format must be one of: srt, vtt, ass.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const useLang = (req.query.lang || "translated").toLowerCase().trim();
+    if (!["translated", "original"].includes(useLang)) {
+      const err = new Error('lang must be "translated" or "original".');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const segments = [...(job.segments || [])].sort((a, b) => a.start - b.start);
+    const mapped = segments
+      .map((seg) => ({
+        start: seg.start,
+        end: seg.end,
+        text: (
+          useLang === "original"
+            ? (seg.originalText ?? seg.translatedText ?? "")
+            : (seg.translatedText ?? seg.originalText ?? "")
+        ).trim(),
+      }))
+      .filter((s) => s.text);
+
+    if (!mapped.length) {
+      const err = new Error("No subtitle segments available for this job.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const GENERATORS = { srt: generateSRT, vtt: generateVTT, ass: generateASS };
+    const MIME_TYPES = {
+      srt: "text/plain; charset=utf-8",
+      vtt: "text/vtt; charset=utf-8",
+      ass: "text/x-ass; charset=utf-8",
+    };
+
+    const content = GENERATORS[format](mapped);
+    const baseName = job.originalFileName.replace(/\.[^/.]+$/, "");
+    const filename = `${baseName}_${useLang}.${format}`;
+
+    res.setHeader("Content-Type", MIME_TYPES[format]);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(filename)}"`,
+    );
+    res.send(content);
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
   }
 };

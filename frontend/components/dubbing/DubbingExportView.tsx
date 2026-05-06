@@ -19,10 +19,85 @@ import {
   ListVideo,
   Volume2,
   VolumeX,
+  X,
+  FileText,
+  FileCode2,
+  Film,
 } from "lucide-react";
 import axiosInstance, { s3Url } from "@/utils/axios";
 import type { EditorJob } from "@/components/dubbingEditor/types";
 import { fmtTimeShort } from "@/components/dubbingEditor/types";
+
+/** Server uploaded a muxed dubbed MP4 (not v1 placeholder where dubbedVideoKey === originalVideoKey). */
+function hasMuxedDubbedVideoFile(job: EditorJob): boolean {
+  if (job.fileType !== "video") return false;
+  if (job.dubbedVideoUrl) return true;
+  return Boolean(
+    job.dubbedVideoKey &&
+      job.originalVideoKey &&
+      job.dubbedVideoKey !== job.originalVideoKey,
+  );
+}
+
+function muxedDubbedVideoFetchUrl(job: EditorJob): string | null {
+  if (!hasMuxedDubbedVideoFile(job)) return null;
+  if (job.dubbedVideoUrl) return s3Url(job.dubbedVideoUrl);
+  if (job.dubbedVideoKey) return s3Url(job.dubbedVideoKey);
+  return null;
+}
+
+/** Parse streamed SSE rebuild progress (same framing as dubbing editor TopBar). */
+async function streamDubbingRebuild(
+  jobId: string,
+  onMessage: (text: string) => void,
+): Promise<{ ok: boolean; error?: string }> {
+  let parsedUpTo = 0;
+  let lastError: string | undefined;
+  const handleChunk = (raw: string) => {
+    const newText = raw.slice(parsedUpTo);
+    parsedUpTo = raw.length;
+    for (const frame of newText.split("\n\n")) {
+      const line = frame.split("\n").find((l) => l.startsWith("data:"));
+      if (!line) continue;
+      try {
+        const evt = JSON.parse(line.slice(5).trim()) as {
+          stage?: string;
+          message?: string;
+        };
+        if (evt.stage === "error") {
+          lastError = evt.message ?? "Video export failed.";
+          return;
+        }
+        if (evt.message) onMessage(evt.message);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+  try {
+    await axiosInstance.post<string>(`/api/dubbing/${jobId}/rebuild`, null, {
+      params: { stream: "1" },
+      responseType: "text",
+      timeout: 0,
+      onDownloadProgress: (e) => {
+        const text =
+          (e.event?.target as XMLHttpRequest | undefined)?.responseText ?? "";
+        handleChunk(text);
+      },
+    });
+  } catch (err: unknown) {
+    const ax = err as { response?: { data?: unknown }; message?: string };
+    const data = ax.response?.data;
+    let msg =
+      typeof data === "string"
+        ? data
+        : (data as { message?: string } | undefined)?.message;
+    msg = msg || ax.message || lastError || "Video export failed.";
+    return { ok: false, error: msg };
+  }
+  if (lastError) return { ok: false, error: lastError };
+  return { ok: true };
+}
 
 // --- Sub-components ---
 
@@ -308,8 +383,221 @@ function StatCards() {
   );
 }
 
-function DownloadPanel({ job }: { job: EditorJob }) {
+type SubtitleFormat = "srt" | "vtt" | "ass";
+type SubtitleLang = "translated" | "original";
+
+const FORMAT_META: Record<
+  SubtitleFormat,
+  { label: string; ext: string; desc: string; icon: React.ReactNode }
+> = {
+  srt: {
+    label: "SRT",
+    ext: ".srt",
+    desc: "SubRip — works with VLC, Premiere, most players",
+    icon: <FileText size={20} />,
+  },
+  vtt: {
+    label: "VTT",
+    ext: ".vtt",
+    desc: "WebVTT — for web players and HTML5 video",
+    icon: <FileCode2 size={20} />,
+  },
+  ass: {
+    label: "ASS",
+    ext: ".ass",
+    desc: "Advanced SubStation — styled subtitles for video editors",
+    icon: <Film size={20} />,
+  },
+};
+
+function SubtitleModal({
+  jobId,
+  baseName,
+  sourceLanguage,
+  targetLanguage,
+  onClose,
+}: {
+  jobId: string;
+  baseName: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  onClose: () => void;
+}) {
+  const [lang, setLang] = useState<SubtitleLang>("translated");
+  const [downloading, setDownloading] = useState<SubtitleFormat | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDownload = async (format: SubtitleFormat) => {
+    setDownloading(format);
+    setError(null);
+    try {
+      const res = await axiosInstance.get(
+        `/api/dubbing/${jobId}/subtitles`,
+        {
+          params: { format, lang },
+          responseType: "blob",
+        },
+      );
+      const blob = new Blob([res.data as BlobPart]);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${baseName}_${lang}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: Blob }; message?: string };
+      let msg = ax.message ?? "Download failed.";
+      if (ax.response?.data instanceof Blob) {
+        try {
+          const text = await ax.response.data.text();
+          const parsed = JSON.parse(text) as { message?: string };
+          if (parsed.message) msg = parsed.message;
+        } catch {
+          /* ignore */
+        }
+      }
+      setError(msg);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const srcLabel =
+    sourceLanguage === "auto" ? "Auto-detected" : sourceLanguage;
+  const tgtLabel = targetLanguage || "Dubbed";
+
+  return (
+    <div className="fixed inset-0 z-100">
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute inset-0 bg-black/50 border-none cursor-default"
+        onClick={onClose}
+      />
+      <div className="absolute left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="text-lg font-extrabold font-headline text-on-surface flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-2xl bg-primary/10 text-primary">
+                <Subtitles size={16} />
+              </span>
+              <span className="truncate">Download Subtitles</span>
+            </h3>
+            <p className="mt-2 text-sm text-on-surface-variant font-body">
+              {srcLabel} → {tgtLabel}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface hover:bg-surface-container transition-colors shrink-0 flex items-center justify-center"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Language toggle */}
+        <div className="mt-5">
+          <div className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 mb-2">
+            Language
+          </div>
+          <div className="flex gap-2">
+            {(["translated", "original"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`flex-1 px-4 py-2 rounded-xl border border-outline-variant/20 text-sm font-headline font-bold transition-colors ${
+                  lang === l
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-container-low text-on-surface hover:bg-surface-container"
+                }`}
+              >
+                {l === "translated"
+                  ? `Dubbed (${tgtLabel})`
+                  : `Original (${srcLabel})`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Format options */}
+        <div className="mt-5 space-y-2">
+          <div className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 mb-2">
+            Format
+          </div>
+          {(Object.entries(FORMAT_META) as [
+            SubtitleFormat,
+            (typeof FORMAT_META)[SubtitleFormat],
+          ][]).map(([fmt, meta]) => (
+            <button
+              key={fmt}
+              onClick={() => handleDownload(fmt)}
+              disabled={!!downloading}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface hover:bg-surface-container transition-colors disabled:opacity-60 disabled:pointer-events-none"
+            >
+              <span className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                {downloading === fmt ? (
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                ) : (
+                  meta.icon
+                )}
+              </span>
+              <span className="flex-1 text-left min-w-0">
+                <span className="block text-sm font-headline font-bold">
+                  {meta.label}
+                  <span className="ml-1.5 text-on-surface-variant/60 font-normal">
+                    {meta.ext}
+                  </span>
+                </span>
+                <span className="block text-xs text-on-surface-variant truncate">
+                  {meta.desc}
+                </span>
+              </span>
+              <Download size={16} className="text-on-surface-variant/50 shrink-0" />
+            </button>
+          ))}
+
+          {error && (
+            <p className="mt-2 text-sm text-error font-body">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-6 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface text-sm font-headline font-bold hover:bg-surface-container transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DownloadPanel({
+  job,
+  jobId,
+  refreshJob,
+  onMuxExportStart,
+  onMuxExportEnd,
+}: {
+  job: EditorJob;
+  jobId: string;
+  refreshJob: () => Promise<EditorJob | null>;
+  onMuxExportStart: () => void;
+  onMuxExportEnd: () => void;
+}) {
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [muxStatus, setMuxStatus] = useState<string | null>(null);
+  const [showSubtitleModal, setShowSubtitleModal] = useState(false);
 
   const handleDownload = async (url: string, filename: string, key: string) => {
     setDownloading(key);
@@ -325,94 +613,156 @@ function DownloadPanel({ job }: { job: EditorJob }) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch {
-      window.open(url, "_blank");
     } finally {
       setDownloading(null);
     }
   };
 
   const dubbedAudioUrl = job.dubbedAudioKey ? s3Url(job.dubbedAudioKey) : null;
-  const originalVideoUrl = job.originalVideoKey ? s3Url(job.originalVideoKey) : null;
-  // Legacy: old jobs that already have a server-muxed dubbed video.
-  const legacyDubbedVideoUrl = job.dubbedVideoUrl ? s3Url(job.dubbedVideoUrl) : null;
+  const muxedVideoUrl = muxedDubbedVideoFetchUrl(job);
+  const canMuxOnServer =
+    job.fileType === "video" && Boolean(job.backgroundKey?.trim());
+
+  const onDubbedVideoClick = async () => {
+    const baseName = job.originalFileName.replace(/\.[^/.]+$/, "");
+    const fname = `${baseName}_dubbed.mp4`;
+
+    if (muxedVideoUrl) {
+      await handleDownload(muxedVideoUrl.split("?")[0], fname, "vid");
+      return;
+    }
+    if (!canMuxOnServer) return;
+
+    setMuxStatus("Starting video export…");
+    setDownloading("vid_mux");
+    onMuxExportStart();
+    try {
+      const result = await streamDubbingRebuild(jobId, (m) => setMuxStatus(m));
+      if (!result.ok) {
+        setMuxStatus(result.error ?? "Video export failed.");
+        return;
+      }
+      const next = await refreshJob();
+      const url = next ? muxedDubbedVideoFetchUrl(next) : null;
+      if (!url) {
+        setMuxStatus("Export finished but dubbed video URL was not found. Try again.");
+        return;
+      }
+      setMuxStatus(null);
+      await handleDownload(url.split("?")[0], fname, "vid_dl");
+    } finally {
+      setDownloading(null);
+      onMuxExportEnd();
+    }
+  };
+
+  const dubbedVideoBusy =
+    downloading === "vid" ||
+    downloading === "vid_dl" ||
+    downloading === "vid_mux";
+  const showDubbedVideo = job.fileType === "video";
+  const canDownloadDubbedVideo = Boolean(muxedVideoUrl) || canMuxOnServer;
+  const dubbedVideoDisabled = !canDownloadDubbedVideo || dubbedVideoBusy;
 
   const baseName = job.originalFileName.replace(/\.[^/.]+$/, "");
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Primary: dubbed audio */}
-      <button
-        onClick={() =>
-          dubbedAudioUrl &&
-          handleDownload(dubbedAudioUrl, `${baseName}_dubbed.mp3`, "audio")
-        }
-        disabled={!dubbedAudioUrl || downloading === "audio"}
-        className="group relative w-full h-14 rounded-full bg-primary flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(57,44,193,0.3)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0"
-      >
-        <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000" />
-        {downloading === "audio" ? (
-          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
-          <Mic size={20} className="text-white" />
-        )}
-        <span className="text-base font-bold text-white tracking-tight font-headline">
-          {downloading === "audio" ? "Downloading…" : "Download Dubbed Audio"}
-        </span>
-      </button>
+      {/* Primary */}
+      {showDubbedVideo ? (
+        <button
+          type="button"
+          onClick={onDubbedVideoClick}
+          disabled={dubbedVideoDisabled}
+          title={
+            !muxedVideoUrl && !canMuxOnServer
+              ? "Separated background audio is unavailable for this job; open the editor and use rebuild if applicable."
+              : muxedVideoUrl
+                ? "Download muxed dubbed MP4"
+                : "Mux dubbed audio into the original video (may take a few minutes)."
+          }
+          className="group relative w-full h-14 rounded-full bg-primary flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(57,44,193,0.3)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000" />
+          {downloading === "vid" || downloading === "vid_dl" || downloading === "vid_mux" ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Download size={20} className="text-white" />
+          )}
+          <span className="text-base font-bold text-white tracking-tight font-headline">
+            {downloading === "vid" || downloading === "vid_dl" || downloading === "vid_mux"
+              ? "Exporting…"
+              : "Download Dubbed Video"}
+          </span>
+        </button>
+      ) : (
+        <button
+          onClick={() =>
+            dubbedAudioUrl &&
+            handleDownload(dubbedAudioUrl, `${baseName}_dubbed.mp3`, "audio")
+          }
+          disabled={!dubbedAudioUrl || downloading === "audio"}
+          className="group relative w-full h-14 rounded-full bg-primary flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(57,44,193,0.3)] hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.2),transparent)] -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000" />
+          {downloading === "audio" ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Mic size={20} className="text-white" />
+          )}
+          <span className="text-base font-bold text-white tracking-tight font-headline">
+            {downloading === "audio" ? "Downloading…" : "Download Dubbed Audio"}
+          </span>
+        </button>
+      )}
+
+      {muxStatus && (
+        <p className="text-xs text-on-surface-variant leading-relaxed font-body">{muxStatus}</p>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
-        {/* Original video download */}
-        {originalVideoUrl && (
+        {/* Secondary: dubbed audio (video jobs) */}
+        {showDubbedVideo && (
           <button
             onClick={() =>
-              handleDownload(
-                originalVideoUrl,
-                `${baseName}_original${job.fileType === "video" ? ".mp4" : ".mp3"}`,
-                "origvid",
-              )
+              dubbedAudioUrl &&
+              handleDownload(dubbedAudioUrl, `${baseName}_dubbed.mp3`, "audio")
             }
-            disabled={downloading === "origvid"}
+            disabled={!dubbedAudioUrl || downloading === "audio"}
+            title={dubbedAudioUrl ? "Download dubbed MP3" : "Dubbed audio not available yet"}
             className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300 disabled:opacity-50"
           >
-            {downloading === "origvid" ? (
+            {downloading === "audio" ? (
               <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             ) : (
-              <Download size={16} className="text-on-surface-variant" />
+              <Mic size={16} className="text-on-surface-variant" />
             )}
-            <span>Original Video</span>
+            <span>Dubbed Audio</span>
           </button>
         )}
 
-        {/* Legacy: server-muxed dubbed video (old jobs) */}
-        {legacyDubbedVideoUrl && (
-          <button
-            onClick={() =>
-              handleDownload(legacyDubbedVideoUrl, `${baseName}_dubbed.mp4`, "vid")
-            }
-            disabled={downloading === "vid"}
-            className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low transition-all duration-300 disabled:opacity-50"
-          >
-            {downloading === "vid" ? (
-              <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-            ) : (
-              <Download size={16} className="text-on-surface-variant" />
-            )}
-            <span>Dubbed Video</span>
-          </button>
-        )}
-
-        {/* Subtitles — coming soon */}
-        {!legacyDubbedVideoUrl && (
-          <button
-            disabled
-            className="flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface-variant text-sm font-bold cursor-not-allowed opacity-50"
-            title="Coming soon"
-          >
-            <Subtitles size={16} />
-            <span>Subtitles</span>
-          </button>
-        )}
+        {/* Subtitles */}
+        <button
+          type="button"
+          onClick={() => setShowSubtitleModal(true)}
+          disabled={!job.segments?.length}
+          title={job.segments?.length ? "Download subtitles in SRT, VTT or ASS" : "No subtitle segments available"}
+          className={`${showDubbedVideo ? "" : "col-span-2 "}group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low hover:border-primary/30 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none`}
+        >
+          <Subtitles size={16} className="text-on-surface-variant group-hover:text-primary transition-colors" />
+          <span>Subtitles</span>
+        </button>
       </div>
+
+      {showSubtitleModal && (
+        <SubtitleModal
+          jobId={jobId}
+          baseName={baseName}
+          sourceLanguage={job.sourceLanguage}
+          targetLanguage={job.targetLanguage}
+          onClose={() => setShowSubtitleModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -424,29 +774,33 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
   const [job, setJob] = useState<EditorJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  /** Rebuild mux sets DB status to "merging" — avoid swapping the UI to the stepper during export mux. */
+  const [muxDownloadInFlight, setMuxDownloadInFlight] = useState(false);
 
-  const fetchJob = useCallback(async () => {
-    if (!jobId) return;
+  const refreshJob = useCallback(async (): Promise<EditorJob | null> => {
+    if (!jobId) return null;
     try {
       const res = await axiosInstance.get<{ job: EditorJob }>(`/api/dubbing/${jobId}`);
       setJob(res.data.job);
-      if (loading) setLoading(false);
-      return ["completed", "failed"].includes(res.data.job.status);
+      setErrorMsg(null);
+      setLoading(false);
+      return res.data.job;
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
       const msg = e?.response?.data?.message ?? e?.message ?? "Failed to fetch job.";
       setErrorMsg(msg);
       setLoading(false);
-      return true;
+      return null;
     }
-  }, [jobId, loading]);
+  }, [jobId]);
 
   useEffect(() => {
     let isMounted = true;
     let timeoutId: number;
 
     const poll = async () => {
-      const shouldStop = await fetchJob();
+      const j = await refreshJob();
+      const shouldStop = !j || ["completed", "failed"].includes(j.status);
       if (!shouldStop && isMounted) {
         timeoutId = window.setTimeout(poll, 3000);
       }
@@ -458,7 +812,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
       isMounted = false;
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [jobId, fetchJob]);
+  }, [jobId, refreshJob]);
 
   if (!jobId) {
     return (
@@ -522,7 +876,8 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
     );
   }
 
-  const isProcessing = !["completed", "failed"].includes(job.status);
+  const isProcessing =
+    !muxDownloadInFlight && !["completed", "failed"].includes(job.status);
   const isFailed = job.status === "failed";
 
   return (
@@ -574,7 +929,7 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
             <div className="animate-in fade-in zoom-in-95 duration-700 w-full">
               <VideoPreview job={job} />
               <LiveTranscription job={job} />
-              <StatCards />
+              {/* <StatCards /> */}
             </div>
           )}
         </div>
@@ -591,7 +946,13 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
                 <p className="text-on-surface-variant text-sm leading-relaxed font-body pr-8">Your dubbing project is polished. We&apos;ve optimized the high-quality audio mix and synced the subtitles with frame-perfect precision.</p>
               </div>
 
-              <DownloadPanel job={job} />
+              <DownloadPanel
+                job={job}
+                jobId={jobId}
+                refreshJob={refreshJob}
+                onMuxExportStart={() => setMuxDownloadInFlight(true)}
+                onMuxExportEnd={() => setMuxDownloadInFlight(false)}
+              />
             </div>
           </div>
 
@@ -609,12 +970,12 @@ export default function DubbingExportView({ inDashboard = false }: { inDashboard
                     AI Synced
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <span className="text-on-surface-variant text-sm font-bold">Quality</span>
                   <span className="text-[10px] font-extrabold tracking-widest text-on-surface bg-surface-container-high px-2 py-1 rounded">
                     ULTRA HD (4K)
                   </span>
-                </div>
+                </div> */}
               </div>
 
               <div className="bg-surface p-6 rounded-[2rem] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-outline-variant/10 space-y-4 relative overflow-hidden group">

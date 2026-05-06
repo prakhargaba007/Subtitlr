@@ -26,6 +26,8 @@ export type EditorJob = {
   targetLanguage: string;
   originalVideoKey?: string | null;
   originalAudioKey?: string | null;
+  /** Present when separation stored a background stem; required server-side for mux/rebuild. */
+  backgroundKey?: string | null;
   dubbedVideoKey?: string | null;
   dubbedAudioKey?: string | null;
   dubbedVideoUrl?: string | null;

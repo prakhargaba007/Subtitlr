@@ -7,6 +7,7 @@ const {
   GoogleAIFileManager,
   FileState,
 } = require("@google/generative-ai/server");
+const { callWithRetry: geminiCallWithRetry } = require("./geminiKeyManager");
 const {
   getFileDuration,
   splitAudioIntoChunks,
@@ -120,11 +121,13 @@ const segmentRulesReference = `Segments:
 - Each segment time span must be long enough to contain the captions (avoid start_us almost equal to end_us unless the line is a single short word).
 - **captions** = verbatim words heard only — no bracket tags, no stage directions.
 - **tts_performance_hint** = REQUIRED on every row: a **Gemini Native Audio / controllable-TTS style** line for this clip. Rules: (1) Use the **exact same spoken words as captions**, same order — do not add, drop, or substitute words. (2) You may **only** insert **inline English** square-bracket **audio tags** between words/phrases where the performance calls for it (Google Gemini TTS style), e.g. [conversational], [excited], [pause], [short pause], [chuckle], [laughs], [whispers], [loud], [sarcastic], [breathless], [gasps], [sighs], [tired], [shouting], or combined like [loud, exaggerated]. (3) If captions are not English, still write **tags in English**; spoken words stay in captions' script/language. (4) For a neutral straight read, prefix once with something like [conversational] or [neutral] then the line; still add [pause] only where you clearly hear a beat or breath gap.
-- **voice_description** = timbre/register (gender, age range, tone, pitch, pace, accent, energy). Keep delivery nuance in **tts_performance_hint** tags; here stay concise and consistent per speaker.
+- **voice_description** = A rich, structured voice persona for this speaker formatted as:
+  "Character: [age range, gender, background/accent, profession if inferable]. Vocal Timbre: [physical voice quality, e.g. raspy, resonant, nasal, warm, breathy]. Speaking Style: [pacing, energy, rhythm, e.g. fast and clipped, slow and measured]. Emotional State: [underlying mood of this segment]. Scenario Context: [who they are talking to and why]."
+  Be consistent for the same speaker across all segments. Only update if the speaker's voice or emotional state clearly changes.
 
 JSON schema:
 - transcript: array in time order
-- each: start_us, end_us, speaker ("Speaker A" / "Speaker B" if multiple), captions (exact wording as spoken), tts_performance_hint (same words as captions plus English [audio tags] only — see rules above), speaker_gender ("male", "female", or "unknown" — infer from voice characteristics; be consistent for the same speaker), voice_description (1-2 sentences: this speaker's voice traits for this segment — timbre, pitch, pace, accent, energy; be consistent for the same speaker across segments unless the voice clearly changes.)`;
+- each: start_us, end_us, speaker ("Speaker A" / "Speaker B" if multiple), captions (exact wording as spoken), tts_performance_hint (same words as captions plus English [audio tags] only — see rules above), speaker_gender ("male", "female", or "unknown" — infer from voice characteristics; be consistent for the same speaker), voice_description (rich structured persona as described above; be consistent for the same speaker across segments.)`;
 
 /**
  * Core prompt for a known language — matches standalone script categories:
@@ -178,7 +181,7 @@ ${segmentRulesReference}`;
 }
 
 /** Same text the standalone transcribe script sends to Gemini (no dubbing-only JSON extras). */
-function buildDubbingPrompt(langKey, isoCode, isAuto, chunkHint) {
+function buildDubbingPrompt(langKey, isoCode, isAuto, chunkHint, opts = {}) {
   let core;
   if (isAuto) {
     core = `Listen to this audio carefully. Transcribe all speech.
@@ -199,6 +202,9 @@ ${segmentRulesReference}`;
   let out = core;
   if (chunkHint) {
     out += `\n\n${chunkHint}`;
+  }
+  if (opts.guidedScript) {
+    out += `\n\nGUIDED SCRIPT (the exact words you are listening to): \n${opts.guidedScript}\n\nPlease use this script to help with timestamp alignment. The output JSON must match the lines provided in this script.`;
   }
   return out;
 }
@@ -227,7 +233,7 @@ const transcriptItemSchema = {
     voice_description: {
       type: SchemaType.STRING,
       description:
-        "Rich 1-2 sentence description of this speaker's voice: gender, approximate age range, tone, pitch, pace, accent, and emotional energy. Be consistent for the same speaker.",
+        "Rich structured voice persona: 'Character: [age, gender, accent, profession]. Vocal Timbre: [raspy/warm/nasal/etc]. Speaking Style: [pace, energy, rhythm]. Emotional State: [mood]. Scenario Context: [who they talk to and why].' Be consistent for the same speaker across all segments.",
     },
     tts_performance_hint: {
       type: SchemaType.STRING,
@@ -413,34 +419,52 @@ function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
 
 /** Dubbing still needs speaker_profiles; Gemini returns transcript-only like the standalone script. */
 function buildSyntheticSpeakerProfiles(segments) {
-  // Collect per-speaker: use the first non-empty voice_description Gemini produced.
+  // Collect per-speaker: accumulate ALL non-empty voice_descriptions, then pick the richest.
   const seen = new Map();
   for (const s of segments) {
     const id = s.speaker_id;
     if (!seen.has(id)) {
       seen.set(id, {
         speaker_id: id,
-        speaker_gender: s.speaker_gender ?? "unknown",
-        voice_description: "",
+        speaker_gender: "unknown",
+        descriptions: [],
       });
     }
-    // Fill in the first meaningful description we encounter for this speaker.
     const entry = seen.get(id);
-    if (!entry.voice_description && s.voice_description) {
-      entry.voice_description = s.voice_description;
+    // Prefer first non-unknown gender value
+    if (
+      entry.speaker_gender === "unknown" &&
+      s.speaker_gender &&
+      s.speaker_gender !== "unknown"
+    ) {
+      entry.speaker_gender = s.speaker_gender;
+    }
+    // Accumulate unique descriptions (avoid exact duplicates)
+    const desc = (s.voice_description || "").trim();
+    if (desc && !entry.descriptions.includes(desc)) {
+      entry.descriptions.push(desc);
     }
   }
-  // Build final profiles; fall back gracefully if Gemini gave nothing.
-  return Array.from(seen.values()).map((p) => ({
-    ...p,
-    voice_description:
-      p.voice_description ||
-      (p.speaker_gender === "male"
-        ? "Male speaker; natural conversational delivery."
-        : p.speaker_gender === "female"
-          ? "Female speaker; natural conversational delivery."
-          : "Speaker; neutral delivery."),
-  }));
+  // Build final profiles — use the longest (richest) description as canonical.
+  return Array.from(seen.values()).map((p) => {
+    let voice_description = "";
+    if (p.descriptions.length > 0) {
+      voice_description = p.descriptions.reduce(
+        (a, b) => (a.length >= b.length ? a : b),
+        "",
+      );
+    }
+    if (!voice_description) {
+      // Structured fallback in the new 5-bullet persona format
+      voice_description =
+        p.speaker_gender === "male"
+          ? "Character: adult male, neutral accent. Vocal Timbre: warm, clear. Speaking Style: conversational, measured pace. Emotional State: neutral. Scenario Context: general conversation."
+          : p.speaker_gender === "female"
+            ? "Character: adult female, neutral accent. Vocal Timbre: clear, warm. Speaking Style: conversational, measured pace. Emotional State: neutral. Scenario Context: general conversation."
+            : "Character: adult speaker, neutral accent. Vocal Timbre: clear, neutral. Speaking Style: conversational. Emotional State: neutral. Scenario Context: general conversation.";
+    }
+    return { speaker_id: p.speaker_id, speaker_gender: p.speaker_gender, voice_description };
+  });
 }
 
 const mergeSpeakerProfiles = (profileArrays) => {
@@ -602,25 +626,10 @@ async function transcribeGeminiChunk(
   isFirstChunk,
   chunkIndex,
   timeOffsetSec,
+  opts = {},
 ) {
-  const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    throw new Error(
-      "Set GOOGLE_API_KEY (or GEMINI_API_KEY) for dubbing transcription.",
-    );
-  }
-
   const modelName = "gemini-3.1-flash-lite-preview";
   console.log(`[transcribeGeminiChunk] Using model: ${modelName}`);
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    generationConfig: {
-      temperature: 0,
-      responseMimeType: "application/json",
-      responseSchema: transcriptResponseSchema,
-    },
-  });
 
   const mimeType = "audio/mpeg";
   let chunkHint = "";
@@ -631,85 +640,99 @@ async function transcribeGeminiChunk(
       `Keep the same speaker labels (e.g. Speaker A / Speaker B, or Speaker_1 / Speaker_2) for the same people as in earlier chunks.`;
   }
 
-  const prompt = buildDubbingPrompt(langKey, isoCode, isAuto, chunkHint);
-  const fileManager = new GoogleAIFileManager(apiKey);
-  let uploadName = null;
+  const prompt = buildDubbingPrompt(langKey, isoCode, isAuto, chunkHint, opts);
 
-  try {
-    const stat = fs.statSync(audioPath);
-    console.log(
-      `[transcribeGeminiChunk] Audio file: ${audioPath} (${(stat.size / 1e6).toFixed(2)} MB)`,
-    );
-    if (stat.size <= INLINE_AUDIO_MAX_BYTES) {
-      console.log(
-        `[transcribeGeminiChunk] Sending audio inline to ${modelName}`,
-      );
-    } else {
-      console.log(`[transcribeGeminiChunk] Uploading audio for ${modelName}`);
-    }
+  const stat = fs.statSync(audioPath);
+  console.log(
+    `[transcribeGeminiChunk] Audio file: ${audioPath} (${(stat.size / 1e6).toFixed(2)} MB)`,
+  );
+  if (stat.size <= INLINE_AUDIO_MAX_BYTES) {
+    console.log(`[transcribeGeminiChunk] Sending audio inline to ${modelName}`);
+  } else {
+    console.log(`[transcribeGeminiChunk] Uploading audio for ${modelName}`);
+  }
 
-    const { mediaPart, uploadName: up } = await buildGeminiMediaPart(
-      fileManager,
-      audioPath,
-      mimeType,
-    );
-    uploadName = up;
+  // Use key manager for automatic 429 rotation across all 3 keys
+  return await geminiCallWithRetry(async (apiKey) => {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: "application/json",
+        responseSchema: transcriptResponseSchema,
+      },
+    });
 
-    console.log(
-      `[transcribeGeminiChunk] Media part prepared, uploadName=${uploadName}`,
-    );
-    console.log(
-      `[transcribeGeminiChunk] Prompt: ${prompt.length > 1200 ? prompt.slice(0, 1200) + "…" : prompt}`,
-    );
+    const fileManager = new GoogleAIFileManager(apiKey);
+    let uploadName = null;
 
-    console.log("[transcribeGeminiChunk] Gemini transcribing…");
-    const result = await model.generateContent([mediaPart, { text: prompt }]);
-    const usage = result.response.usageMetadata;
-    const text = result.response.text();
-    console.log(
-      `[transcribeGeminiChunk] Gemini response received, length=${text.length}, tokens=${JSON.stringify(usage)}`,
-    );
-    const parsed = parseJsonFromModelText(text);
-    if (!Array.isArray(parsed.transcript)) {
-      console.error(
-        "[transcribeGeminiChunk] Gemini response missing transcript array:",
-        parsed,
-      );
-      throw new Error("Gemini response missing transcript array");
-    }
-    const segments = mapGeminiTranscriptToSegments(
-      parsed.transcript,
-      timeOffsetSec,
-    );
-    console.log(
-      `[transcribeGeminiChunk] Segments mapped: count=${segments.length}, timeOffsetSec=${timeOffsetSec}`,
-    );
-    const speaker_profiles = buildSyntheticSpeakerProfiles(segments);
-    console.log(
-      `[transcribeGeminiChunk] Speaker profiles built: count=${Object.keys(speaker_profiles).length}`,
-    );
-    return { segments, speaker_profiles, usage };
-  } catch (err) {
-    console.error(
-      "[transcribeGeminiChunk] Error during Gemini chunk transcription:",
-      err,
-    );
-    throw err;
-  } finally {
     try {
-      await deleteUploadedFile(fileManager, uploadName);
-      console.log(
-        `[transcribeGeminiChunk] Uploaded file cleaned up: ${uploadName}`,
+      const { mediaPart, uploadName: up } = await buildGeminiMediaPart(
+        fileManager,
+        audioPath,
+        mimeType,
       );
-    } catch (cleanupErr) {
-      if (uploadName) {
-        console.warn(
-          `[transcribeGeminiChunk] Could not clean up uploaded file: ${uploadName}`,
-          cleanupErr,
+      uploadName = up;
+
+      console.log(
+        `[transcribeGeminiChunk] Media part prepared, uploadName=${uploadName}`,
+      );
+      console.log(
+        `[transcribeGeminiChunk] Prompt: ${
+          prompt.length > 1200 ? prompt.slice(0, 1200) + "\u2026" : prompt
+        }`,
+      );
+
+      console.log("[transcribeGeminiChunk] Gemini transcribing\u2026");
+      const result = await model.generateContent([mediaPart, { text: prompt }]);
+      const usage = result.response.usageMetadata;
+      const text = result.response.text();
+      console.log(
+        `[transcribeGeminiChunk] Gemini response received, length=${text.length}, tokens=${JSON.stringify(usage)}`,
+      );
+      const parsed = parseJsonFromModelText(text);
+      if (!Array.isArray(parsed.transcript)) {
+        console.error(
+          "[transcribeGeminiChunk] Gemini response missing transcript array:",
+          parsed,
         );
+        throw new Error("Gemini response missing transcript array");
+      }
+      const segments = mapGeminiTranscriptToSegments(
+        parsed.transcript,
+        timeOffsetSec,
+      );
+      console.log(
+        `[transcribeGeminiChunk] Segments mapped: count=${segments.length}, timeOffsetSec=${timeOffsetSec}`,
+      );
+      const speaker_profiles = buildSyntheticSpeakerProfiles(segments);
+      console.log(
+        `[transcribeGeminiChunk] Speaker profiles built: count=${Object.keys(speaker_profiles).length}`,
+      );
+      return { segments, speaker_profiles, usage };
+    } catch (err) {
+      console.error(
+        "[transcribeGeminiChunk] Error during Gemini chunk transcription:",
+        err,
+      );
+      throw err;
+    } finally {
+      try {
+        await deleteUploadedFile(fileManager, uploadName);
+        console.log(
+          `[transcribeGeminiChunk] Uploaded file cleaned up: ${uploadName}`,
+        );
+      } catch (cleanupErr) {
+        if (uploadName) {
+          console.warn(
+            `[transcribeGeminiChunk] Could not clean up uploaded file: ${uploadName}`,
+            cleanupErr,
+          );
+        }
       }
     }
-  }
+  });
 }
 
 const fileSize = (p) => fs.statSync(p).size;
@@ -732,8 +755,9 @@ const writeTranscriptionOutputJson = (payload) => {
  * Transcribe separated vocals with Gemini (vocals-only ASR).
  * @param {string} vocalsPath
  * @param {string|null|undefined} sourceLanguage
+ * @param {object} [opts]
  */
-const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
+const transcribeWithSpeakers = async (vocalsPath, sourceLanguage, opts = {}) => {
   const vadIntervals = await resolveDubbingVadIntervals(vocalsPath);
   const { langKey, isoCode, isAuto } =
     resolveDubbingTranscribeLanguage(sourceLanguage);
@@ -742,7 +766,7 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
   const duration = await getFileDuration(vocalsPath);
 
   const runSingleShot = async () =>
-    transcribeGeminiChunk(vocalsPath, langKey, isoCode, isAuto, true, 0, 0);
+    transcribeGeminiChunk(vocalsPath, langKey, isoCode, isAuto, true, 0, 0, opts);
 
   let finalized;
   if (vocalsSize <= INLINE_AUDIO_MAX_BYTES) {
@@ -791,6 +815,7 @@ const transcribeWithSpeakers = async (vocalsPath, sourceLanguage) => {
         i === 0,
         i,
         timeOffset,
+        opts,
       );
       allSegments.push(...result.segments);
       allProfiles.push(result.speaker_profiles);
