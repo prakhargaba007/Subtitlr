@@ -304,11 +304,15 @@ export default function ProcessingView() {
               headers["Content-Type"] = "application/json";
               if (mode === "subtitles") {
                 const lang = getPendingLanguage();
+                const subtitleSourceLanguage = getPendingSourceLanguage();
+                const subtitleTargetLanguage = getPendingTargetLanguage();
                 payload = {
                   s3Key: key,
                   originalFileName: file.name,
                   mimeType: mime,
                   ...(lang ? { language: lang } : {}),
+                  ...(subtitleSourceLanguage ? { sourceLanguage: subtitleSourceLanguage } : {}),
+                  ...(subtitleTargetLanguage ? { targetLanguage: subtitleTargetLanguage } : {}),
                 };
               } else {
                 payload = {
@@ -330,7 +334,11 @@ export default function ProcessingView() {
           fd.append("file", file);
           if (mode === "subtitles") {
             const lang = getPendingLanguage();
+            const subtitleSourceLanguage = getPendingSourceLanguage();
+            const subtitleTargetLanguage = getPendingTargetLanguage();
             if (lang) fd.append("language", lang);
+            if (subtitleSourceLanguage) fd.append("sourceLanguage", subtitleSourceLanguage);
+            if (subtitleTargetLanguage) fd.append("targetLanguage", subtitleTargetLanguage);
           } else {
             if (targetLanguage) fd.append("targetLanguage", targetLanguage);
             if (sourceLanguage) fd.append("sourceLanguage", sourceLanguage);

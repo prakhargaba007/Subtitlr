@@ -34,6 +34,8 @@ const {
   transcribeSpeechClip,
   shiftSegments,
   transliterateToHinglish,
+  shouldTranslateSubtitles,
+  translateSubtitleSegments,
   generateSRT,
   generateVTT,
   generateASS,
@@ -147,7 +149,12 @@ exports.generateSubtitles = async (req, res, next) => {
 
     emit({ stage: "validating", message: "Checking file and credits…" });
 
-    const { isoCode, label: langLabel } = resolveLanguage(req.body.language);
+    const sourceLanguage = (req.body.sourceLanguage || req.body.language || "").trim();
+    const targetLanguage = (req.body.targetLanguage || "").trim();
+    const { isoCode, label: sourceLangLabel } = resolveLanguage(sourceLanguage);
+    const translationPlan = shouldTranslateSubtitles(sourceLanguage, targetLanguage);
+    let finalLangLabel = translationPlan.target?.label || sourceLangLabel;
+    const usageRecords = [];
 
     const ext = path.extname(req.file.originalname) || ".tmp";
     let tmpInput;
@@ -303,13 +310,44 @@ exports.generateSubtitles = async (req, res, next) => {
       allSegments = await runLegacyWhisper();
     }
 
-    if (langLabel === "hinglish") {
+    if (translationPlan.translate && translationPlan.target?.label === "hinglish") {
       emit({ stage: "transliterating", message: "Converting to Hinglish script…" });
       const tResult = await transliterateToHinglish(allSegments);
       allSegments = tResult.segments;
-      if (projectId && tResult.usage) {
+      if (tResult.usage) {
         const isGemini = !!tResult.usage.promptTokenCount;
-        await recordProjectUsage(projectId, {
+        usageRecords.push({
+          model: isGemini ? (process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview") : "gpt-4o-mini",
+          inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
+          outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
+        });
+      }
+    } else if (translationPlan.translate && translationPlan.target) {
+      emit({
+        stage: "translating",
+        message: `Translating subtitles to ${translationPlan.target.label}…`,
+        progress: 88,
+      });
+      const tResult = await translateSubtitleSegments(allSegments, translationPlan.target.label, {
+        sourceLanguage: sourceLangLabel,
+      });
+      allSegments = tResult.segments;
+      if (tResult.usage) {
+        const isGemini = tResult.provider === "gemini";
+        usageRecords.push({
+          model: tResult.model || (isGemini ? "gemini" : "gpt-4o-mini"),
+          inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
+          outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
+        });
+      }
+    } else if (!translationPlan.translate && sourceLangLabel === "hinglish") {
+      emit({ stage: "transliterating", message: "Converting to Hinglish script…" });
+      const tResult = await transliterateToHinglish(allSegments);
+      allSegments = tResult.segments;
+      finalLangLabel = "hinglish";
+      if (tResult.usage) {
+        const isGemini = !!tResult.usage.promptTokenCount;
+        usageRecords.push({
           model: isGemini ? (process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview") : "gpt-4o-mini",
           inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
           outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
@@ -329,7 +367,9 @@ exports.generateSubtitles = async (req, res, next) => {
       {
         fileName: req.file.originalname,
         fileType: isVideo ? "video" : "audio",
-        language: langLabel,
+        language: finalLangLabel,
+        sourceLanguage: sourceLangLabel,
+        targetLanguage: translationPlan.target?.label || null,
         duration,
         originalFileKey,
       }
@@ -342,7 +382,7 @@ exports.generateSubtitles = async (req, res, next) => {
       duration,
       creditsUsed: creditsNeeded,
       status: "completed",
-      language: langLabel,
+      language: finalLangLabel,
       transcription,
       segments: allSegments,
       originalFileKey,
@@ -358,6 +398,9 @@ exports.generateSubtitles = async (req, res, next) => {
         model: "whisper-1",
         seconds: duration,
       });
+      for (const usage of usageRecords) {
+        await recordProjectUsage(projectId, usage);
+      }
     }
 
     emit({

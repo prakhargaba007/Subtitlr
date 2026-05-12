@@ -42,6 +42,14 @@ const AUTO_DETECT: ApiLanguage = {
   dub: { isEnable: false, provider: null },
 };
 
+const SAME_AS_SOURCE: ApiLanguage = {
+  lang_name: "",
+  label: "Same as video/audio",
+  iso_code: null,
+  sub: { isEnable: true, provider: null },
+  dub: { isEnable: false, provider: null },
+};
+
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -187,6 +195,7 @@ function UploadCardInner({
   const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [language, setLanguage] = useState("");
+  const [subtitleSourceLanguage, setSubtitleSourceLanguage] = useState("");
   const [authChecking, setAuthChecking] = useState(false);
   const [maxFileSizeMB, setMaxFileSizeMB] = useState<number | null>(null);
   const [maxInputMinutes, setMaxInputMinutes] = useState<number | null>(null);
@@ -205,6 +214,8 @@ function UploadCardInner({
     languageBundle !== null && languageBundle.mode === mode;
   const languages =
     langReady && languageBundle ? languageBundle.languages : [];
+  const subtitleTargetLanguages =
+    mode === "subtitles" ? [SAME_AS_SOURCE, ...languages.filter((l) => l.lang_name.trim())] : languages;
 
   useEffect(() => {
     if (onModeChange) onModeChange(mode);
@@ -265,6 +276,7 @@ function UploadCardInner({
           const next = [AUTO_DETECT, ...raw];
           setLanguageBundle({ mode: "subtitles", languages: next });
           setLanguage((prev) => (prev && raw.some((l) => l.lang_name === prev) ? prev : ""));
+          setSubtitleSourceLanguage((prev) => (prev && raw.some((l) => l.lang_name === prev) ? prev : ""));
         } else {
           setLanguageBundle({ mode: "dubbing", languages: raw });
           setLanguage((prev) => {
@@ -277,6 +289,7 @@ function UploadCardInner({
         if (cancelled) return;
         if (q === "subtitles") {
           setLanguageBundle({ mode: "subtitles", languages: [AUTO_DETECT] });
+          setSubtitleSourceLanguage("");
         } else {
           setLanguageBundle({ mode: "dubbing", languages: [] });
           setLanguage("");
@@ -509,7 +522,9 @@ function UploadCardInner({
     setPendingFile(selectedFile);
     setPendingMode(mode);
     if (mode === "subtitles") {
-      setPendingLanguage(safeLang);
+      setPendingLanguage(subtitleSourceLanguage);
+      setPendingSourceLanguage(subtitleSourceLanguage);
+      setPendingTargetLanguage(safeLang);
     } else {
       // For dubbing we treat the picker as *target language* for now
       setPendingTargetLanguage(safeLang);
@@ -522,6 +537,14 @@ function UploadCardInner({
   };
 
   const selectedLangRow = langReady ? languages.find((l) => l.lang_name === language) : undefined;
+  const selectedSubtitleSourceRow =
+    mode === "subtitles" && langReady
+      ? languages.find((l) => l.lang_name === subtitleSourceLanguage)
+      : undefined;
+  const selectedSubtitleTargetRow =
+    mode === "subtitles" && langReady
+      ? subtitleTargetLanguages.find((l) => l.lang_name === language)
+      : undefined;
   const dubProvider = selectedLangRow?.dub?.provider;
   const dubbingTtsLabel =
     dubProvider === "sarvam"
@@ -713,29 +736,70 @@ function UploadCardInner({
                 </button>
               </div>
 
-              <div>
-                <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
-                  {mode === "dubbing" ? "Dubbing Language (Target)" : "Subtitle Language"}
-                </p>
-                {!langReady ? (
-                  <div className="relative w-full">
-                    <div className="h-[46px] w-full rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 animate-pulse" />
+              {mode === "subtitles" ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+                      Video/audio language
+                    </p>
+                    {!langReady ? (
+                      <div className="relative w-full">
+                        <div className="h-[46px] w-full rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 animate-pulse" />
+                      </div>
+                    ) : (
+                      <LanguagePicker
+                        languages={languages}
+                        value={subtitleSourceLanguage}
+                        onChange={setSubtitleSourceLanguage}
+                      />
+                    )}
                   </div>
-                ) : mode === "dubbing" && languages.length === 0 ? (
-                  <p className="text-sm text-red-600/90 py-2">Could not load dubbing languages. Try again later.</p>
-                ) : (
-                  <LanguagePicker languages={languages} value={language} onChange={setLanguage} />
-                )}
-                <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
-                  {mode === "dubbing"
-                    ? language
+
+                  <div>
+                    <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+                      Subtitle language
+                    </p>
+                    {!langReady ? (
+                      <div className="relative w-full">
+                        <div className="h-[46px] w-full rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 animate-pulse" />
+                      </div>
+                    ) : (
+                      <LanguagePicker
+                        languages={subtitleTargetLanguages}
+                        value={language}
+                        onChange={setLanguage}
+                      />
+                    )}
+                    <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
+                      {language
+                        ? `We'll transcribe ${selectedSubtitleSourceRow?.label ?? "Auto-detected speech"} first, then save subtitles in ${selectedSubtitleTargetRow?.label ?? language}.`
+                        : subtitleSourceLanguage
+                          ? `We'll generate subtitles in ${selectedSubtitleSourceRow?.label ?? subtitleSourceLanguage}.`
+                          : "Whisper will detect the spoken language and save subtitles in that language."}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+                    Dubbing Language (Target)
+                  </p>
+                  {!langReady ? (
+                    <div className="relative w-full">
+                      <div className="h-[46px] w-full rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 animate-pulse" />
+                    </div>
+                  ) : languages.length === 0 ? (
+                    <p className="text-sm text-red-600/90 py-2">Could not load dubbing languages. Try again later.</p>
+                  ) : (
+                    <LanguagePicker languages={languages} value={language} onChange={setLanguage} />
+                  )}
+                  <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
+                    {language
                       ? `Dubbing to ${selectedLangRow?.label ?? language}. This target is set up for ${dubbingTtsLabel}. Source speech is auto-detected.`
-                      : "Pick a dubbing target from the list. Indic languages use Sarvam TTS when configured; other listed languages map to the Inworld voice catalog when Inworld is your TTS backend."
-                    : language === ""
-                      ? "Whisper will detect the language automatically."
-                      : `Transcribing in ${selectedLangRow?.label ?? language} (Whisper).`}
-                </p>
-              </div>
+                      : "Pick a dubbing target from the list. Indic languages use Sarvam TTS when configured; other listed languages map to the Inworld voice catalog when Inworld is your TTS backend."}
+                  </p>
+                </div>
+              )}
 
               <div className="border-t border-outline-variant/10" />
 

@@ -169,6 +169,130 @@ const transliterateToHinglish = async (segments) => {
   }
 };
 
+const resolveSubtitleOutputLanguage = (input) => {
+  const key = String(input || "").toLowerCase().trim();
+  if (!key) return null;
+  if (key === "hinglish") {
+    return { key, label: "hinglish", isoCode: "hi" };
+  }
+  if (key in LANGUAGE_MAP && LANGUAGE_MAP[key]) {
+    return { key, label: key, isoCode: LANGUAGE_MAP[key] };
+  }
+  const byIso = Object.entries(LANGUAGE_MAP).find(([, isoCode]) => isoCode === key);
+  if (byIso) {
+    return { key: byIso[0], label: byIso[0], isoCode: byIso[1] };
+  }
+  const err = new Error(`Unsupported subtitle output language: ${input}`);
+  err.statusCode = 422;
+  throw err;
+};
+
+const shouldTranslateSubtitles = (sourceLanguage, targetLanguage) => {
+  const target = resolveSubtitleOutputLanguage(targetLanguage);
+  if (!target) return { translate: false, target: null };
+
+  const source = resolveLanguage(sourceLanguage);
+  const sourceRaw = String(sourceLanguage || "").toLowerCase().trim();
+  const sameKey = sourceRaw && sourceRaw === target.key;
+  const sameIso = target.key !== "hinglish" && source.isoCode && source.isoCode === target.isoCode;
+  const sameLabel = source.label && source.label === target.label;
+
+  return {
+    translate: !(sameKey || sameIso || sameLabel),
+    target,
+  };
+};
+
+const SUBTITLE_TRANSLATION_SYSTEM_PROMPT =
+  "You are a professional subtitle translator. Translate each caption segment into the requested target language. " +
+  "Return plain subtitle text only: no markdown, no explanations, no audio/TTS tags, and no source-language text unless it is a proper noun, brand, URL, code, or standard loanword. " +
+  "Preserve meaning, tone, numbers, names, punctuation intent, and caption readability. Keep each translation concise enough for the original subtitle timing. " +
+  'Return ONLY a JSON object: { "results": [ { "index": 0, "text": "..." } ] } with one entry per input segment.';
+
+const translateSubtitleSegments = async (
+  segments,
+  targetLanguage,
+  options = {},
+) => {
+  if (!segments.length) return { segments: [], usage: null, provider: null };
+
+  const target = resolveSubtitleOutputLanguage(targetLanguage);
+  const sourceLanguage = String(options.sourceLanguage || "auto").trim() || "auto";
+  const payload = JSON.stringify({
+    source_language: sourceLanguage,
+    target_language: target.label,
+    segments: segments.map((s, i) => ({
+      index: i,
+      start: s.start,
+      end: s.end,
+      text: s.text,
+    })),
+  });
+
+  const geminiModel =
+    process.env.SUBTITLE_TRANSLATION_MODEL ||
+    process.env.SUBTITLE_TRANSLITERATION_MODEL ||
+    "gemini-3.1-flash-lite-preview";
+
+  try {
+    const response = await geminiCallWithRetry(async (apiKey) => {
+      const gemini = new GoogleGenAI({ apiKey });
+      return await gemini.models.generateContent({
+        model: geminiModel,
+        contents: `${SUBTITLE_TRANSLATION_SYSTEM_PROMPT}\n\n${payload}`,
+        generationConfig: {
+          temperature: 0.1,
+          responseMimeType: "application/json",
+        },
+      });
+    });
+
+    const parsed = parseGeminiJsonResponse(response);
+    const byIndex = {};
+    for (const row of parsed.results || []) byIndex[row.index] = row;
+    const usage = response.response?.usageMetadata ?? response.usageMetadata;
+
+    return {
+      segments: segments.map((s, i) => ({
+        start: s.start,
+        end: s.end,
+        text: String(byIndex[i]?.text || s.text).trim(),
+      })),
+      usage,
+      provider: "gemini",
+      model: geminiModel,
+    };
+  } catch (err) {
+    console.warn(
+      "[subtitles] Gemini translation failed or not configured, trying OpenAI fallback:",
+      err.message,
+    );
+    const response = await getOpenAI().chat.completions.create({
+      model: process.env.SUBTITLE_TRANSLATION_OPENAI_MODEL || "gpt-4o-mini",
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SUBTITLE_TRANSLATION_SYSTEM_PROMPT },
+        { role: "user", content: payload },
+      ],
+    });
+    const parsed = JSON.parse(response.choices[0].message.content);
+    const byIndex = {};
+    for (const row of parsed.results || []) byIndex[row.index] = row;
+
+    return {
+      segments: segments.map((s, i) => ({
+        start: s.start,
+        end: s.end,
+        text: String(byIndex[i]?.text || s.text).trim(),
+      })),
+      usage: response.usage,
+      provider: "openai",
+      model: process.env.SUBTITLE_TRANSLATION_OPENAI_MODEL || "gpt-4o-mini",
+    };
+  }
+};
+
 // ─── Subtitle Format Generators ───────────────────────────────────────────────
 
 const pad = (n, len = 2) => String(n).padStart(len, "0");
@@ -251,6 +375,9 @@ module.exports = {
   transcribeSpeechClip,
   shiftSegments,
   transliterateToHinglish,
+  resolveSubtitleOutputLanguage,
+  shouldTranslateSubtitles,
+  translateSubtitleSegments,
   generateSRT,
   generateVTT,
   generateASS,
