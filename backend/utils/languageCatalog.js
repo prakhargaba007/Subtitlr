@@ -331,13 +331,14 @@ const INWORLD_LANG_CODE_MAP = {
 
 /** Sarvam TTS: English name → BCP-47 `target_language_code`. Dubbing uses Sarvam when target matches these keys. */
 const SARVAM_BCP47_MAP = {
+  english: "en-IN",
   hindi: "hi-IN",
   bengali: "bn-IN",
   gujarati: "gu-IN",
   kannada: "kn-IN",
   malayalam: "ml-IN",
   marathi: "mr-IN",
-  odia: "or-IN",
+  odia: "od-IN",
   punjabi: "pa-IN",
   tamil: "ta-IN",
   telugu: "te-IN",
@@ -427,16 +428,16 @@ const buildDubbingLanguageList = () => {
     });
   }
 
-  for (const key of INWORLD_CANONICAL_LANG_KEYS) {
-    if (key === "hindi") continue;
-    if (byValue.has(key)) continue;
-    byValue.set(key, {
-      value: key,
-      label: capitalizeLabel(key),
-      isoCode: LANGUAGE_MAP[key] ?? null,
-      dubbingTts: "inworld",
-    });
-  }
+  // for (const key of INWORLD_CANONICAL_LANG_KEYS) {
+  //   if (key === "hindi") continue;
+  //   if (byValue.has(key)) continue;
+  //   byValue.set(key, {
+  //     value: key,
+  //     label: capitalizeLabel(key),
+  //     isoCode: LANGUAGE_MAP[key] ?? null,
+  //     dubbingTts: "inworld",
+  //   });
+  // }
 
   const list = Array.from(byValue.values());
   list.sort((a, b) => a.label.localeCompare(b.label));

@@ -9,7 +9,6 @@ import type { RootState } from "@/redux/store";
 import { clearUserDetails } from "@/redux/slices/userSlice";
 import axiosInstance from "@/utils/axios";
 import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
-import ProjectList from "./ProjectList";
 
 const NAV_ITEMS = [
   { icon: "dashboard", label: "Launchpad", href: "/dashboard" },
@@ -23,9 +22,6 @@ const DIRECT_LINKS = [
   // { icon: "toll", label: "Credit History", href: "/dashboard/credit-history" },
   { icon: "rocket_launch", label: "Request a Feature", href: "/dashboard/request-feature" },
 ];
-
-
-const MAX_CREDITS = 60;
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -90,8 +86,11 @@ export default function DashboardSidebar() {
      { icon: "logout", label: "Log Out", action: handleLogout, danger: true },
   ]
   
-  const usedPercent =
-    credits !== null ? Math.round(((MAX_CREDITS - credits) / MAX_CREDITS) * 100) : 0;
+  const planCreditLimit = currentPlan?.creditsPerPeriod ?? credits ?? 0;
+  const remainingPercent =
+    credits !== null && planCreditLimit > 0
+      ? Math.round((credits / planCreditLimit) * 100)
+      : 0;
 
   return (
     <aside className="h-screen w-[72px] lg:w-72 fixed left-0 top-0 bg-surface-container-lowest/95 supports-backdrop-filter:bg-surface-container-lowest/75 supports-backdrop-filter:backdrop-blur-xl border-r border-outline-variant/20 flex flex-col py-7 px-3 lg:px-4 z-50 transition-all duration-300">
@@ -192,13 +191,13 @@ export default function DashboardSidebar() {
                       {credits ?? "—"}
                     </span>
                     <span className="text-[10px] font-bold text-on-surface-variant font-label">
-                      / {MAX_CREDITS} left
+                      / {planCreditLimit || "—"} left
                     </span>
                   </div>
                   <div className="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${Math.min(100, Math.max(0, 100 - usedPercent))}%` }}
+                      style={{ width: `${Math.min(100, Math.max(0, remainingPercent))}%` }}
                     />
                   </div>
                   <button
