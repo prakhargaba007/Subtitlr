@@ -316,8 +316,9 @@ exports.generateSubtitles = async (req, res, next) => {
       allSegments = tResult.segments;
       if (tResult.usage) {
         const isGemini = !!tResult.usage.promptTokenCount;
+        const isDeepseek = tResult.provider === "deepseek";
         usageRecords.push({
-          model: isGemini ? (process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview") : "gpt-4o-mini",
+          model: tResult.model || (isGemini ? "gemini-3.1-flash-lite-preview" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
           inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
           outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
         });
@@ -334,8 +335,9 @@ exports.generateSubtitles = async (req, res, next) => {
       allSegments = tResult.segments;
       if (tResult.usage) {
         const isGemini = tResult.provider === "gemini";
+        const isDeepseek = tResult.provider === "deepseek";
         usageRecords.push({
-          model: tResult.model || (isGemini ? "gemini" : "gpt-4o-mini"),
+          model: tResult.model || (isGemini ? "gemini" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
           inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
           outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
         });
@@ -347,8 +349,9 @@ exports.generateSubtitles = async (req, res, next) => {
       finalLangLabel = "hinglish";
       if (tResult.usage) {
         const isGemini = !!tResult.usage.promptTokenCount;
+        const isDeepseek = tResult.provider === "deepseek";
         usageRecords.push({
-          model: isGemini ? (process.env.SUBTITLE_TRANSLITERATION_MODEL || "gemini-3.1-flash-lite-preview") : "gpt-4o-mini",
+          model: tResult.model || (isGemini ? "gemini-3.1-flash-lite-preview" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
           inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
           outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
         });

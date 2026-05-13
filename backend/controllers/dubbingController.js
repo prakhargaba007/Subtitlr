@@ -1235,6 +1235,7 @@ exports.startDubbingJob = async (req, res) => {
         const v = await selectBestSarvamVoice(profile.voice_description, {
           excludeVoiceIds: assignedSarvamIds,
           speakerCount: dubbingSpeakerCount,
+          targetLanguage,
         });
         assignedSarvamIds.push(v);
         voiceMap[profile.speaker_id] = v;

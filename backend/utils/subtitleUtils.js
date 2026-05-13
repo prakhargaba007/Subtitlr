@@ -17,6 +17,19 @@ const getGemini = () => {
   return _gemini;
 };
 
+let _deepseek = null;
+const getDeepseek = () => {
+  const key = process.env.SUBTITLEDEEP;
+  if (!key) return null;
+  if (!_deepseek) {
+    _deepseek = new OpenAI({
+      apiKey: key,
+      baseURL: "https://api.deepseek.com/v1",
+    });
+  }
+  return _deepseek;
+};
+
 const parseGeminiJsonResponse = (response) => {
   let text = "";
   if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
@@ -116,6 +129,35 @@ const transliterateToHinglish = async (segments) => {
 
   const texts = segments.map((s) => s.text);
   const userPayload = JSON.stringify({ texts });
+
+  // Use Deepseek if SUBTITLEDEEP is configured
+  const deepseek = getDeepseek();
+  if (deepseek) {
+    try {
+      const response = await deepseek.chat.completions.create({
+        model: process.env.SUBTITLE_TRANSLITERATION_MODEL || "deepseek-chat",
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: HINGLISH_SYSTEM_PROMPT },
+          { role: "user", content: userPayload },
+        ],
+      });
+      const parsed = JSON.parse(response.choices[0].message.content);
+      return {
+        segments: segments.map((s, i) => ({
+          ...s,
+          text: (parsed.results || [])[i] ?? s.text,
+        })),
+        usage: response.usage,
+      };
+    } catch (err) {
+      console.warn(
+        "[subtitles] Deepseek transliteration failed, trying Gemini fallback:",
+        err.message,
+      );
+    }
+  }
 
   const model =
     process.env.SUBTITLE_TRANSLITERATION_MODEL ||
@@ -228,6 +270,41 @@ const translateSubtitleSegments = async (
       text: s.text,
     })),
   });
+
+  // Use Deepseek if SUBTITLEDEEP is configured
+  const deepseek = getDeepseek();
+  if (deepseek) {
+    try {
+      const response = await deepseek.chat.completions.create({
+        model: process.env.SUBTITLE_TRANSLATION_MODEL || "deepseek-chat",
+        temperature: 0.1,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SUBTITLE_TRANSLATION_SYSTEM_PROMPT },
+          { role: "user", content: payload },
+        ],
+      });
+      const parsed = JSON.parse(response.choices[0].message.content);
+      const byIndex = {};
+      for (const row of parsed.results || []) byIndex[row.index] = row;
+
+      return {
+        segments: segments.map((s, i) => ({
+          start: s.start,
+          end: s.end,
+          text: String(byIndex[i]?.text || s.text).trim(),
+        })),
+        usage: response.usage,
+        provider: "deepseek",
+        model: process.env.SUBTITLE_TRANSLATION_MODEL || "deepseek-chat",
+      };
+    } catch (err) {
+      console.warn(
+        "[subtitles] Deepseek translation failed, trying Gemini fallback:",
+        err.message,
+      );
+    }
+  }
 
   const geminiModel =
     process.env.SUBTITLE_TRANSLATION_MODEL ||
