@@ -14,6 +14,7 @@ const {
   getSubtitleJobs,
   getSubtitleJob,
   updateSubtitleJobSegments,
+  translateSubtitleJob,
   getUserCredits,
   getCreditHistory,
   getCreditSummary,
@@ -69,6 +70,9 @@ router.get("/:id/export", isAuth, exportSubtitles);
 
 // PATCH /api/subtitles/:id — body: { segments: [{ start, end, text }, ...] }
 router.patch("/:id", isAuth, updateSubtitleJobSegments);
+
+// POST /api/subtitles/:id/translate — body: { targetLanguage }; forks new SubtitleJob + Project
+router.post("/:id/translate", isAuth, translateSubtitleJob);
 
 // GET /api/subtitles/:id
 router.get("/:id", isAuth, getSubtitleJob);

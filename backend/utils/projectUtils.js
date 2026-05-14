@@ -2,14 +2,21 @@ const Project = require("../models/Project");
 
 /**
  * Create a Project row after a SubtitleJob is persisted. Idempotent on duplicate key.
+ * @param {string} userId
+ * @param {import("mongoose").Types.ObjectId|string} subtitleJobId
+ * @param {{ displayName?: string | null }} [options]
  */
-async function createProjectForSubtitleJob(userId, subtitleJobId) {
+async function createProjectForSubtitleJob(userId, subtitleJobId, options = {}) {
   try {
-    await Project.create({
+    const doc = {
       user: userId,
       kind: "subtitle",
       subtitleJob: subtitleJobId,
-    });
+    };
+    if (options.displayName && String(options.displayName).trim()) {
+      doc.displayName = String(options.displayName).trim();
+    }
+    await Project.create(doc);
   } catch (e) {
     if (e && e.code === 11000) return;
     throw e;

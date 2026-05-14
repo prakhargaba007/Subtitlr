@@ -5,6 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import AppNavbar from "@/components/AppNavbar";
 import Footer from "@/components/Footer";
+import TranslateLanguageDialog from "@/components/export/TranslateLanguageDialog";
 import axiosInstance from "@/utils/axios";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -50,6 +51,13 @@ const DOWNLOADS = [
 const AUTOSAVE_DEBOUNCE_MS = 5000;
 const MAX_UNDO_STEPS = 50;
 
+/** Must match `CREDITS_PER_MINUTE` in `backend/utils/creditUtils.js`. */
+const CREDITS_PER_MINUTE = 5;
+
+function subtitleCreditsForDuration(durationSeconds: number) {
+  return Math.ceil(durationSeconds / 60) * CREDITS_PER_MINUTE;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ExportView() {
@@ -76,11 +84,19 @@ export default function ExportView() {
   const [saveToast, setSaveToast] = useState<"none" | "saved" | "error">("none");
   const [savedRevision, setSavedRevision] = useState(0);
 
+  const [translateDialogOpen, setTranslateDialogOpen] = useState(false);
+  const [translateTarget, setTranslateTarget] = useState("");
+  const [translateLangRows, setTranslateLangRows] = useState<{ lang_name: string; label: string }[]>([]);
+  const [translateLangsLoading, setTranslateLangsLoading] = useState(false);
+  const [translateLangsError, setTranslateLangsError] = useState<string | null>(null);
+  const [translateSubmitting, setTranslateSubmitting] = useState(false);
+  const [translateError, setTranslateError] = useState<string | null>(null);
+
   const lastSavedSegmentsJsonRef = useRef<string | null>(null);
   const latestSegmentsRef = useRef<Segment[]>([]);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const persistSegmentsToServerRef = useRef<() => Promise<void>>(async () => {});
+  const persistSegmentsToServerRef = useRef<() => Promise<boolean>>(async () => true);
   const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
   const lineInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const historyPastRef = useRef<Segment[][]>([]);
@@ -184,6 +200,9 @@ export default function ExportView() {
       return;
     }
 
+    setLoading(true);
+    setErrorMsg(null);
+
     Promise.all([
       axiosInstance.get<{ job: SubtitleJob }>(`/api/subtitles/${jobId}`),
       axiosInstance.get<{ credits: number }>("/api/subtitles/credits"),
@@ -208,11 +227,11 @@ export default function ExportView() {
       .finally(() => setLoading(false));
   }, [jobId]);
 
-  const persistSegmentsToServer = useCallback(async () => {
-    if (!jobId) return;
+  const persistSegmentsToServer = useCallback(async (): Promise<boolean> => {
+    if (!jobId) return true;
     const snap = latestSegmentsRef.current.map((s) => ({ ...s }));
     const json = JSON.stringify(snap);
-    if (json === lastSavedSegmentsJsonRef.current) return;
+    if (json === lastSavedSegmentsJsonRef.current) return true;
 
     setIsSaving(true);
     setSaveToast("none");
@@ -235,9 +254,11 @@ export default function ExportView() {
           setSaveToast("none");
         }, 2000);
       }
+      return true;
     } catch (e) {
       console.error(e);
       setSaveToast("error");
+      return false;
     } finally {
       setIsSaving(false);
       setSavedRevision((n) => n + 1);
@@ -302,6 +323,89 @@ export default function ExportView() {
     setEditingLine(null);
   };
 
+  const translateCreditsCost = useMemo(
+    () => (job ? subtitleCreditsForDuration(job.duration) : 0),
+    [job],
+  );
+
+  useEffect(() => {
+    if (!translateDialogOpen) return;
+    let cancelled = false;
+    setTranslateLangsLoading(true);
+    setTranslateLangsError(null);
+    axiosInstance
+      .get(`/api/subtitles/languages?mode=subtitles`)
+      .then((res) => {
+        if (cancelled) return;
+        const d = res.data as unknown as { languages?: unknown };
+        const raw = Array.isArray(d?.languages) ? d.languages : [];
+        const rows: { lang_name: string; label: string }[] = [];
+        for (const item of raw) {
+          if (typeof item !== "object" || item === null) continue;
+          const o = item as Record<string, unknown>;
+          const lang_name =
+            typeof o.lang_name === "string"
+              ? o.lang_name
+              : typeof o.value === "string"
+                ? o.value
+                : "";
+          if (!lang_name.trim()) continue;
+          const label =
+            typeof o.label === "string" && o.label.trim() ? o.label : lang_name;
+          rows.push({ lang_name, label });
+        }
+        setTranslateLangRows(rows);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const ax = err as { response?: { data?: { message?: string } }; message?: string };
+        const msg =
+          ax?.response?.data?.message ?? ax?.message ?? "Could not load languages.";
+        setTranslateLangsError(msg);
+        setTranslateLangRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setTranslateLangsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [translateDialogOpen]);
+
+  const confirmTranslate = useCallback(async () => {
+    if (!jobId || !translateTarget.trim()) return;
+    setTranslateError(null);
+    const persisted = await persistSegmentsToServer();
+    if (!persisted) {
+      setTranslateError(
+        "Could not save your edits. Wait for saving to succeed, then try again.",
+      );
+      return;
+    }
+    setTranslateSubmitting(true);
+    try {
+      const { data } = await axiosInstance.post<{ job: SubtitleJob; creditsRemaining: number }>(
+        `/api/subtitles/${jobId}/translate`,
+        { targetLanguage: translateTarget.trim() },
+      );
+      if (typeof data.creditsRemaining === "number") setCredits(data.creditsRemaining);
+      setTranslateDialogOpen(false);
+      setTranslateTarget("");
+      const nextId = data.job._id;
+      const nextPath = inDashboard
+        ? `/dashboard/export?jobId=${nextId}`
+        : `/export?jobId=${nextId}`;
+      router.replace(nextPath);
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg =
+        ax?.response?.data?.message ?? ax?.message ?? "Translation failed. Try again.";
+      setTranslateError(msg);
+    } finally {
+      setTranslateSubmitting(false);
+    }
+  }, [jobId, translateTarget, persistSegmentsToServer, inDashboard, router]);
+
   // ── Loading skeleton ──────────────────────────────────────────────────────
 
   if (loading) {
@@ -340,7 +444,8 @@ export default function ExportView() {
   const totalCredits = (credits ?? 0) + job.creditsUsed;
 
   const mainContent = (
-    <main className={`${inDashboard ? "pt-4 sm:pt-6 pb-12 sm:pb-16" : "pt-24 sm:pt-28 pb-16 sm:pb-20"} px-4 sm:px-6 max-w-6xl mx-auto`}>
+    <>
+      <main className={`${inDashboard ? "pt-4 sm:pt-6 pb-12 sm:pb-16" : "pt-24 sm:pt-28 pb-16 sm:pb-20"} px-4 sm:px-6 max-w-6xl mx-auto`}>
 
       {/* ── Save your work banner (anonymous users only) ────────────────── */}
       {isTempUser && !saveBannerDismissed && (
@@ -566,7 +671,13 @@ export default function ExportView() {
             </button>
             <button
               type="button"
-              className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all"
+              onClick={() => {
+                setTranslateError(null);
+                setTranslateTarget("");
+                setTranslateDialogOpen(true);
+              }}
+              disabled={segments.length === 0 || translateSubmitting}
+              className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
               <span className="material-symbols-outlined text-lg">refresh</span>
               Generate in Another Language
@@ -698,6 +809,28 @@ export default function ExportView() {
         </div>
       </div>
     </main>
+
+      <TranslateLanguageDialog
+        open={translateDialogOpen}
+        onClose={() => {
+          if (!translateSubmitting) {
+            setTranslateDialogOpen(false);
+            setTranslateError(null);
+          }
+        }}
+        languages={translateLangRows}
+        languagesError={translateLangsError}
+        languagesLoading={translateLangsLoading}
+        value={translateTarget}
+        onChange={setTranslateTarget}
+        creditsCost={translateCreditsCost}
+        creditsBalance={credits}
+        currentLanguage={job.language}
+        isSubmitting={translateSubmitting}
+        error={translateError}
+        onConfirm={() => void confirmTranslate()}
+      />
+    </>
   );
 
   if (inDashboard) {

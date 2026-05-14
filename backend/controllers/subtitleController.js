@@ -589,6 +589,186 @@ exports.updateSubtitleJobSegments = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/subtitles/:id/translate — fork a new completed SubtitleJob + Project with translated
+ * segment text (same timings). Source job is unchanged. Charges `calculateCreditsNeeded(duration)`.
+ */
+exports.translateSubtitleJob = async (req, res, next) => {
+  try {
+    const targetLanguage = (req.body?.targetLanguage || "").trim();
+    if (!targetLanguage) {
+      const err = new Error("targetLanguage is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const err = new Error("Subtitle job not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const job = await SubtitleJob.findById(req.params.id);
+    if (!job) {
+      const err = new Error("Subtitle job not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+    if (job.user.toString() !== req.userId) {
+      const err = new Error("Access denied.");
+      err.statusCode = 403;
+      throw err;
+    }
+    if (job.status !== "completed") {
+      const err = new Error("Subtitle job cannot be translated in its current state.");
+      err.statusCode = 409;
+      throw err;
+    }
+
+    const segmentsIn = (job.segments || []).map((s) => ({
+      start: s.start,
+      end: s.end,
+      text: typeof s.text === "string" ? s.text : "",
+    }));
+    if (segmentsIn.length === 0) {
+      const err = new Error("No subtitle segments to translate.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const translationPlan = shouldTranslateSubtitles(job.language, targetLanguage);
+    if (!translationPlan.translate) {
+      const err = new Error("Subtitles are already in that language.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    let finalLangLabel =
+      translationPlan.target?.label || String(job.language || "auto");
+
+    const creditsNeeded = calculateCreditsNeeded(job.duration);
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const err = new Error("User not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+    assertEnoughCredits(user, creditsNeeded);
+
+    const usageRecords = [];
+    let allSegments = segmentsIn.map((s) => ({ ...s }));
+
+    if (translationPlan.translate && translationPlan.target?.label === "hinglish") {
+      const tResult = await transliterateToHinglish(allSegments);
+      allSegments = tResult.segments;
+      finalLangLabel = "hinglish";
+      if (tResult.usage) {
+        const isGemini = !!tResult.usage.promptTokenCount;
+        const isDeepseek = tResult.provider === "deepseek";
+        usageRecords.push({
+          model:
+            tResult.model ||
+            (isGemini
+              ? "gemini-3.1-flash-lite-preview"
+              : isDeepseek
+                ? "deepseek-chat"
+                : "gpt-4o-mini"),
+          inputTokens: isGemini
+            ? tResult.usage.promptTokenCount
+            : tResult.usage.prompt_tokens,
+          outputTokens: isGemini
+            ? tResult.usage.candidatesTokenCount
+            : tResult.usage.completion_tokens,
+        });
+      }
+    } else if (translationPlan.translate && translationPlan.target) {
+      const tResult = await translateSubtitleSegments(
+        allSegments,
+        translationPlan.target.label,
+        { sourceLanguage: job.language },
+      );
+      allSegments = tResult.segments;
+      finalLangLabel = translationPlan.target.label;
+      if (tResult.usage) {
+        const isGemini = tResult.provider === "gemini";
+        const isDeepseek = tResult.provider === "deepseek";
+        usageRecords.push({
+          model:
+            tResult.model ||
+            (isGemini ? "gemini" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
+          inputTokens: isGemini
+            ? tResult.usage.promptTokenCount
+            : tResult.usage.prompt_tokens,
+          outputTokens: isGemini
+            ? tResult.usage.candidatesTokenCount
+            : tResult.usage.completion_tokens,
+        });
+      }
+    }
+
+    const ext = path.extname(job.originalFileName);
+    const stem = ext
+      ? job.originalFileName.slice(0, -ext.length)
+      : job.originalFileName;
+    const forkOriginalName = `${stem} — ${finalLangLabel}${ext || ""}`;
+
+    const creditsRemaining = await deductCredits(
+      req.userId,
+      creditsNeeded,
+      "subtitle_job",
+      `Translated subtitles to ${finalLangLabel} (${creditsNeeded} credits)`,
+      {
+        fileName: forkOriginalName,
+        fileType: job.fileType,
+        language: finalLangLabel,
+        duration: job.duration,
+        subtitleTranslate: true,
+        forkedFromSubtitleJobId: String(job._id),
+      },
+    );
+
+    const transcription = allSegments.map((s) => s.text).join(" ");
+
+    const newJob = await SubtitleJob.create({
+      user: req.userId,
+      originalFileName: forkOriginalName,
+      fileType: job.fileType,
+      duration: job.duration,
+      creditsUsed: creditsNeeded,
+      status: "completed",
+      language: finalLangLabel,
+      transcription,
+      segments: allSegments,
+      originalFileKey: job.originalFileKey,
+      originalFileUrl: job.originalFileUrl,
+      thumbnailKey: job.thumbnailKey,
+    });
+
+    await createProjectForSubtitleJob(req.userId, newJob._id, {
+      displayName: forkOriginalName,
+    });
+
+    const projectId = await findProjectIdByJobId(newJob._id, "subtitle");
+    if (projectId) {
+      for (const usage of usageRecords) {
+        await recordProjectUsage(projectId, usage);
+      }
+    }
+
+    const jobObj = newJob.toObject ? newJob.toObject() : newJob;
+    if (jobObj.thumbnailKey) {
+      try {
+        jobObj.thumbnailUrl = await storage.getPublicUrl(jobObj.thumbnailKey);
+      } catch (_) {}
+    }
+
+    res.json({ job: jobObj, creditsRemaining });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
+};
+
 exports.getSubtitleJob = async (req, res, next) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
