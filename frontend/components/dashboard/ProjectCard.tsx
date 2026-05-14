@@ -34,10 +34,16 @@ export default function ProjectCard({
   project,
   variant = "list",
   onAction,
+  priorityThumbnail = false,
+  eagerThumbnail = false,
 }: {
   project: Project;
   variant?: "list" | "grid";
   onAction?: (action: ProjectAction, project: Project) => void;
+  /** First visible card: high fetch priority for LCP. */
+  priorityThumbnail?: boolean;
+  /** Above-the-fold row: eager decode/load (grid first row, or first list row). */
+  eagerThumbnail?: boolean;
 }) {
   const isReady = project.status === "Ready";
   const mediaUrl = project.thumbnail ?? null;
@@ -123,6 +129,8 @@ export default function ProjectCard({
                 src={mediaUrl}
                 width={100}
                 height={100}
+                priority={priorityThumbnail}
+                loading={eagerThumbnail ? "eager" : "lazy"}
               />
             )}
             <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

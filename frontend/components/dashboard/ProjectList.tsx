@@ -425,7 +425,7 @@ export default function ProjectList({
             : "space-y-3"
         }
       >
-        {projects.map((project) => (
+        {projects.map((project, index) => (
           <div
             key={project.id}
             onClick={() => {
@@ -443,6 +443,8 @@ export default function ProjectList({
               project={project}
               variant={layout === "grid" ? "grid" : "list"}
               onAction={handleAction}
+              priorityThumbnail={index === 0}
+              eagerThumbnail={layout === "grid" ? index < 3 : index === 0}
             />
           </div>
         ))}

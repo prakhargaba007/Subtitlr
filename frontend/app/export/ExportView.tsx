@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import AppNavbar from "@/components/AppNavbar";
@@ -47,6 +47,9 @@ const DOWNLOADS = [
   { label: "Download .ASS", sub: "Advanced Styling", ext: "ass", primary: false },
 ];
 
+const AUTOSAVE_DEBOUNCE_MS = 5000;
+const MAX_UNDO_STEPS = 50;
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ExportView() {
@@ -69,6 +72,95 @@ export default function ExportView() {
   const [editingLine, setEditingLine] = useState<number | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [downloaded, setDownloaded] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveToast, setSaveToast] = useState<"none" | "saved" | "error">("none");
+  const [savedRevision, setSavedRevision] = useState(0);
+
+  const lastSavedSegmentsJsonRef = useRef<string | null>(null);
+  const latestSegmentsRef = useRef<Segment[]>([]);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistSegmentsToServerRef = useRef<() => Promise<void>>(async () => {});
+  const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
+  const lineInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const historyPastRef = useRef<Segment[][]>([]);
+  const historyFutureRef = useRef<Segment[][]>([]);
+  const editBaselinePushedRef = useRef(false);
+  const [historyTick, setHistoryTick] = useState(0);
+
+  useEffect(() => {
+    latestSegmentsRef.current = segments;
+  }, [segments]);
+
+  useEffect(() => {
+    editBaselinePushedRef.current = false;
+  }, [editingLine]);
+
+  const captureForUndo = useCallback(() => {
+    const snap = latestSegmentsRef.current.map((s) => ({ ...s }));
+    historyPastRef.current.push(snap);
+    if (historyPastRef.current.length > MAX_UNDO_STEPS) {
+      historyPastRef.current.shift();
+    }
+    historyFutureRef.current = [];
+    setHistoryTick((t) => t + 1);
+  }, []);
+
+  const undo = useCallback(() => {
+    const past = historyPastRef.current;
+    if (past.length === 0) return;
+    const snapshot = past.pop()!;
+    const current = latestSegmentsRef.current.map((s) => ({ ...s }));
+    historyFutureRef.current.push(current);
+    setEditingLine(null);
+    setSegments(snapshot);
+    setHistoryTick((t) => t + 1);
+    setSavedRevision((n) => n + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    const future = historyFutureRef.current;
+    if (future.length === 0) return;
+    const snapshot = future.pop()!;
+    const current = latestSegmentsRef.current.map((s) => ({ ...s }));
+    historyPastRef.current.push(current);
+    if (historyPastRef.current.length > MAX_UNDO_STEPS) {
+      historyPastRef.current.shift();
+    }
+    setEditingLine(null);
+    setSegments(snapshot);
+    setHistoryTick((t) => t + 1);
+    setSavedRevision((n) => n + 1);
+  }, []);
+
+  const canUndo = useMemo(() => {
+    void historyTick;
+    return historyPastRef.current.length > 0;
+  }, [historyTick]);
+  const canRedo = useMemo(() => {
+    void historyTick;
+    return historyFutureRef.current.length > 0;
+  }, [historyTick]);
+
+  const focusFirstSubtitleEdit = useCallback(() => {
+    if (segments.length === 0) return;
+    setActiveLine(0);
+    setEditingLine(0);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        transcriptScrollRef.current
+          ?.querySelector<HTMLElement>('[data-subtitle-row="0"]')
+          ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        const input = lineInputRefs.current[0];
+        input?.focus();
+        input?.setSelectionRange(0, 0);
+      });
+    });
+  }, [segments.length]);
+
+  const dirty =
+    lastSavedSegmentsJsonRef.current !== null &&
+    JSON.stringify(segments) !== lastSavedSegmentsJsonRef.current;
 
   // Check if current user is a temp (anonymous) user
   useEffect(() => {
@@ -97,10 +189,16 @@ export default function ExportView() {
       axiosInstance.get<{ credits: number }>("/api/subtitles/credits"),
     ])
       .then(([jobRes, creditsRes]) => {
+        const segs = jobRes.data.job.segments;
+        lastSavedSegmentsJsonRef.current = JSON.stringify(segs);
+        historyPastRef.current = [];
+        historyFutureRef.current = [];
         setJob(jobRes.data.job);
-        setSegments(jobRes.data.job.segments);
+        setSegments(segs);
         setCredits(creditsRes.data.credits);
         setActiveLine(0);
+        setSavedRevision((n) => n + 1);
+        setHistoryTick((t) => t + 1);
       })
       .catch((err) => {
         const msg =
@@ -109,6 +207,68 @@ export default function ExportView() {
       })
       .finally(() => setLoading(false));
   }, [jobId]);
+
+  const persistSegmentsToServer = useCallback(async () => {
+    if (!jobId) return;
+    const snap = latestSegmentsRef.current.map((s) => ({ ...s }));
+    const json = JSON.stringify(snap);
+    if (json === lastSavedSegmentsJsonRef.current) return;
+
+    setIsSaving(true);
+    setSaveToast("none");
+    const transcription = snap.map((s) => s.text).join(" ");
+    try {
+      await axiosInstance.patch<{ job: SubtitleJob }>(`/api/subtitles/${jobId}`, {
+        segments: snap,
+      });
+      lastSavedSegmentsJsonRef.current = json;
+      setJob((j) => (j ? { ...j, segments: snap, transcription } : null));
+      const stillDirty =
+        JSON.stringify(latestSegmentsRef.current) !== lastSavedSegmentsJsonRef.current;
+      if (stillDirty) {
+        if (savedFlashTimerRef.current) clearTimeout(savedFlashTimerRef.current);
+      } else {
+        if (savedFlashTimerRef.current) clearTimeout(savedFlashTimerRef.current);
+        setSaveToast("saved");
+        savedFlashTimerRef.current = setTimeout(() => {
+          savedFlashTimerRef.current = null;
+          setSaveToast("none");
+        }, 2000);
+      }
+    } catch (e) {
+      console.error(e);
+      setSaveToast("error");
+    } finally {
+      setIsSaving(false);
+      setSavedRevision((n) => n + 1);
+    }
+  }, [jobId]);
+
+  useEffect(() => {
+    persistSegmentsToServerRef.current = persistSegmentsToServer;
+  }, [persistSegmentsToServer]);
+
+  useEffect(() => {
+    if (!jobId || loading) return;
+    if (!dirty) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSaveTimerRef.current = null;
+      void persistSegmentsToServerRef.current();
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [segments, jobId, loading, dirty, savedRevision]);
+
+  useEffect(() => {
+    return () => {
+      if (savedFlashTimerRef.current) clearTimeout(savedFlashTimerRef.current);
+    };
+  }, []);
 
   const handleDownload = (ext: string) => {
     if (!jobId) return;
@@ -130,10 +290,15 @@ export default function ExportView() {
       .catch(console.error);
   };
 
-  const saveEdit = (idx: number, newText: string) => {
-    setSegments((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, text: newText } : s))
-    );
+  const updateSegmentText = (idx: number, text: string) => {
+    if (editingLine === idx && !editBaselinePushedRef.current) {
+      captureForUndo();
+      editBaselinePushedRef.current = true;
+    }
+    setSegments((prev) => prev.map((s, i) => (i === idx ? { ...s, text } : s)));
+  };
+
+  const closeLineEditor = () => {
     setEditingLine(null);
   };
 
@@ -251,15 +416,60 @@ export default function ExportView() {
           <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden flex flex-col h-[360px] sm:h-[420px] shadow-sm">
 
             {/* Editor toolbar */}
-            <div className="px-4 sm:px-6 py-3 sm:py-3.5 bg-surface-container-low flex justify-between items-center border-b border-outline-variant/10">
-              <h2 className="font-headline font-semibold text-on-surface text-sm">Preview Editor</h2>
-              <span className="text-[11px] sm:text-xs font-headline font-semibold text-on-surface-variant bg-surface-container-lowest px-2.5 sm:px-3 py-1 rounded-full border border-outline-variant/20">
-                {segments.length} segments
-              </span>
+            <div className="px-4 sm:px-6 py-3 sm:py-3.5 bg-surface-container-low flex justify-between items-center gap-3 border-b border-outline-variant/10">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+                <h2 className="font-headline font-semibold text-on-surface text-sm truncate">Preview Editor</h2>
+                <div className="flex items-center gap-0.5 border border-outline-variant/25 rounded-full bg-surface-container-lowest p-0.5">
+                  <button
+                    type="button"
+                    disabled={!canUndo}
+                    onClick={() => undo()}
+                    title="Undo"
+                    aria-label="Undo"
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">undo</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!canRedo}
+                    onClick={() => redo()}
+                    title="Redo"
+                    aria-label="Redo"
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">redo</span>
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 min-w-0 justify-end flex-wrap">
+                {dirty && !isSaving && saveToast !== "error" && (
+                  <span className="text-[10px] sm:text-[11px] font-body text-on-surface-variant truncate max-w-44 sm:max-w-none">
+                    Saves after you stop editing…
+                  </span>
+                )}
+                {isSaving && (
+                  <span className="text-[10px] sm:text-[11px] font-body text-primary font-medium">Saving…</span>
+                )}
+                {saveToast === "saved" && !isSaving && (
+                  <span className="text-[10px] sm:text-[11px] font-body text-emerald-600 font-medium">Saved</span>
+                )}
+                {saveToast === "error" && !isSaving && (
+                  <span className="text-[10px] sm:text-[11px] font-body text-red-600 font-medium truncate max-w-40 sm:max-w-none">
+                    Save failed — retrying…
+                  </span>
+                )}
+                <span className="text-[11px] sm:text-xs font-headline font-semibold text-on-surface-variant bg-surface-container-lowest px-2.5 sm:px-3 py-1 rounded-full border border-outline-variant/20 shrink-0">
+                  {segments.length} segments
+                </span>
+              </div>
             </div>
 
             {/* Transcript lines */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0.5 custom-scrollbar">
+            <div
+              ref={transcriptScrollRef}
+              className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0.5 custom-scrollbar"
+            >
               {segments.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
                   No segments found.
@@ -272,7 +482,11 @@ export default function ExportView() {
                   return (
                     <div
                       key={idx}
-                      onClick={() => { setActiveLine(idx); setEditingLine(null); }}
+                      data-subtitle-row={idx}
+                      onClick={() => {
+                        setActiveLine(idx);
+                        setEditingLine(null);
+                      }}
                       className={[
                         "group flex items-start gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-xl cursor-pointer transition-all",
                         isActive
@@ -302,21 +516,32 @@ export default function ExportView() {
 
                       {isEditing ? (
                         <input
+                          ref={(el) => {
+                            lineInputRefs.current[idx] = el;
+                          }}
                           autoFocus
-                          defaultValue={seg.text}
+                          value={seg.text}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            updateSegmentText(idx, e.target.value);
+                          }}
                           onClick={(e) => e.stopPropagation()}
-                          onBlur={(e) => saveEdit(idx, e.target.value)}
+                          onBlur={closeLineEditor}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") saveEdit(idx, e.currentTarget.value);
+                            if (e.key === "Enter") closeLineEditor();
                             if (e.key === "Escape") setEditingLine(null);
                           }}
                           className="flex-1 bg-transparent border-b border-primary outline-none text-body text-on-surface font-body leading-relaxed"
                         />
                       ) : (
                         <p
-                          className="flex-1 text-body text-on-surface font-body leading-relaxed"
-                          onDoubleClick={(e) => { e.stopPropagation(); setEditingLine(idx); }}
-                          title="Double-click to edit"
+                          className="flex-1 text-body text-on-surface font-body leading-relaxed cursor-text select-text"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveLine(idx);
+                            setEditingLine(idx);
+                          }}
+                          title="Click to edit"
                         >
                           {seg.text}
                         </p>
@@ -330,19 +555,29 @@ export default function ExportView() {
 
           {/* Secondary actions */}
           <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
-            {[
-              { icon: "edit_note", label: "Edit subtitles" },
-              { icon: "refresh", label: "Regenerate" },
-              { icon: "translate", label: "Convert to Hinglish / English" },
-            ].map(({ icon, label }) => (
-              <button
-                key={label}
-                className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all"
-              >
-                <span className="material-symbols-outlined text-lg">{icon}</span>
-                {label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={focusFirstSubtitleEdit}
+              disabled={segments.length === 0}
+              className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <span className="material-symbols-outlined text-lg">edit_note</span>
+              Edit subtitles
+            </button>
+            <button
+              type="button"
+              className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">refresh</span>
+              Generate in Another Language
+            </button>
+            <button
+              type="button"
+              className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">translate</span>
+              Convert to Hinglish
+            </button>
           </div>
         </div>
 
@@ -449,10 +684,13 @@ export default function ExportView() {
                   Sign In
                 </Link>
               ) : (
-                <button className="py-2 sm:py-2.5 bg-on-surface text-surface text-xs sm:text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1 sm:gap-1.5">
-                  <span className="material-symbols-outlined text-sm sm:text-base">rocket_launch</span>
-                  Upgrade
-                </button>
+                // <Link href="/dashboard/billing">
+
+                  <button onClick={() => router.push("/dashboard/billing")} className="py-2 sm:py-2.5 bg-on-surface text-surface text-xs sm:text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1 sm:gap-1.5">
+                    <span className="material-symbols-outlined text-sm sm:text-base">rocket_launch</span>
+                    Upgrade
+                  </button>
+                // </Link>
               )}
             </div>
           </div>

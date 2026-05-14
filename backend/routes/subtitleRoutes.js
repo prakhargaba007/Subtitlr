@@ -13,6 +13,7 @@ const {
   exportSubtitles,
   getSubtitleJobs,
   getSubtitleJob,
+  updateSubtitleJobSegments,
   getUserCredits,
   getCreditHistory,
   getCreditSummary,
@@ -65,6 +66,9 @@ router.get("/credits/summary", isAuth, getCreditSummary);
 
 // GET /api/subtitles/:id/export?format=srt|vtt|ass
 router.get("/:id/export", isAuth, exportSubtitles);
+
+// PATCH /api/subtitles/:id — body: { segments: [{ start, end, text }, ...] }
+router.patch("/:id", isAuth, updateSubtitleJobSegments);
 
 // GET /api/subtitles/:id
 router.get("/:id", isAuth, getSubtitleJob);

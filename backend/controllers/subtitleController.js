@@ -522,6 +522,73 @@ exports.getSubtitleJobs = async (req, res, next) => {
   }
 };
 
+/**
+ * PATCH /api/subtitles/:id — update segment texts (and derived transcription) after export edits.
+ */
+exports.updateSubtitleJobSegments = async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const err = new Error("Subtitle job not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const raw = req.body?.segments;
+    if (!Array.isArray(raw)) {
+      const err = new Error("segments must be an array.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const segments = [];
+    for (let i = 0; i < raw.length; i++) {
+      const s = raw[i];
+      const start = Number(s?.start);
+      const end = Number(s?.end);
+      const text = typeof s?.text === "string" ? s.text : "";
+      if (!Number.isFinite(start) || !Number.isFinite(end)) {
+        const err = new Error(`segments[${i}]: start and end must be numbers.`);
+        err.statusCode = 400;
+        throw err;
+      }
+      segments.push({ start, end, text });
+    }
+
+    const job = await SubtitleJob.findById(req.params.id);
+    if (!job) {
+      const err = new Error("Subtitle job not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+    if (job.user.toString() !== req.userId) {
+      const err = new Error("Access denied.");
+      err.statusCode = 403;
+      throw err;
+    }
+    if (job.status !== "completed") {
+      const err = new Error("Subtitle job is not editable in its current state.");
+      err.statusCode = 409;
+      throw err;
+    }
+
+    const transcription = segments.map((s) => s.text).join(" ");
+    job.segments = segments;
+    job.transcription = transcription;
+    await job.save();
+
+    const jobObj = job.toObject ? job.toObject() : job;
+    if (jobObj.thumbnailKey) {
+      try {
+        jobObj.thumbnailUrl = await storage.getPublicUrl(jobObj.thumbnailKey);
+      } catch (_) {}
+    }
+    res.json({ job: jobObj });
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
+  }
+};
+
 exports.getSubtitleJob = async (req, res, next) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
