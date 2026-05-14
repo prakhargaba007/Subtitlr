@@ -6,10 +6,18 @@ import FadingCircle from "@/components/FadingCircle";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 
+function getTimeGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+}
+
 export default function DashboardPage() {
     const userInfo = useSelector((state: RootState) => state.user.userInfo);
     const displayName = userInfo?.name?.trim() || userInfo?.email?.trim() || "";
     const greetingName = displayName ? `, ${displayName}` : "";
+    const greeting = getTimeGreeting();
 
     return (
         <div className="relative">
@@ -32,7 +40,7 @@ export default function DashboardPage() {
                         What are we creating today?
                     </h2>
                     <p className="text-on-surface-variant text-lg font-body">
-                        Good morning{greetingName}. Upload your media and let&apos;s get to work.
+                        {greeting}<span className="font-bold capitalize">{greetingName}</span>
                     </p>
                 </div>
 

@@ -175,11 +175,11 @@ export default function ExportView() {
   const totalCredits = (credits ?? 0) + job.creditsUsed;
 
   const mainContent = (
-    <main className={`${inDashboard ? "pt-6 pb-16" : "pt-28 pb-20"} px-6 max-w-6xl mx-auto`}>
+    <main className={`${inDashboard ? "pt-4 sm:pt-6 pb-12 sm:pb-16" : "pt-24 sm:pt-28 pb-16 sm:pb-20"} px-4 sm:px-6 max-w-6xl mx-auto`}>
 
       {/* ── Save your work banner (anonymous users only) ────────────────── */}
       {isTempUser && !saveBannerDismissed && (
-        <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between gap-4">
+        <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <span className="material-symbols-outlined text-primary text-xl shrink-0">save</span>
             <div className="min-w-0">
@@ -187,7 +187,7 @@ export default function ExportView() {
               <p className="text-xs text-on-surface-variant">Sign in to keep your subtitles and get 60 credits/month.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
             <Link
               href="/login"
               className="px-4 py-2 bg-primary text-on-primary font-headline font-bold text-xs rounded-full hover:bg-primary/90 transition-colors"
@@ -206,11 +206,11 @@ export default function ExportView() {
       )}
 
       {/* ── Success header ────────────────────────────────────────────── */}
-      <section className="mb-12 flex flex-col md:flex-row items-center md:items-start gap-6">
-        <div className="shrink-0 bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
-          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+      <section className="mb-8 sm:mb-12 flex flex-col items-center md:flex-row md:items-start gap-4 sm:gap-6">
+        <div className="shrink-0 bg-surface-container-lowest p-4 sm:p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
             <span
-              className="material-symbols-outlined text-4xl"
+              className="material-symbols-outlined text-3xl sm:text-4xl"
               style={{ fontVariationSettings: "'FILL' 1, 'wght' 600" }}
             >
               check_circle
@@ -219,24 +219,24 @@ export default function ExportView() {
         </div>
 
         <div className="text-center md:text-left">
-          <h1 className="font-headline text-h3 font-bold tracking-tight text-on-surface mb-2">
+          <h1 className="font-headline text-h4 sm:text-h3 font-bold tracking-tight text-on-surface mb-2">
             Subtitles Generated Successfully
           </h1>
-          <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-on-surface-variant text-sm font-medium">
+          <div className="flex flex-wrap justify-center md:justify-start gap-x-4 sm:gap-x-6 gap-y-1.5 sm:gap-y-2 text-on-surface-variant text-xs sm:text-sm font-medium">
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base">movie</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">movie</span>
               {job.originalFileName}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base">schedule</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">schedule</span>
               {formatDurationSecs(job.duration)}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base">token</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">token</span>
               {job.creditsUsed} Credit{job.creditsUsed !== 1 ? "s" : ""} Used
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base">language</span>
+              <span className="material-symbols-outlined text-sm sm:text-base">language</span>
               {job.language}
             </span>
           </div>
@@ -248,18 +248,18 @@ export default function ExportView() {
 
         {/* Left — Preview editor */}
         <div className="lg:col-span-8">
-          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden flex flex-col h-[420px] shadow-sm">
+          <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 overflow-hidden flex flex-col h-[360px] sm:h-[420px] shadow-sm">
 
             {/* Editor toolbar */}
-            <div className="px-6 py-3.5 bg-surface-container-low flex justify-between items-center border-b border-outline-variant/10">
+            <div className="px-4 sm:px-6 py-3 sm:py-3.5 bg-surface-container-low flex justify-between items-center border-b border-outline-variant/10">
               <h2 className="font-headline font-semibold text-on-surface text-sm">Preview Editor</h2>
-              <span className="text-xs font-headline font-semibold text-on-surface-variant bg-surface-container-lowest px-3 py-1 rounded-full border border-outline-variant/20">
+              <span className="text-[11px] sm:text-xs font-headline font-semibold text-on-surface-variant bg-surface-container-lowest px-2.5 sm:px-3 py-1 rounded-full border border-outline-variant/20">
                 {segments.length} segments
               </span>
             </div>
 
             {/* Transcript lines */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-0.5 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0.5 custom-scrollbar">
               {segments.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-on-surface-variant text-sm">
                   No segments found.
@@ -274,7 +274,7 @@ export default function ExportView() {
                       key={idx}
                       onClick={() => { setActiveLine(idx); setEditingLine(null); }}
                       className={[
-                        "group flex items-start gap-4 px-4 py-3 rounded-xl cursor-pointer transition-all",
+                        "group flex items-start gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-xl cursor-pointer transition-all",
                         isActive
                           ? "bg-primary/5 border-l-[3px] border-primary"
                           : "border-l-[3px] border-transparent hover:bg-surface-container-low",
@@ -283,7 +283,7 @@ export default function ExportView() {
                       <button
                         onClick={(e) => e.stopPropagation()}
                         className={[
-                          "material-symbols-outlined text-xl shrink-0 mt-0.5 transition-colors",
+                          "material-symbols-outlined text-lg sm:text-xl shrink-0 mt-0.5 transition-colors",
                           isActive ? "text-primary" : "text-on-surface-variant/30 group-hover:text-primary/60",
                         ].join(" ")}
                         style={{ fontVariationSettings: "'FILL' 1" }}
@@ -293,7 +293,7 @@ export default function ExportView() {
 
                       <span
                         className={[
-                          "font-headline text-xs w-14 shrink-0 pt-1 font-semibold",
+                          "font-headline text-[11px] sm:text-xs w-12 sm:w-14 shrink-0 pt-1 font-semibold",
                           isActive ? "text-primary" : "text-on-surface-variant",
                         ].join(" ")}
                       >
@@ -329,7 +329,7 @@ export default function ExportView() {
           </div>
 
           {/* Secondary actions */}
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
             {[
               { icon: "edit_note", label: "Edit subtitles" },
               { icon: "refresh", label: "Regenerate" },
@@ -337,7 +337,7 @@ export default function ExportView() {
             ].map(({ icon, label }) => (
               <button
                 key={label}
-                className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all"
+                className="flex items-center justify-center sm:justify-start gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-headline text-sm font-semibold rounded-full hover:bg-surface-container-low transition-all"
               >
                 <span className="material-symbols-outlined text-lg">{icon}</span>
                 {label}
@@ -358,16 +358,16 @@ export default function ExportView() {
                 key={ext}
                 onClick={() => handleDownload(ext)}
                 className={[
-                  "w-full group flex items-center justify-between p-5 rounded-2xl transition-all hover:-translate-y-0.5",
+                  "w-full group flex items-center justify-between p-4 sm:p-5 rounded-2xl transition-all hover:-translate-y-0.5",
                   primary
                     ? "bg-linear-to-r from-primary to-primary-container text-on-primary shadow-lg hover:shadow-primary/25"
                     : "bg-surface-container-lowest border border-outline-variant/20 text-on-surface hover:bg-surface-container-low",
                 ].join(" ")}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <span
                     className={[
-                      "material-symbols-outlined text-2xl",
+                      "material-symbols-outlined text-xl sm:text-2xl",
                       !primary && "text-primary",
                     ]
                       .filter(Boolean)
@@ -376,8 +376,8 @@ export default function ExportView() {
                     {downloaded.includes(ext) ? "check_circle" : "download"}
                   </span>
                   <div className="text-left">
-                    <p className="font-headline font-bold text-sm">{label}</p>
-                    <p className={`text-xs font-body ${primary ? "opacity-75" : "text-on-surface-variant"}`}>
+                    <p className="font-headline font-bold text-xs sm:text-sm">{label}</p>
+                    <p className={`text-[11px] sm:text-xs font-body ${primary ? "opacity-75" : "text-on-surface-variant"}`}>
                       {sub}
                     </p>
                   </div>
@@ -391,33 +391,33 @@ export default function ExportView() {
 
           {/* Credits card */}
           <div className="bg-surface-container-low rounded-2xl border border-outline-variant/10 overflow-hidden">
-            <div className="px-5 pt-5 pb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-lg">toll</span>
-              <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant">
+            <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 sm:pb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-base sm:text-lg">toll</span>
+              <p className="text-[11px] sm:text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant">
                 Credit Balance
               </p>
             </div>
 
-            <div className="px-5 grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-primary/10 rounded-xl px-4 py-3 text-center">
-                <p className="text-2xl font-headline font-bold text-primary leading-none">
+            <div className="px-4 sm:px-5 grid grid-cols-2 gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+              <div className="bg-primary/10 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-center">
+                <p className="text-xl sm:text-2xl font-headline font-bold text-primary leading-none">
                   {credits ?? "—"}
                 </p>
-                <p className="text-[11px] font-body text-primary/70 mt-1 uppercase tracking-wide">
+                <p className="text-[10px] sm:text-[11px] font-body text-primary/70 mt-1 uppercase tracking-wide">
                   Remaining
                 </p>
               </div>
-              <div className="bg-surface-container-highest rounded-xl px-4 py-3 text-center">
-                <p className="text-2xl font-headline font-bold text-on-surface leading-none">
+              <div className="bg-surface-container-highest rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-center">
+                <p className="text-xl sm:text-2xl font-headline font-bold text-on-surface leading-none">
                   {job.creditsUsed}
                 </p>
-                <p className="text-[11px] font-body text-on-surface-variant mt-1 uppercase tracking-wide">
+                <p className="text-[10px] sm:text-[11px] font-body text-on-surface-variant mt-1 uppercase tracking-wide">
                   Used this job
                 </p>
               </div>
             </div>
 
-            <div className="px-5 mb-1">
+            <div className="px-4 sm:px-5 mb-1">
               <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
                 <div
                   className="bg-primary h-full rounded-full transition-all"
@@ -432,25 +432,25 @@ export default function ExportView() {
               </div>
             </div>
 
-            <div className="px-4 pb-4 pt-3 grid grid-cols-2 gap-2.5">
+            <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 sm:pt-3 grid grid-cols-2 gap-2 sm:gap-2.5">
               <button
                 onClick={() => router.push(newUploadHref)}
-                className="py-2.5 bg-surface-container-lowest text-on-surface text-sm font-headline font-bold rounded-full hover:bg-white transition-colors border border-outline-variant/20 flex items-center justify-center gap-1.5"
+                className="py-2 sm:py-2.5 bg-surface-container-lowest text-on-surface text-xs sm:text-sm font-headline font-bold rounded-full hover:bg-white transition-colors border border-outline-variant/20 flex items-center justify-center gap-1 sm:gap-1.5"
               >
-                <span className="material-symbols-outlined text-base">upload_file</span>
+                <span className="material-symbols-outlined text-sm sm:text-base">upload_file</span>
                 New upload
               </button>
               {isTempUser ? (
                 <Link
                   href="/login"
-                  className="py-2.5 bg-on-surface text-surface text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1.5"
+                  className="py-2 sm:py-2.5 bg-on-surface text-surface text-xs sm:text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-base">login</span>
+                  <span className="material-symbols-outlined text-sm sm:text-base">login</span>
                   Sign In
                 </Link>
               ) : (
-                <button className="py-2.5 bg-on-surface text-surface text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1.5">
-                  <span className="material-symbols-outlined text-base">rocket_launch</span>
+                <button className="py-2 sm:py-2.5 bg-on-surface text-surface text-xs sm:text-sm font-headline font-bold rounded-full hover:bg-on-surface/90 transition-colors flex items-center justify-center gap-1 sm:gap-1.5">
+                  <span className="material-symbols-outlined text-sm sm:text-base">rocket_launch</span>
                   Upgrade
                 </button>
               )}

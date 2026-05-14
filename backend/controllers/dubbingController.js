@@ -29,6 +29,8 @@ const {
   getFileDuration,
   getMediaStreamSummary,
   extractAudio,
+  extractAudioWindow,
+  concatMp3Files,
   cleanupPath,
   ensureMinAudioDuration,
 } = require("../utils/audioUtils");
@@ -100,6 +102,13 @@ const {
   BCP_47_MAP,
 } = require("../utils/sarvamTtsUtils");
 const {
+  isSarvamVoiceCloneConfigured,
+  sarvamVoiceCloneConfigMissing,
+  createSarvamVoiceClone,
+  deleteSarvamVoiceClone,
+  getSarvamCloneFailureMode,
+} = require("../utils/sarvamVoiceCloneUtils");
+const {
   isSmallestConfigured,
   fetchSmallestVoiceCatalog,
   selectBestSmallestVoice,
@@ -118,6 +127,93 @@ const DUBBING_CREDITS_PER_SECOND = 1;
 
 const calculateDubbingCredits = (durationSeconds) =>
   Math.ceil(durationSeconds) * DUBBING_CREDITS_PER_SECOND;
+
+const envNumber = (key, fallback, min, max) => {
+  const raw = String(process.env[key] || "").trim();
+  if (!raw) return fallback;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return fallback;
+  return Math.max(min, Math.min(max, value));
+};
+
+const isSarvamCloneModeRequested = (req) => {
+  const bodyMode = String(req.body.voiceMode || req.body.dubbingVoiceMode || "")
+    .trim()
+    .toLowerCase();
+  const envMode = String(process.env.DUBBING_VOICE_MODE || "")
+    .trim()
+    .toLowerCase();
+  const explicitBody =
+    String(req.body.useVoiceClone || "").trim().toLowerCase() === "true" ||
+    String(req.body.useVoiceClone || "").trim() === "1";
+  return (
+    explicitBody ||
+    bodyMode === "sarvam_clone" ||
+    bodyMode === "clone" ||
+    envMode === "sarvam_clone"
+  );
+};
+
+const buildSpeakerCloneSample = async ({
+  speakerId,
+  segments,
+  audioPath,
+  tmpPaths,
+  jobIdStr,
+}) => {
+  const targetSeconds = envNumber("SARVAM_CLONE_SAMPLE_SECONDS", 35, 8, 120);
+  const minSeconds = envNumber("SARVAM_CLONE_MIN_SAMPLE_SECONDS", 8, 2, 60);
+  const maxClipSeconds = envNumber("SARVAM_CLONE_MAX_CLIP_SECONDS", 10, 2, 30);
+  const minClipSeconds = envNumber("SARVAM_CLONE_MIN_CLIP_SECONDS", 1.2, 0.3, 10);
+
+  const usable = (segments || [])
+    .filter((s) => s.speaker_id === speakerId)
+    .map((s) => ({
+      start: Number(s.start) || 0,
+      end: Number(s.end) || 0,
+      text: String(s.text || "").trim(),
+    }))
+    .map((s) => ({ ...s, duration: Math.max(0, s.end - s.start) }))
+    .filter((s) => s.duration >= minClipSeconds && s.text.length >= 3)
+    .sort((a, b) => b.duration - a.duration);
+
+  let total = 0;
+  const selected = [];
+  for (const seg of usable) {
+    if (total >= targetSeconds) break;
+    selected.push(seg);
+    total += Math.min(seg.duration, maxClipSeconds);
+  }
+
+  if (total < minSeconds) {
+    throw new Error(
+      `Not enough clean speech for ${speakerId}: ${total.toFixed(1)}s available, need ${minSeconds.toFixed(1)}s.`,
+    );
+  }
+
+  selected.sort((a, b) => a.start - b.start);
+  const sampleDir = path.join(os.tmpdir(), `sarvam_clone_${jobIdStr}_${speakerId}_${uuidv4()}`);
+  fs.mkdirSync(sampleDir, { recursive: true });
+  tmpPaths.push(sampleDir);
+
+  const clips = [];
+  for (let i = 0; i < selected.length; i++) {
+    const seg = selected[i];
+    const clipPath = path.join(sampleDir, `clip_${String(i + 1).padStart(2, "0")}.mp3`);
+    await extractAudioWindow(
+      audioPath,
+      clipPath,
+      seg.start,
+      Math.min(seg.duration, maxClipSeconds),
+    );
+    clips.push(clipPath);
+  }
+
+  const samplePath = path.join(sampleDir, "sample.mp3");
+  await concatMp3Files(clips, samplePath);
+  saveArtifact(jobIdStr, `voice_clone_samples/${speakerId}.mp3`, samplePath);
+  return samplePath;
+};
 
 let _openai = null;
 const getOpenAI = () => {
@@ -789,8 +885,10 @@ async function runDubbingPipelineFromInput(
     sourceLanguage,
     targetLanguage,
     audioPath,
+    cloneSampleAudioPath: transcribeInputPath,
     sepPromise,
     translatedSegments,
+    rawSegments,
     speaker_profiles,
     segmentsForTranslate,
     _t0,
@@ -1035,6 +1133,9 @@ exports.startDubbingJob = async (req, res) => {
 
   const tmpPaths = [];
   let job = null;
+  let thumbPromise = null;
+  let origUploadPromise = null;
+  const temporarySarvamCloneIds = [];
 
   try {
     // Use reserved duration estimate (if present) to avoid fast early progress.
@@ -1086,14 +1187,18 @@ exports.startDubbingJob = async (req, res) => {
       creditsNeeded,
       isVideo: preparedIsVideo,
       translatedSegments,
+      rawSegments,
       speaker_profiles,
       audioPath,
+      cloneSampleAudioPath,
       sepPromise,
       _t0,
-      thumbPromise,
-      origUploadPromise,
+      thumbPromise: preparedThumbPromise,
+      origUploadPromise: preparedOrigUploadPromise,
       projectId,
     } = prepared;
+    thumbPromise = preparedThumbPromise;
+    origUploadPromise = preparedOrigUploadPromise;
 
     // Now that we know the media duration, calibrate progress speed.
     setExpectedFromDuration(duration);
@@ -1227,22 +1332,91 @@ exports.startDubbingJob = async (req, res) => {
         message: "Selecting Sarvam TTS voices for speakers…",
       });
       const assignedSarvamIds = [];
+      const cloneRequested = isSarvamCloneModeRequested(req);
+      const cloneFailureMode = getSarvamCloneFailureMode();
+      const canClone = cloneRequested && isSarvamVoiceCloneConfigured();
+
+      if (cloneRequested && !canClone) {
+        const msg =
+          "Sarvam voice clone requested, but clone API is not configured.";
+        if (cloneFailureMode === "strict") {
+          throw new Error(msg);
+        }
+        const missing = sarvamVoiceCloneConfigMissing().join(", ");
+        console.warn(
+          `[dubbing] ${msg} Fix: set ${missing}. Falling back to Sarvam preset voices.`,
+        );
+        emit({
+          stage: "generating",
+          message: "Sarvam voice clone is not configured; using preset voices.",
+        });
+      }
+
       for (const profile of speaker_profiles) {
         emit({
           stage: "generating",
           message: `Selecting voice for ${profile.speaker_id}…`,
         });
-        const v = await selectBestSarvamVoice(profile.voice_description, {
-          excludeVoiceIds: assignedSarvamIds,
-          speakerCount: dubbingSpeakerCount,
-          targetLanguage,
-        });
-        assignedSarvamIds.push(v);
-        voiceMap[profile.speaker_id] = v;
+        let synthesisVoice = null;
+        let persistedVoice = null;
+        if (canClone) {
+          try {
+            emit({
+              stage: "generating",
+              message: `Creating Sarvam voice clone for ${profile.speaker_id}…`,
+            });
+            const samplePath = await buildSpeakerCloneSample({
+              speakerId: profile.speaker_id,
+              segments: rawSegments,
+              audioPath: cloneSampleAudioPath || audioPath,
+              tmpPaths,
+              jobIdStr,
+            });
+            const clone = await createSarvamVoiceClone({
+              speakerId: profile.speaker_id,
+              samplePath,
+              targetLanguage,
+              jobId: jobIdStr,
+            });
+            synthesisVoice = clone.voiceId;
+            temporarySarvamCloneIds.push(synthesisVoice);
+            persistedVoice = await selectBestSarvamVoice(
+              profile.voice_description,
+              {
+                excludeVoiceIds: assignedSarvamIds,
+                speakerCount: dubbingSpeakerCount,
+                targetLanguage,
+              },
+            );
+          } catch (cloneErr) {
+            console.error("[dubbing] Sarvam voice clone failed:", cloneErr);
+            if (cloneFailureMode === "strict") {
+              throw cloneErr;
+            }
+            console.warn(
+              `[dubbing] Sarvam clone failed for ${profile.speaker_id}; using preset voice:`,
+              cloneErr.message,
+            );
+            emit({
+              stage: "generating",
+              message: `Voice clone failed for ${profile.speaker_id}; using a Sarvam preset voice.`,
+            });
+          }
+        }
+        if (!synthesisVoice) {
+          synthesisVoice = await selectBestSarvamVoice(profile.voice_description, {
+            excludeVoiceIds: assignedSarvamIds,
+            speakerCount: dubbingSpeakerCount,
+            targetLanguage,
+          });
+          persistedVoice = synthesisVoice;
+        }
+        if (persistedVoice) assignedSarvamIds.push(persistedVoice);
+        voiceMap[profile.speaker_id] = synthesisVoice;
         updatedProfiles.push({
           speaker_id: profile.speaker_id,
           voice_description: profile.voice_description,
-          elevenlabs_voice_id: v,
+          elevenlabs_voice_id: persistedVoice || synthesisVoice,
         });
       }
       await DubbingJob.findByIdAndUpdate(job._id, {
@@ -2053,6 +2227,25 @@ exports.startDubbingJob = async (req, res) => {
         bg.push(origUploadPromise);
       await Promise.allSettled(bg);
     } catch (_) {}
+
+    if (temporarySarvamCloneIds.length) {
+      const cloneCleanup = await Promise.allSettled(
+        temporarySarvamCloneIds.map((voiceId) => deleteSarvamVoiceClone(voiceId)),
+      );
+      cloneCleanup.forEach((result, index) => {
+        const voiceId = temporarySarvamCloneIds[index];
+        if (result.status === "rejected") {
+          console.warn(
+            `[dubbing] Failed to delete Sarvam voice clone ${voiceId}:`,
+            result.reason?.message || result.reason,
+          );
+        } else if (result.value?.skipped) {
+          console.warn(
+            `[dubbing] Skipped Sarvam voice clone cleanup for ${voiceId}: ${result.value.reason}`,
+          );
+        }
+      });
+    }
 
     // Clean up all temp files
     tmpPaths.forEach(cleanupPath);

@@ -81,11 +81,11 @@ export default function FeedbackFormPage({
   };
 
   return (
-    <main className="relative pt-32 pb-24 overflow-x-clip px-4 md:px-8">
-      <div aria-hidden className="pointer-events-none absolute left-40 top-0 -translate-x-1/2 -translate-y-[15%] -z-10">
+    <main className="relative pt-14 pb-24 overflow-x-clip px-4 md:px-8">
+      <div aria-hidden className="pointer-events-none absolute left-40 top-0 -translate-x-1/2 -translate-y-[15%] z-10">
         <FadingCircle size={560} color="var(--color-primary)" />
       </div>
-      <div aria-hidden className="pointer-events-none absolute right-20 bottom-24 translate-x-1/4 translate-y-1/4 -z-10 opacity-90">
+      <div aria-hidden className="pointer-events-none absolute right-20 bottom-24 translate-x-1/4 translate-y-1/4 z-10 opacity-90">
         <FadingCircle size={360} color="var(--color-secondary)" />
       </div>
 
@@ -227,11 +227,13 @@ export default function FeedbackFormPage({
                 placeholder="Tell us what you think, what's broken, or what you'd love to see next…"
                 rows={5}
                 required
+                maxLength={1000}
                 className="w-full resize-none px-5 py-4 rounded-xl bg-surface-container-low border border-outline-variant/20 text-on-surface placeholder:text-outline outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all leading-relaxed font-body"
               />
               <p className="text-xs text-on-surface-variant flex justify-between mt-2">
-                <span>Markdown is not supported.</span>
-                <span>{form.message.length} characters</span>
+                {/* <span>Markdown is not supported. Max 1000 characters.</span> */}
+                <span></span>
+                <span>{form.message.length} / 1000</span>
               </p>
             </div>
 

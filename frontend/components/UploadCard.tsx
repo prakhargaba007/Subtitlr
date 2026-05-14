@@ -659,7 +659,7 @@ function UploadCardInner({
                         {dragOver ? "file_upload" : "cloud_upload"}
                       </span>
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 text-center" >
                       <h3 className="font-headline text-xl font-bold text-on-surface">
                         {dragOver ? "Drop to upload" : "Drop your file here"}
                       </h3>
@@ -668,7 +668,7 @@ function UploadCardInner({
                       </p>
                     </div>
                     <div className="flex gap-2 flex-wrap justify-center">
-                      {["MP4", "MOV", "MP3", "WAV", "WEBM"].map((fmt) => (
+                      {["MP4", "MOV", "MP3", "WAV", "WEBM"].map((fmt) => (  
                         <span
                           key={fmt}
                           className="px-2.5 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-headline font-bold rounded-lg"
@@ -770,13 +770,13 @@ function UploadCardInner({
                         onChange={setLanguage}
                       />
                     )}
-                    <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
+                    {/* <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
                       {language
                         ? `We'll transcribe ${selectedSubtitleSourceRow?.label ?? "Auto-detected speech"} first, then save subtitles in ${selectedSubtitleTargetRow?.label ?? language}.`
                         : subtitleSourceLanguage
                           ? `We'll generate subtitles in ${selectedSubtitleSourceRow?.label ?? subtitleSourceLanguage}.`
                           : "Whisper will detect the spoken language and save subtitles in that language."}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
               ) : (
@@ -793,11 +793,11 @@ function UploadCardInner({
                   ) : (
                     <LanguagePicker languages={languages} value={language} onChange={setLanguage} />
                   )}
-                  <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
-                    {language
-                      ? `Dubbing to ${selectedLangRow?.label ?? language}. This target is set up for ${dubbingTtsLabel}. Source speech is auto-detected.`
-                      : "Pick a dubbing target from the list. Indic languages use Sarvam TTS when configured; other listed languages map to the Inworld voice catalog when Inworld is your TTS backend."}
-                  </p>
+                    {/* <p className="mt-2 text-[11px] text-on-surface-variant/60 leading-relaxed">
+                      {language
+                        ? `Dubbing to ${selectedLangRow?.label ?? language}. This target is set up for ${dubbingTtsLabel}. Source speech is auto-detected.`
+                        : "Pick a dubbing target from the list. Indic languages use Sarvam TTS when configured; other listed languages map to the Inworld voice catalog when Inworld is your TTS backend."}
+                    </p> */}
                 </div>
               )}
 
