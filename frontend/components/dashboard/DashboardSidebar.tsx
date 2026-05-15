@@ -9,6 +9,7 @@ import type { RootState } from "@/redux/store";
 import { clearUserDetails } from "@/redux/slices/userSlice";
 import axiosInstance from "@/utils/axios";
 import { fetchCurrentPlan, type CurrentPlanResponse } from "@/utils/plansApi";
+import ProjectSearchModal from "./ProjectSearchModal";
 
 const NAV_ITEMS = [
   { icon: "dashboard", label: "Launchpad", href: "/dashboard" },
@@ -35,13 +36,9 @@ export default function DashboardSidebar() {
   
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close mobile drawer on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-  
   const [credits, setCredits] = useState<number | null>(null);
   const hasUserData = typeof window !== "undefined" && Boolean(localStorage.getItem("userData"));
   const [creditsLoading, setCreditsLoading] = useState(hasUserData);
@@ -70,7 +67,13 @@ export default function DashboardSidebar() {
     if (menuOpen) document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
-  
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    setMobileOpen(false);
+    setMenuOpen(false);
+  };
+
   const handleLogout = async () => {
     try {
       await axiosInstance.post("/api/auth/logout");
@@ -132,7 +135,7 @@ export default function DashboardSidebar() {
           className={[
             "mb-8 px-2 cursor-pointer select-none flex items-center justify-between",
             "hidden lg:block",
-            mobileOpen && "max-lg:!flex",
+            mobileOpen && "max-lg:flex!",
           ].join(" ")}
           onClick={() => router.push("/dashboard")}
         >
@@ -152,10 +155,33 @@ export default function DashboardSidebar() {
         <div
           className={[
             "mb-8 lg:hidden flex justify-center",
-            mobileOpen && "max-lg:!hidden",
+            mobileOpen && "max-lg:hidden!",
           ].join(" ")}
         >
           <Image src="/kililabs-mark-indigo.svg" alt="Kili" width={36} height={36} priority />
+        </div>
+
+                {/* Project search */}
+                <div
+          className={[
+            "mb-5 hidden lg:block",
+            mobileOpen && "max-lg:block!",
+          ].join(" ")}
+        >
+          <button
+            type="button"
+            onClick={openSearch}
+            className="group flex h-11 w-full items-center gap-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-3 text-left text-sm font-medium text-on-surface-variant transition-all hover:border-primary/30 hover:bg-surface-container"
+            aria-label="Open project search"
+          >
+            <span className="material-symbols-outlined text-base text-on-surface-variant group-hover:text-primary">
+              search
+            </span>
+            <span className="min-w-0 flex-1 truncate">Search projects</span>
+            <span className="rounded-lg border border-outline-variant/20 bg-surface-container px-1.5 py-0.5 text-[10px] font-bold text-on-surface-variant">
+              ⌘K
+            </span>
+          </button>
         </div>
 
         {/* Main nav */}
@@ -166,7 +192,9 @@ export default function DashboardSidebar() {
               <Link
                 key={label}
                 href={href}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => {
+                  setMobileOpen(false);
+                }}
                 className={[
                   "group flex items-center justify-center lg:justify-start gap-3 px-3.5 py-2.5 rounded-2xl transition-colors text-sm font-body",
                   active
@@ -185,7 +213,7 @@ export default function DashboardSidebar() {
                 <span
                   className={[
                     "hidden lg:block flex-1",
-                    mobileOpen && "max-lg:!block",
+                    mobileOpen && "max-lg:block!",
                   ].join(" ")}
                 >
                   {label}
@@ -194,7 +222,7 @@ export default function DashboardSidebar() {
                   className={[
                     "hidden lg:block h-1.5 w-1.5 rounded-full transition-opacity",
                     active ? "bg-primary opacity-100" : "bg-on-surface-variant opacity-0 group-hover:opacity-40",
-                    mobileOpen && "max-lg:!block",
+                    mobileOpen && "max-lg:block!",
                   ].join(" ")}
                 />
               </Link>
@@ -205,13 +233,17 @@ export default function DashboardSidebar() {
         {/* Divider */}
         <div className="my-5 border-t border-outline-variant/20" />
 
+
+
         {/* Direct links */}
         <div className="space-y-1 flex-1">
           {DIRECT_LINKS.map(({ icon, label, href }) => (
             <Link
               key={label}
               href={href}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+              }}
               className="group flex items-center justify-center lg:justify-start gap-3 px-3.5 py-2.5 rounded-2xl transition-colors text-xs font-body text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
             >
               <span className="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-on-surface transition-colors">
@@ -220,7 +252,7 @@ export default function DashboardSidebar() {
               <span
                 className={[
                   "hidden lg:block",
-                  mobileOpen && "max-lg:!block",
+                  mobileOpen && "max-lg:block!",
                 ].join(" ")}
               >
                 {label}
@@ -237,7 +269,7 @@ export default function DashboardSidebar() {
               <div
                 className={[
                   "hidden lg:block space-y-2 px-4 py-3",
-                  mobileOpen && "max-lg:!block",
+                  mobileOpen && "max-lg:block!",
                 ].join(" ")}
               >
                 {creditsLoading ? (
@@ -318,7 +350,7 @@ export default function DashboardSidebar() {
             <div
               className={[
                 "hidden lg:flex flex-1 items-center justify-between overflow-hidden",
-                mobileOpen && "max-lg:!flex",
+                mobileOpen && "max-lg:flex!",
               ].join(" ")}
             >
               <div className="overflow-hidden text-left">
@@ -334,6 +366,8 @@ export default function DashboardSidebar() {
           </button>
         </div>
       </aside>
+
+      <ProjectSearchModal open={searchOpen} onOpenChange={setSearchOpen} />
     </>
   );
 }

@@ -12,6 +12,7 @@ const mongoose = require("mongoose");
 const Project = require("../models/Project");
 const SubtitleJob = require("../models/Subtitle");
 const DubbingJob = require("../models/DubbingJob");
+const { buildProjectSearchDocument } = require("../utils/projectSearch");
 
 async function upsertSubtitleProject(doc) {
   const displayName = doc.displayName ?? null;
@@ -28,6 +29,10 @@ async function upsertSubtitleProject(doc) {
         displayName,
         pinnedAt,
         archivedAt,
+        ...buildProjectSearchDocument(
+          { kind: "subtitle", displayName },
+          doc,
+        ),
       },
       $unset: { dubbingJob: "" },
     },
@@ -50,6 +55,10 @@ async function upsertDubbingProject(doc) {
         displayName,
         pinnedAt,
         archivedAt,
+        ...buildProjectSearchDocument(
+          { kind: "dubbing", displayName },
+          doc,
+        ),
       },
       $unset: { subtitleJob: "" },
     },

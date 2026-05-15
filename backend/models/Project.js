@@ -33,6 +33,29 @@ const projectSchema = new Schema(
       default: null,
       trim: true,
     },
+    /**
+     * Lightweight denormalized search document built from Project metadata plus
+     * linked job summary fields. Keep large transcript/segment text out of this.
+     */
+    searchText: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    searchTokens: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+    searchTrigrams: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+    searchUpdatedAt: {
+      type: Date,
+      default: null,
+    },
     pinnedAt: {
       type: Date,
       default: null,
@@ -92,6 +115,8 @@ projectSchema.pre("validate", function (next) {
 });
 
 projectSchema.index({ user: 1, archivedAt: 1, pinnedAt: -1, createdAt: -1 });
+projectSchema.index({ user: 1, archivedAt: 1, searchTokens: 1 });
+projectSchema.index({ user: 1, archivedAt: 1, searchTrigrams: 1 });
 // Partial unique: sparse unique still indexes explicit null — only index real ObjectIds.
 projectSchema.index(
   { subtitleJob: 1 },

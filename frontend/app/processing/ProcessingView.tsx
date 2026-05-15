@@ -129,7 +129,6 @@ export default function ProcessingView() {
   const abortRef = useRef<AbortController | null>(null);
 
   const homeHref = inDashboard ? "/dashboard" : "/";
-  const exportBase = inDashboard ? "/dashboard" : "";
   const mode = getPendingMode();
   const steps = mode === "dubbing" ? DUBBING_STEPS : SUBTITLE_STEPS;
 
@@ -256,9 +255,9 @@ export default function ProcessingView() {
           setPendingFile(null);
           setTimeout(() => {
             if (mode === "dubbing") {
-              router.push(`${exportBase}/dubbing/export?jobId=${event.job!._id}`);
+              router.push(`/dashboard/dubbing/export?jobId=${event.job!._id}`);
             } else {
-              router.push(`${exportBase}/export?jobId=${event.job!._id}`);
+              router.push(`/dashboard/export?jobId=${event.job!._id}`);
             }
           }, 1200);
         }
@@ -528,7 +527,7 @@ export default function ProcessingView() {
                     </div>
                     <span
                       className={[
-                        "text-sm font-semibold transition-colors",
+                        "text-sm font-semibold transition-colors mr-4",
                         done
                           ? "text-on-surface"
                           : active

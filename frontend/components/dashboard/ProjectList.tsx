@@ -68,6 +68,7 @@ const SUBTITLE_COMPLETED = new Set(["completed"]);
 export type FetchProjectPageArgs = {
   page: number; // 1-indexed
   pageSize: number;
+  search?: string;
   signal?: AbortSignal;
 };
 
@@ -134,14 +135,23 @@ function mapApiProjectRowToProject(row: ApiProjectRow): Project {
 async function defaultFetchProjectPage({
   page,
   pageSize,
+  search,
   signal,
 }: FetchProjectPageArgs): Promise<FetchProjectPageResult> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(pageSize),
+  });
+  if (search?.trim()) {
+    params.set("search", search.trim());
+  }
+
   const res = await axiosInstance.get<{
     projects: ApiProjectRow[];
     pages?: number;
     total?: number;
     page?: number;
-  }>(`/api/projects?page=${page}&limit=${pageSize}`, { signal });
+  }>(`/api/projects?${params.toString()}`, { signal });
 
   const rows = res.data.projects ?? [];
   const mapped = rows.map(mapApiProjectRowToProject);
@@ -169,6 +179,8 @@ export default function ProjectList({
   initialPage = 1,
   fetchPage,
   onProjectClick,
+  searchable = false,
+  searchPlaceholder = "Search projects, files, languages...",
 }: {
   /**
    * @deprecated Use `pageSize` instead. Kept for backwards compatibility.
@@ -181,6 +193,8 @@ export default function ProjectList({
   initialPage?: number;
   fetchPage?: FetchProjectPage;
   onProjectClick?: (project: Project) => void;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -190,6 +204,8 @@ export default function ProjectList({
   const [hasMore, setHasMore] = useState<boolean | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [detailsProject, setDetailsProject] = useState<Project | null>(null);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -216,6 +232,18 @@ export default function ProjectList({
   }, [initialPage]);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(false);
@@ -223,6 +251,7 @@ export default function ProjectList({
     effectiveFetchPage({
       page,
       pageSize: effectivePageSize,
+      search: debouncedSearch,
       signal: controller.signal,
     })
       .then((res) => {
@@ -241,7 +270,49 @@ export default function ProjectList({
       });
 
     return () => controller.abort();
-  }, [effectiveFetchPage, effectivePageSize, page, refreshNonce]);
+  }, [debouncedSearch, effectiveFetchPage, effectivePageSize, page, refreshNonce]);
+
+  const header = (
+    <div className="flex flex-col gap-3 mb-6 px-2 sm:flex-row sm:items-center sm:justify-between">
+      <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
+      <div className="flex items-center gap-3">
+        {searchable ? (
+          <label className="relative block w-full sm:w-80">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-base text-on-surface-variant">
+              search
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="h-11 w-full rounded-2xl border border-outline-variant/20 bg-surface-container-low pl-10 pr-10 text-sm font-medium text-on-surface outline-none transition-all placeholder:text-outline/60 focus:border-primary focus:ring-2 focus:ring-primary/10"
+              aria-label="Search projects"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+                aria-label="Clear project search"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            ) : null}
+          </label>
+        ) : null}
+        {showSeeAll ? (
+          <Link
+            href="/dashboard/projects"
+            className="shrink-0 text-sm font-bold text-primary hover:border-b-2 hover:border-primary flex items-center gap-1 font-label"
+          >
+            See All
+            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  );
 
   const handleAction = async (action: ProjectAction, project: Project) => {
     if (!project.jobId || !project.type) return;
@@ -344,9 +415,7 @@ export default function ProjectList({
   if (loading) {
     return (
       <section>
-        <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
-        </div>
+        {header}
         <div
           className={
             layout === "grid"
@@ -365,9 +434,7 @@ export default function ProjectList({
   if (error) {
     return (
       <section>
-        <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
-        </div>
+        {header}
         <p className="text-sm text-on-surface-variant text-center py-8">
           Could not load projects. Please try again later.
         </p>
@@ -378,12 +445,21 @@ export default function ProjectList({
   if (projects.length === 0) {
     return (
       <section>
-        <div className="flex items-center justify-between mb-6 px-2">
-          <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
-        </div>
+        {header}
         <div className="text-center py-12 text-on-surface-variant">
           <span className="material-symbols-outlined text-4xl mb-3 block opacity-40">folder_open</span>
-          {page > 1 ? (
+          {debouncedSearch ? (
+            <div className="space-y-3">
+              <p className="text-sm font-medium">No projects found for &quot;{debouncedSearch}&quot;.</p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:border-b-2 hover:border-primary font-label"
+              >
+                Clear search
+              </button>
+            </div>
+          ) : page > 1 ? (
             <div className="space-y-3">
               <p className="text-sm font-medium">No projects on this page.</p>
               <button
@@ -405,18 +481,7 @@ export default function ProjectList({
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-6 px-2">
-        <h3 className="text-xl font-extrabold text-on-surface font-headline">{title}</h3>
-        {showSeeAll ? (
-          <Link
-            href="/dashboard/projects"
-            className="text-sm font-bold text-primary hover:border-b-2 hover:border-primary flex items-center gap-1 font-label"
-          >
-            See All
-            <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </Link>
-        ) : null}
-      </div>
+      {header}
 
       <div
         className={
