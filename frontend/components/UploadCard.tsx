@@ -12,6 +12,7 @@ import {
   setPendingYoutubeUrl,
 } from "@/utils/fileStore";
 import axiosInstance from "@/utils/axios";
+import SearchableDropdown, { type SearchableDropdownOption } from "@/components/ui/SearchableDropdown";
 
 // ── Accepted MIME types ───────────────────────────────────────────────────────
 
@@ -66,101 +67,27 @@ function LanguagePicker({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return q ? languages.filter((l) => l.label.toLowerCase().includes(q)) : languages;
-  }, [languages, query]);
-
-  const selected = languages.find((l) => l.lang_name === value) ?? AUTO_DETECT;
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery("");
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const pick = (lang: ApiLanguage) => {
-    onChange(lang.lang_name);
-    setOpen(false);
-    setQuery("");
-  };
+  const options = useMemo<SearchableDropdownOption[]>(
+    () =>
+      languages.map((lang) => ({
+        value: lang.lang_name,
+        label: lang.label,
+        icon: "language",
+        description: lang.iso_code ? lang.iso_code.toUpperCase() : undefined,
+      })),
+    [languages],
+  );
 
   return (
-    <div ref={containerRef} className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white/60 border border-outline-variant/30 rounded-2xl text-sm font-body text-on-surface hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-      >
-        <span className="flex items-center gap-2 min-w-0">
-          <span className="material-symbols-outlined text-primary text-base shrink-0">language</span>
-          <span className="truncate">{selected.label}</span>
-        </span>
-        <span
-          className={`material-symbols-outlined text-on-surface-variant text-lg shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        >
-          expand_more
-        </span>
-      </button>
-
-      {open && (
-        <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-outline-variant/20 rounded-2xl shadow-2xl shadow-black/10 overflow-hidden">
-          <div className="p-2 border-b border-outline-variant/10">
-            <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-xl">
-              <span className="material-symbols-outlined text-on-surface-variant text-base">search</span>
-              <input
-                autoFocus
-                type="text"
-                placeholder="Search language…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 bg-transparent text-sm font-body text-on-surface placeholder:text-on-surface-variant/50 outline-none"
-              />
-              {query && (
-                <button onClick={() => setQuery("")} className="text-on-surface-variant hover:text-on-surface">
-                  <span className="material-symbols-outlined text-base">close</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <ul className="max-h-52 overflow-y-auto py-1.5 upload-card-scrollbar">
-            {filtered.length === 0 ? (
-              <li className="px-4 py-3 text-sm text-on-surface-variant text-center">No results</li>
-            ) : (
-              filtered.map((lang, idx) => (
-                <li key={`${lang.lang_name}::${lang.label}::${lang.iso_code ?? "x"}::${idx}`}>
-                  <button
-                    type="button"
-                    onClick={() => pick(lang)}
-                    className={[
-                      "w-full text-left px-4 py-2.5 text-sm font-body transition-colors flex items-center gap-3",
-                      lang.lang_name === value
-                        ? "bg-primary/8 text-primary font-semibold"
-                        : "text-on-surface hover:bg-surface-container-low",
-                    ].join(" ")}
-                  >
-                    {lang.lang_name === value && (
-                      <span className="material-symbols-outlined text-primary text-base">check</span>
-                    )}
-                    <span className={lang.lang_name === value ? "" : "ml-[22px]"}>{lang.label}</span>
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-      )}
-    </div>
+    <SearchableDropdown
+      options={options}
+      value={value}
+      onChange={onChange}
+      placeholder={AUTO_DETECT.label}
+      searchPlaceholder="Search language..."
+      emptyText="No results"
+      icon="language"
+    />
   );
 }
 
@@ -535,23 +462,6 @@ function UploadCardInner({
     if (!ok) return;
     router.push(nextPath);
   };
-
-  const selectedLangRow = langReady ? languages.find((l) => l.lang_name === language) : undefined;
-  const selectedSubtitleSourceRow =
-    mode === "subtitles" && langReady
-      ? languages.find((l) => l.lang_name === subtitleSourceLanguage)
-      : undefined;
-  const selectedSubtitleTargetRow =
-    mode === "subtitles" && langReady
-      ? subtitleTargetLanguages.find((l) => l.lang_name === language)
-      : undefined;
-  const dubProvider = selectedLangRow?.dub?.provider;
-  const dubbingTtsLabel =
-    dubProvider === "sarvam"
-      ? "Sarvam TTS"
-      : dubProvider === "inworld"
-        ? "Inworld TTS (voice catalog)"
-        : "your configured dubbing TTS provider";
 
   const canProceed =
     langReady &&

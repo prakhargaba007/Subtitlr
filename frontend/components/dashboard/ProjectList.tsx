@@ -7,6 +7,7 @@ import axiosInstance from "@/utils/axios";
 import ProjectCard, { type Project, type ProjectAction } from "./ProjectCard";
 import Pagination from "@/components/Pagination";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import SearchableDropdown, { type SearchableDropdownOption } from "@/components/ui/SearchableDropdown";
 
 interface SubtitleJob {
   _id: string;
@@ -62,13 +63,94 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+export function parseProjectFilters(params: URLSearchParams | null): ProjectFilters {
+  const type = params?.get("type");
+  const created = params?.get("created");
+  const status = params?.get("status");
+  const sort = params?.get("sort");
+
+  return {
+    type:
+      type === "subtitle" || type === "dubbing"
+        ? type
+        : DEFAULT_PROJECT_FILTERS.type,
+    created:
+      created === "today" || created === "7d" || created === "30d"
+        ? created
+        : DEFAULT_PROJECT_FILTERS.created,
+    status:
+      status === "ready" || status === "processing" || status === "failed"
+        ? status
+        : DEFAULT_PROJECT_FILTERS.status,
+    sort:
+      sort === "newest" || sort === "oldest" || sort === "pinned"
+        ? sort
+        : DEFAULT_PROJECT_FILTERS.sort,
+  };
+}
+
+export { DEFAULT_PROJECT_FILTERS };
+
+function getFilterLabel<T extends string>(
+  options: Array<{ value: T; label: string }>,
+  value: T,
+) {
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
 const DUBBING_STATUSES = new Set(["completed", "done"]);
 const SUBTITLE_COMPLETED = new Set(["completed"]);
+
+type ProjectTypeFilter = "all" | "subtitle" | "dubbing";
+type ProjectCreatedFilter = "all" | "today" | "7d" | "30d";
+type ProjectStatusFilter = "all" | "ready" | "processing" | "failed";
+type ProjectSortFilter = "newest" | "oldest" | "pinned";
+
+export type ProjectFilters = {
+  type: ProjectTypeFilter;
+  created: ProjectCreatedFilter;
+  status: ProjectStatusFilter;
+  sort: ProjectSortFilter;
+};
+
+const DEFAULT_PROJECT_FILTERS: ProjectFilters = {
+  type: "all",
+  created: "all",
+  status: "all",
+  sort: "pinned",
+};
+
+const TYPE_FILTER_OPTIONS: Array<SearchableDropdownOption & { value: ProjectTypeFilter }> = [
+  { value: "all", label: "All types", icon: "folder" },
+  { value: "subtitle", label: "Captions", icon: "closed_caption" },
+  { value: "dubbing", label: "Dubbing", icon: "translate" },
+];
+
+const CREATED_FILTER_OPTIONS: Array<SearchableDropdownOption & { value: ProjectCreatedFilter }> = [
+  { value: "all", label: "All time", icon: "calendar_month" },
+  { value: "today", label: "Today", icon: "today" },
+  { value: "7d", label: "Last 7 days", icon: "date_range" },
+  { value: "30d", label: "Last 30 days", icon: "date_range" },
+];
+
+const STATUS_FILTER_OPTIONS: Array<SearchableDropdownOption & { value: ProjectStatusFilter }> = [
+  { value: "all", label: "All statuses", icon: "pending_actions" },
+  { value: "ready", label: "Ready", icon: "check_circle" },
+  { value: "processing", label: "Processing", icon: "sync" },
+  { value: "failed", label: "Failed", icon: "error" },
+];
+
+const SORT_FILTER_OPTIONS: Array<SearchableDropdownOption & { value: ProjectSortFilter }> = [
+  { value: "pinned", label: "Pinned first", icon: "keep" },
+  { value: "newest", label: "Newest", icon: "south" },
+  { value: "oldest", label: "Oldest", icon: "north" },
+];
 
 export type FetchProjectPageArgs = {
   page: number; // 1-indexed
   pageSize: number;
   search?: string;
+  filters?: ProjectFilters;
   signal?: AbortSignal;
 };
 
@@ -136,6 +218,7 @@ async function defaultFetchProjectPage({
   page,
   pageSize,
   search,
+  filters,
   signal,
 }: FetchProjectPageArgs): Promise<FetchProjectPageResult> {
   const params = new URLSearchParams({
@@ -144,6 +227,12 @@ async function defaultFetchProjectPage({
   });
   if (search?.trim()) {
     params.set("search", search.trim());
+  }
+  if (filters) {
+    if (filters.type !== "all") params.set("type", filters.type);
+    if (filters.created !== "all") params.set("created", filters.created);
+    if (filters.status !== "all") params.set("status", filters.status);
+    if (filters.sort !== "pinned") params.set("sort", filters.sort);
   }
 
   const res = await axiosInstance.get<{
@@ -181,6 +270,9 @@ export default function ProjectList({
   onProjectClick,
   searchable = false,
   searchPlaceholder = "Search projects, files, languages...",
+  showFilters = false,
+  initialFilters,
+  onFiltersChange,
 }: {
   /**
    * @deprecated Use `pageSize` instead. Kept for backwards compatibility.
@@ -195,6 +287,9 @@ export default function ProjectList({
   onProjectClick?: (project: Project) => void;
   searchable?: boolean;
   searchPlaceholder?: string;
+  showFilters?: boolean;
+  initialFilters?: ProjectFilters;
+  onFiltersChange?: (filters: ProjectFilters) => void;
 }) {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -206,6 +301,11 @@ export default function ProjectList({
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filters, setFilters] = useState<ProjectFilters>(() =>
+    showFilters ? (initialFilters ?? DEFAULT_PROJECT_FILTERS) : DEFAULT_PROJECT_FILTERS,
+  );
+  const [draftFilters, setDraftFilters] = useState<ProjectFilters>(filters);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [detailsProject, setDetailsProject] = useState<Project | null>(null);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -232,6 +332,13 @@ export default function ProjectList({
   }, [initialPage]);
 
   useEffect(() => {
+    if (!showFilters) return;
+    const nextFilters = initialFilters ?? DEFAULT_PROJECT_FILTERS;
+    setFilters(nextFilters);
+    setDraftFilters(nextFilters);
+  }, [initialFilters, showFilters]);
+
+  useEffect(() => {
     const timeout = window.setTimeout(() => {
       setDebouncedSearch(searchQuery.trim());
     }, 300);
@@ -241,7 +348,7 @@ export default function ProjectList({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, filters]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -252,6 +359,7 @@ export default function ProjectList({
       page,
       pageSize: effectivePageSize,
       search: debouncedSearch,
+      filters,
       signal: controller.signal,
     })
       .then((res) => {
@@ -270,7 +378,196 @@ export default function ProjectList({
       });
 
     return () => controller.abort();
-  }, [debouncedSearch, effectiveFetchPage, effectivePageSize, page, refreshNonce]);
+  }, [debouncedSearch, effectiveFetchPage, effectivePageSize, filters, page, refreshNonce]);
+
+  const hasActiveFilters =
+    filters.type !== DEFAULT_PROJECT_FILTERS.type ||
+    filters.created !== DEFAULT_PROJECT_FILTERS.created ||
+    filters.status !== DEFAULT_PROJECT_FILTERS.status ||
+    filters.sort !== DEFAULT_PROJECT_FILTERS.sort;
+
+  const syncFiltersToUrl = (nextFilters: ProjectFilters) => {
+    setFilters(nextFilters);
+    setDraftFilters(nextFilters);
+    onFiltersChange?.(nextFilters);
+  };
+
+  const updateDraftFilter = <K extends keyof ProjectFilters>(key: K, value: ProjectFilters[K]) => {
+    setDraftFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const activeFilterSummary = [
+    filters.type !== "all" ? getFilterLabel(TYPE_FILTER_OPTIONS, filters.type) : null,
+    filters.created !== "all" ? getFilterLabel(CREATED_FILTER_OPTIONS, filters.created) : null,
+    filters.status !== "all" ? getFilterLabel(STATUS_FILTER_OPTIONS, filters.status) : null,
+    filters.sort !== "pinned" ? getFilterLabel(SORT_FILTER_OPTIONS, filters.sort) : null,
+  ].filter(Boolean);
+
+  const filterControl = showFilters ? (
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 px-2">
+      <button
+        type="button"
+        onClick={() => {
+          setDraftFilters(filters);
+          setFilterModalOpen(true);
+        }}
+        className={[
+          "inline-flex h-11 items-center gap-2 rounded-2xl border px-4 text-sm font-extrabold transition-all font-label",
+          hasActiveFilters
+            ? "border-primary/30 bg-primary/10 text-primary"
+            : "border-outline-variant/20 bg-surface-container-low text-on-surface-variant hover:text-on-surface",
+        ].join(" ")}
+      >
+        <span className="material-symbols-outlined text-base">filter_list</span>
+        Filters
+        {hasActiveFilters ? (
+          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[10px] text-on-primary">
+            {activeFilterSummary.length}
+          </span>
+        ) : null}
+      </button>
+      {hasActiveFilters ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {activeFilterSummary.map((label) => (
+            <span
+              key={label}
+              className="rounded-full bg-surface-container-low px-3 py-1.5 text-xs font-bold text-on-surface-variant"
+            >
+              {label}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={() => syncFiltersToUrl(DEFAULT_PROJECT_FILTERS)}
+            className="text-sm font-bold text-primary hover:border-b-2 hover:border-primary"
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
+    </div>
+  ) : null;
+
+  const filterModal = showFilters && filterModalOpen ? (
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+      <button
+        type="button"
+        aria-label="Close filters"
+        className="absolute inset-0 cursor-default"
+        onClick={() => setFilterModalOpen(false)}
+      />
+      <div className="relative w-full max-w-xl rounded-4xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            {/* <p className="text-xs font-extrabold uppercase tracking-wider text-primary font-label">
+              Project filters
+            </p> */}
+            <h4 className="mt-1 text-2xl font-extrabold text-on-surface font-headline">
+              Filter your projects
+            </h4>
+            {/* <p className="mt-1 text-sm text-on-surface-variant">
+              Filter by type, creation time, status, and sort order.
+            </p> */}
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilterModalOpen(false)}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-on-surface-variant hover:bg-surface-container"
+            aria-label="Close filters"
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-on-surface-variant font-label">
+              Type
+            </label>
+            <SearchableDropdown
+              options={TYPE_FILTER_OPTIONS}
+              value={draftFilters.type}
+              onChange={(value) => updateDraftFilter("type", value as ProjectTypeFilter)}
+              searchPlaceholder="Search type..."
+              icon="folder"
+              searchable={false}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-on-surface-variant font-label">
+              Created
+            </label>
+            <SearchableDropdown
+              options={CREATED_FILTER_OPTIONS}
+              value={draftFilters.created}
+              onChange={(value) => updateDraftFilter("created", value as ProjectCreatedFilter)}
+              searchPlaceholder="Search date..."
+              icon="calendar_month"
+              searchable={false}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-on-surface-variant font-label">
+              Status
+            </label>
+            <SearchableDropdown
+              options={STATUS_FILTER_OPTIONS}
+              value={draftFilters.status}
+              onChange={(value) => updateDraftFilter("status", value as ProjectStatusFilter)}
+              searchPlaceholder="Search status..."
+              icon="pending_actions"
+              searchable={false}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-on-surface-variant font-label">
+              Sort
+            </label>
+            <SearchableDropdown
+              options={SORT_FILTER_OPTIONS}
+              value={draftFilters.sort}
+              onChange={(value) => updateDraftFilter("sort", value as ProjectSortFilter)}
+              searchPlaceholder="Search sort..."
+              icon="sort"
+              searchable={false}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              syncFiltersToUrl(DEFAULT_PROJECT_FILTERS);
+              setFilterModalOpen(false);
+            }}
+            className="h-11 rounded-2xl px-4 text-sm font-bold text-on-surface-variant hover:bg-surface-container"
+          >
+            Reset filters
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFilterModalOpen(false)}
+              className="h-11 rounded-2xl border border-outline-variant/20 px-4 text-sm font-bold text-on-surface hover:bg-surface-container"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                syncFiltersToUrl(draftFilters);
+                setFilterModalOpen(false);
+              }}
+              className="h-11 rounded-2xl bg-primary px-5 text-sm font-bold text-on-primary hover:opacity-90"
+            >
+              Apply filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   const header = (
     <div className="flex flex-col gap-3 mb-6 px-2 sm:flex-row sm:items-center sm:justify-between">
@@ -416,6 +713,8 @@ export default function ProjectList({
     return (
       <section>
         {header}
+        {filterControl}
+        {filterModal}
         <div
           className={
             layout === "grid"
@@ -435,6 +734,8 @@ export default function ProjectList({
     return (
       <section>
         {header}
+        {filterControl}
+        {filterModal}
         <p className="text-sm text-on-surface-variant text-center py-8">
           Could not load projects. Please try again later.
         </p>
@@ -446,17 +747,26 @@ export default function ProjectList({
     return (
       <section>
         {header}
+        {filterControl}
+        {filterModal}
         <div className="text-center py-12 text-on-surface-variant">
           <span className="material-symbols-outlined text-4xl mb-3 block opacity-40">folder_open</span>
-          {debouncedSearch ? (
+          {debouncedSearch || hasActiveFilters ? (
             <div className="space-y-3">
-              <p className="text-sm font-medium">No projects found for &quot;{debouncedSearch}&quot;.</p>
+              <p className="text-sm font-medium">
+                {debouncedSearch
+                  ? `No projects found for "${debouncedSearch}".`
+                  : "No projects match these filters."}
+              </p>
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  syncFiltersToUrl(DEFAULT_PROJECT_FILTERS);
+                }}
                 className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:border-b-2 hover:border-primary font-label"
               >
-                Clear search
+                Clear filters
               </button>
             </div>
           ) : page > 1 ? (
@@ -481,7 +791,12 @@ export default function ProjectList({
 
   return (
     <section>
-      {header}
+      <div className="max-w-9xl mx-auto flex flex-row justify-between items-center">
+        {header}
+        {filterControl}
+      </div>
+
+      {filterModal}
 
       <div
         className={
@@ -614,8 +929,8 @@ export default function ProjectList({
           modalState.type === "delete"
             ? "Delete project?"
             : modalState.type === "rename"
-            ? "Rename project"
-            : "Unpin project?"
+              ? "Rename project"
+              : "Unpin project?"
         }
         description={
           modalState.type === "rename" ? (
@@ -645,15 +960,15 @@ export default function ProjectList({
           modalState.type === "delete"
             ? "Yes, delete"
             : modalState.type === "rename"
-            ? "Save changes"
-            : "Yes, unpin"
+              ? "Save changes"
+              : "Yes, unpin"
         }
         confirmingText={
           modalState.type === "delete"
             ? "Deleting..."
             : modalState.type === "rename"
-            ? "Saving..."
-            : "Unpinning..."
+              ? "Saving..."
+              : "Unpinning..."
         }
         cancelText="Cancel"
         isConfirming={modalState.isConfirming}

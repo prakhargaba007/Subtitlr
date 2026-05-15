@@ -115,7 +115,10 @@ const {
   synthesizeSmallestTts,
 } = require("../utils/smallestTtsUtils");
 const { loadLocalInworldVoices } = require("../utils/localInworldVoices");
-const { createProjectForDubbingJob } = require("../utils/projectUtils");
+const {
+  createProjectForDubbingJob,
+  refreshProjectFilterFieldsForDubbingJob,
+} = require("../utils/projectUtils");
 const {
   findProjectIdByJobId,
   recordProjectUsage,
@@ -2141,6 +2144,7 @@ exports.startDubbingJob = async (req, res) => {
       },
       { new: true },
     );
+    await refreshProjectFilterFieldsForDubbingJob(finalJob._id, finalJob).catch(() => {});
 
     console.log(
       `[dubbing:timing] TOTAL pipeline: ${Date.now() - (_t0 || Date.now())}ms`,
@@ -2205,6 +2209,10 @@ exports.startDubbingJob = async (req, res) => {
       await DubbingJob.findByIdAndUpdate(job._id, {
         status: "failed",
         error: err.message || "Unknown error",
+      }).catch(() => {});
+      await refreshProjectFilterFieldsForDubbingJob(job._id, {
+        status: "failed",
+        fileType: job.fileType,
       }).catch(() => {});
     }
 
@@ -3008,6 +3016,7 @@ exports.rebuildDubbingJob = async (req, res, next) => {
       },
       { new: true },
     );
+    await refreshProjectFilterFieldsForDubbingJob(updated._id, updated).catch(() => {});
 
     if (emit) {
       emit({

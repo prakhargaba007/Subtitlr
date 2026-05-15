@@ -200,7 +200,7 @@ export default function ProjectSearchModal({
             className="h-10 min-w-0 flex-1 bg-transparent text-base font-semibold text-on-surface outline-none placeholder:text-outline/70"
             aria-label="Search projects"
           />
-          {searchQuery ? (
+          {/* {searchQuery ? (
             <button
               type="button"
               onClick={clearSearch}
@@ -209,7 +209,7 @@ export default function ProjectSearchModal({
             >
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
-          ) : null}
+          ) : null} */}
           <button
             type="button"
             onClick={closeSearch}

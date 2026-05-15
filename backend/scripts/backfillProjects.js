@@ -13,6 +13,7 @@ const Project = require("../models/Project");
 const SubtitleJob = require("../models/Subtitle");
 const DubbingJob = require("../models/DubbingJob");
 const { buildProjectSearchDocument } = require("../utils/projectSearch");
+const { buildProjectFilterFields } = require("../utils/projectFilterFields");
 
 async function upsertSubtitleProject(doc) {
   const displayName = doc.displayName ?? null;
@@ -33,6 +34,7 @@ async function upsertSubtitleProject(doc) {
           { kind: "subtitle", displayName },
           doc,
         ),
+        ...buildProjectFilterFields(doc),
       },
       $unset: { dubbingJob: "" },
     },
@@ -59,6 +61,7 @@ async function upsertDubbingProject(doc) {
           { kind: "dubbing", displayName },
           doc,
         ),
+        ...buildProjectFilterFields(doc),
       },
       $unset: { subtitleJob: "" },
     },

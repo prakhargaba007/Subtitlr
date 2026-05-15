@@ -33,6 +33,18 @@ const projectSchema = new Schema(
       default: null,
       trim: true,
     },
+    jobStatus: {
+      type: String,
+      enum: ["ready", "processing", "failed"],
+      default: "processing",
+      index: true,
+    },
+    jobFileType: {
+      type: String,
+      enum: ["audio", "video", null],
+      default: null,
+      index: true,
+    },
     /**
      * Lightweight denormalized search document built from Project metadata plus
      * linked job summary fields. Keep large transcript/segment text out of this.
@@ -115,6 +127,8 @@ projectSchema.pre("validate", function (next) {
 });
 
 projectSchema.index({ user: 1, archivedAt: 1, pinnedAt: -1, createdAt: -1 });
+projectSchema.index({ user: 1, archivedAt: 1, kind: 1, createdAt: -1 });
+projectSchema.index({ user: 1, archivedAt: 1, jobStatus: 1, createdAt: -1 });
 projectSchema.index({ user: 1, archivedAt: 1, searchTokens: 1 });
 projectSchema.index({ user: 1, archivedAt: 1, searchTrigrams: 1 });
 // Partial unique: sparse unique still indexes explicit null — only index real ObjectIds.

@@ -2,6 +2,7 @@ const Project = require("../models/Project");
 const SubtitleJob = require("../models/Subtitle");
 const DubbingJob = require("../models/DubbingJob");
 const { buildProjectSearchDocument } = require("./projectSearch");
+const { buildProjectFilterFields } = require("./projectFilterFields");
 
 /**
  * Create a Project row after a SubtitleJob is persisted. Idempotent on duplicate key.
@@ -22,7 +23,7 @@ async function createProjectForSubtitleJob(userId, subtitleJobId, options = {}) 
     if (options.displayName && String(options.displayName).trim()) {
       doc.displayName = String(options.displayName).trim();
     }
-    Object.assign(doc, buildProjectSearchDocument(doc, job));
+    Object.assign(doc, buildProjectSearchDocument(doc, job), buildProjectFilterFields(job));
     await Project.create(doc);
   } catch (e) {
     if (e && e.code === 11000) return;
@@ -43,7 +44,7 @@ async function createProjectForDubbingJob(userId, dubbingJobId) {
       kind: "dubbing",
       dubbingJob: dubbingJobId,
     };
-    Object.assign(doc, buildProjectSearchDocument(doc, job));
+    Object.assign(doc, buildProjectSearchDocument(doc, job), buildProjectFilterFields(job));
     await Project.create(doc);
   } catch (e) {
     if (e && e.code === 11000) return;
@@ -51,7 +52,21 @@ async function createProjectForDubbingJob(userId, dubbingJobId) {
   }
 }
 
+async function refreshProjectFilterFieldsForDubbingJob(dubbingJobId, jobOverride = null) {
+  const job =
+    jobOverride ||
+    (await DubbingJob.findById(dubbingJobId)
+      .select("fileType status")
+      .lean());
+  if (!job) return;
+  await Project.updateOne(
+    { dubbingJob: dubbingJobId },
+    { $set: buildProjectFilterFields(job) },
+  );
+}
+
 module.exports = {
   createProjectForSubtitleJob,
   createProjectForDubbingJob,
+  refreshProjectFilterFieldsForDubbingJob,
 };

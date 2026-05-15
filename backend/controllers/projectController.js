@@ -9,6 +9,7 @@ const {
   normalizeSearchText,
   scoreProjectSearchResult,
 } = require("../utils/projectSearch");
+const { buildProjectFilterFields } = require("../utils/projectFilterFields");
 
 async function attachThumbToJob(job) {
   if (!job) return job;
@@ -87,8 +88,37 @@ async function hydrateProjectRows(projectDocs) {
   );
 }
 
+function parseCreatedFilter(value) {
+  const now = new Date();
+  const created = String(value || "all").toLowerCase();
+  if (created === "today") {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    return { $gte: start };
+  }
+  if (created === "7d") {
+    return { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+  }
+  if (created === "30d") {
+    return { $gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
+  }
+  return null;
+}
+
+function buildSort(sort) {
+  switch (String(sort || "pinned").toLowerCase()) {
+    case "newest":
+      return { createdAt: -1 };
+    case "oldest":
+      return { createdAt: 1 };
+    case "pinned":
+    default:
+      return { pinnedAt: -1, createdAt: -1 };
+  }
+}
+
 /**
- * GET /api/projects?page=1&limit=10&archived=0|1&search=query
+ * GET /api/projects?page=1&limit=10&archived=0|1&search=query&type=dubbing&created=7d&status=ready&sort=newest
  */
 exports.getProjects = async (req, res, next) => {
   try {
@@ -104,13 +134,27 @@ exports.getProjects = async (req, res, next) => {
     const filter = showArchived
       ? { user: req.userId, archivedAt: { $ne: null } }
       : { user: req.userId, archivedAt: null };
+    const type = String(req.query.type || "all").toLowerCase();
+    const status = String(req.query.status || "all").toLowerCase();
+    const createdFilter = parseCreatedFilter(req.query.created);
+    const sort = buildSort(req.query.sort);
+
+    if (type === "subtitle" || type === "dubbing") {
+      filter.kind = type;
+    }
+    if (status === "ready" || status === "processing" || status === "failed") {
+      filter.jobStatus = status;
+    }
+    if (createdFilter) {
+      filter.createdAt = createdFilter;
+    }
 
     if (search) {
       const { filter: searchFilter, normalized, queryTokens, queryTrigrams } =
         buildProjectSearchFilter(filter, search);
       const candidateLimit = Math.min(500, Math.max(skip + limit * 5, limit * 5));
       const candidates = await Project.find(searchFilter)
-        .sort({ pinnedAt: -1, createdAt: -1 })
+        .sort(sort)
         .limit(candidateLimit)
         .lean();
 
@@ -125,6 +169,9 @@ exports.getProjects = async (req, res, next) => {
           const aPinned = a.project.pinnedAt ? new Date(a.project.pinnedAt).getTime() : 0;
           const bPinned = b.project.pinnedAt ? new Date(b.project.pinnedAt).getTime() : 0;
           if (bPinned !== aPinned) return bPinned - aPinned;
+          if (sort.createdAt === 1) {
+            return new Date(a.project.createdAt).getTime() - new Date(b.project.createdAt).getTime();
+          }
           return new Date(b.project.createdAt).getTime() - new Date(a.project.createdAt).getTime();
         });
 
@@ -143,7 +190,7 @@ exports.getProjects = async (req, res, next) => {
 
     const [projectDocs, total] = await Promise.all([
       Project.find(filter)
-        .sort({ pinnedAt: -1, createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -198,7 +245,7 @@ exports.patchProject = async (req, res, next) => {
     }
 
     const job = await getProjectJob(project);
-    Object.assign(project, buildProjectSearchDocument(project, job));
+    Object.assign(project, buildProjectSearchDocument(project, job), buildProjectFilterFields(job));
     await project.save();
     res.json({ project: project.toObject ? project.toObject() : project });
   } catch (err) {
