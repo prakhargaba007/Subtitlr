@@ -504,14 +504,21 @@ function DubAnotherLanguageModal({
         if (cancelled) return;
         const raw = Array.isArray(res.data?.languages) ? res.data.languages : [];
         const normalized = raw
-          .map((lang) => ({
-            value: String(lang.value || "").trim(),
-            lang_name: String(lang.lang_name || "").trim(),
-            label: String(lang.label || lang.value || "").trim(),
-            iso_code: typeof lang.isoCode === "string" ? lang.isoCode : null,
-            // Optionally keep .dubbingTts field if needed in future:
-            // dubbing_tts: lang.dubbingTts ?? null,
-          }))
+          .map((lang) => {
+            const value = String(lang.value || lang.lang_name || "").trim();
+            return {
+              value,
+              lang_name: value,
+              label: String(lang.label || value).trim(),
+              iso_code:
+                typeof lang.iso_code === "string"
+                  ? lang.iso_code
+                  : typeof lang.isoCode === "string"
+                    ? lang.isoCode
+                    : null,
+              dubbingTts: typeof lang.dubbingTts === "string" ? lang.dubbingTts : null,
+            };
+          })
           .filter((lang) => lang.lang_name && lang.label);
         setLanguages(normalized);
         const current = String(job.targetLanguage || "").trim().toLowerCase();
