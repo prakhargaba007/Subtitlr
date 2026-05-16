@@ -10,6 +10,7 @@ import {
   Maximize,
   Minimize,
   Subtitles,
+  Mic,
 } from "lucide-react";
 import type { DubbingSegment, EditorJob } from "@/components/dubbingEditor/types";
 import { s3Url } from "@/utils/axios";
@@ -38,6 +39,20 @@ function getActiveSeg(
     if (t >= seg.start && t <= seg.end) return seg;
   }
   return null;
+}
+
+function mediaSrc(keyOrUrl?: string | null): string | null {
+  const value = keyOrUrl?.trim();
+  if (!value) return null;
+  return s3Url(value);
+}
+
+function audioPreviewSrc(job: EditorJob): string | null {
+  return (
+    mediaSrc(job.dubbedAudioUrl) ??
+    mediaSrc(job.dubbedAudioKey) ??
+    mediaSrc(job.originalAudioKey)
+  );
 }
 
 // ─── component ────────────────────────────────────────────────────────────────
@@ -183,7 +198,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
         const audio = audioRef.current;
         if (audio) {
           if (!seekingRef.current) audio.currentTime = video.currentTime;
-          audio.play().catch(() => {});
+          audio.play().catch(() => { });
         }
         startDriftLoop();
       }
@@ -212,7 +227,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
         const audio = audioRef.current;
         if (audio) {
           audio.currentTime = video.currentTime;
-          if (!video.paused) audio.play().catch(() => {});
+          if (!video.paused) audio.play().catch(() => { });
         }
       }
     };
@@ -269,7 +284,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
         audio.volume = volume;
         audio.muted = muted;
         audio.currentTime = video.currentTime;
-        if (!video.paused) audio.play().catch(() => {});
+        if (!video.paused) audio.play().catch(() => { });
       }
     } else {
       stopDriftLoop();
@@ -342,7 +357,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      video.play().catch(() => {});
+      video.play().catch(() => { });
       setFlashIcon("play");
     } else {
       video.pause();
@@ -395,7 +410,7 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
         audio.volume = volume;
         audio.muted = muted;
         audio.currentTime = video.currentTime;
-        if (!video.paused) audio.play().catch(() => {});
+        if (!video.paused) audio.play().catch(() => { });
       }
     }
   };
@@ -404,21 +419,67 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
     const el = wrapperRef.current;
     if (!el) return;
     if (!document.fullscreenElement) {
-      el.requestFullscreen().catch(() => {});
+      el.requestFullscreen().catch(() => { });
     } else {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
     }
   };
 
   // ── derived ───────────────────────────────────────────────────────────────
-  if (!videoSrc) return null;
-
+  const audioSrc = audioPreviewSrc(job);
   const showAudioToggle = !!job.originalVideoKey && !!dubbedAudioSrc;
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
   const bufferedPct = duration > 0 ? (bufferedEnd / duration) * 100 : 0;
 
   const VolumeIcon =
     muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+
+  if (job.fileType === "audio") {
+    return (
+      <div className="">
+        <div className="">
+          <div className="w-full  rounded-4xl bg-surface-container-low border border-outline-variant/20 p-6 sm:p-8 flex flex-col items-center gap-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/20">
+              <Mic size={34} />
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-bold tracking-widest uppercase text-primary">
+                Audio Preview
+              </p>
+              <h3 className="text-xl sm:text-2xl font-bold text-on-surface font-headline wrap-break-word">
+                {job.originalFileName}
+              </h3>
+              <p className="text-sm text-on-surface-variant font-body">
+                {job.sourceLanguage} to {job.targetLanguage}
+              </p>
+            </div>
+
+            {audioSrc ? (
+              <audio
+                className="w-full"
+                controls
+                controlsList="nodownload"
+                preload="metadata"
+                src={audioSrc}
+              />
+            ) : (
+              <p className="w-full rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface-variant">
+                No audio preview available yet.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!videoSrc) {
+    return (
+      <div className="rounded-xl bg-black/90 border border-white/10 shadow-2xl min-h-[320px] flex items-center justify-center p-8 text-center">
+        <p className="text-sm text-white/60">No video preview available yet.</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -473,18 +534,16 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
       {/* ── Top-left badge row ── */}
       {showAudioToggle && (
         <div
-          className={`absolute top-3 left-3 z-20 transition-opacity duration-200 ${
-            controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+          className={`absolute top-3 left-3 z-20 transition-opacity duration-200 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
         >
           <button
             type="button"
             onClick={handleModeToggle}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 backdrop-blur-md ring-1 ring-white/10 ${
-              useOriginal
-                ? "bg-black/60 text-white/80 hover:bg-black/80"
-                : "bg-primary/90 text-white hover:bg-primary"
-            }`}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase transition-all active:scale-95 backdrop-blur-md ring-1 ring-white/10 ${useOriginal
+              ? "bg-black/60 text-white/80 hover:bg-black/80"
+              : "bg-primary/90 text-white hover:bg-primary"
+              }`}
           >
             {/* {useOriginal ? (
               <Volume2 size={9} className="shrink-0" />
@@ -499,9 +558,8 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
       {/* ── Subtitle overlay ── */}
       {subtitleDisplay && (
         <div
-          className={`absolute inset-x-0 z-20 flex justify-center transition-all duration-150 ${
-            controlsVisible ? "bottom-24" : "bottom-6"
-          }`}
+          className={`absolute inset-x-0 z-20 flex justify-center transition-all duration-150 ${controlsVisible ? "bottom-24" : "bottom-6"
+            }`}
         >
           <span className="max-w-[82%] px-4 py-1.5 rounded-lg bg-black/70 backdrop-blur-sm text-white text-sm font-medium leading-snug text-center ring-1 ring-white/5 shadow-lg [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
             {subtitleDisplay}
@@ -511,9 +569,8 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
 
       {/* ── Controls overlay ── */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-20 transition-opacity duration-200 ${
-          controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`absolute inset-x-0 bottom-0 z-20 transition-opacity duration-200 ${controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       >
         {/* gradient scrim */}
         <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-transparent pointer-events-none" />
@@ -611,11 +668,10 @@ export default function DubbingVideoPlayer({ job }: { job: EditorJob }) {
               <button
                 type="button"
                 onClick={() => setSubtitlesOn((v) => !v)}
-                className={`flex items-center gap-1 px-2 h-7 rounded-md text-[10px] font-bold tracking-wide uppercase transition-all shrink-0 ${
-                  subtitlesOn
-                    ? "bg-primary/20 text-primary ring-1 ring-primary/40"
-                    : "text-white/50 hover:text-white/80"
-                }`}
+                className={`flex items-center gap-1 px-2 h-7 rounded-md text-[10px] font-bold tracking-wide uppercase transition-all shrink-0 ${subtitlesOn
+                  ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                  : "text-white/50 hover:text-white/80"
+                  }`}
                 aria-label="Toggle subtitles (C)"
                 title={`Subtitles: ${subtitlesOn ? "On" : "Off"} (press C)`}
               >
