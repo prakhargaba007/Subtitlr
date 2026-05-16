@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/utils/axios";
 
@@ -19,6 +20,10 @@ interface ApiProjectRow {
     targetLanguage?: string;
     status: string;
     createdAt: string;
+    originalFileUrl?: string | null;
+    dubbedVideoUrl?: string | null;
+    thumbnailUrl?: string | null;
+    thumbnailKey?: string | null;
   };
 }
 
@@ -30,6 +35,7 @@ interface SearchProjectResult {
   meta: string;
   href: string;
   icon: string;
+  thumbnail?: string;
   typeLabel: string;
   pinned: boolean;
 }
@@ -68,6 +74,7 @@ function mapSearchProjectResult(row: ApiProjectRow): SearchProjectResult {
     meta,
     href,
     icon: isDubbing ? "translate" : job.fileType === "video" ? "movie" : "mic",
+    thumbnail: job.thumbnailUrl ?? undefined,
     typeLabel: isDubbing ? "Dubbing" : "Captions",
     pinned: Boolean(row.pinnedAt),
   };
@@ -245,11 +252,25 @@ export default function ProjectSearchModal({
                   >
                     <span
                       className={[
-                        "material-symbols-outlined grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-[24px]",
-                        isDubbing ? "bg-purple-50 text-purple-600" : "bg-primary/10 text-primary",
+                        "relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl text-[24px]",
+                        project.thumbnail
+                          ? "bg-surface-container"
+                          : isDubbing
+                            ? "bg-purple-50 text-purple-600"
+                            : "bg-primary/10 text-primary",
                       ].join(" ")}
                     >
-                      {project.icon}
+                      {project.thumbnail ? (
+                        <Image
+                          alt=""
+                          src={project.thumbnail}
+                          width={48}
+                          height={48}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">{project.icon}</span>
+                      )}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
