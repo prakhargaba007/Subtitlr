@@ -124,6 +124,9 @@ const {
   recordProjectUsage,
 } = require("../utils/usageTracker");
 const { downloadYoutubeVideo } = require("../utils/youtubeDownloadUtils");
+const {
+  sendDubbingCompletedEmail,
+} = require("../utils/dubbingCompletionEmail");
 
 // Dubbing credits: 1 credit per second (rounded up to the next whole second).
 const DUBBING_CREDITS_PER_SECOND = 1;
@@ -473,6 +476,238 @@ async function pipelineTtsSyncUploadForDubbing({
   emit({ stage: "syncing", message: "Timing sync complete." });
 
   return { rawDubbedPaths, wordTsForRows, syncedBuffers };
+}
+
+function resolveRetargetTtsProvider(req, targetLanguage) {
+  let ttsProvider = (req.body.ttsProvider || getTtsProvider()).toLowerCase();
+  const sarvamSupportedLanguages = Object.keys(BCP_47_MAP);
+  if (
+    sarvamSupportedLanguages.includes((targetLanguage || "").toLowerCase()) &&
+    ttsProvider !== "gemini"
+  ) {
+    ttsProvider = "sarvam";
+  }
+  if (
+    ttsProvider === "elevenlabs" &&
+    !String(process.env.ELEVENLABS_API_KEY || "").trim()
+  ) {
+    const err = new Error(
+      "ELEVENLABS_API_KEY is required when DUBBING_TTS_PROVIDER=elevenlabs.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (!String(process.env.OPENAI_API_KEY || "").trim()) {
+    const err = new Error(
+      "OPENAI_API_KEY is required for dubbing translation and voice selection.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "inworld" && !isInworldConfigured()) {
+    const err = new Error(
+      "INWORLD_API_KEY is required when DUBBING_TTS_PROVIDER=inworld.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "sarvam" && !isSarvamConfigured()) {
+    const err = new Error(
+      "SARVAM_API_KEY is required when DUBBING_TTS_PROVIDER=sarvam or for Indic languages.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "smallest" && !isSmallestConfigured()) {
+    const err = new Error(
+      "SMALLEST_API_KEY is required when DUBBING_TTS_PROVIDER=smallest.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  if (ttsProvider === "gemini" && !isGeminiTtsConfigured()) {
+    const err = new Error(
+      "GOOGLE_API_KEY or GEMINI_API_KEY is required when DUBBING_TTS_PROVIDER=gemini.",
+    );
+    err.statusCode = 422;
+    throw err;
+  }
+  return ttsProvider;
+}
+
+async function selectVoicesForRetarget({
+  job,
+  ttsProvider,
+  speakerProfiles,
+  targetLanguage,
+  emit,
+}) {
+  const speakerCount = speakerProfiles.length;
+  let resolvedProvider = ttsProvider === "auto" ? "openai" : ttsProvider;
+  let voiceMap = {};
+  let updatedProfiles = [];
+
+  const persist = async (provider) => {
+    await DubbingJob.findByIdAndUpdate(job._id, {
+      speakerProfiles: updatedProfiles,
+      ttsProvider: provider,
+    });
+    resolvedProvider = provider;
+  };
+
+  if (ttsProvider === "openai") {
+    emit({ stage: "generating", message: "Selecting OpenAI TTS voices for speakers…" });
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestOpenAIVoice(profile.voice_description, {
+        excludeVoiceIds: assigned,
+        speakerCount,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("openai");
+  } else if (ttsProvider === "inworld") {
+    emit({ stage: "generating", message: "Loading Inworld voice catalog…" });
+    const catalog = await fetchInworldVoiceCatalog(targetLanguage);
+    emit({ stage: "generating", message: "Selecting Inworld TTS voices for speakers…" });
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestInworldVoice(profile.voice_description, catalog, {
+        excludeVoiceIds: assigned,
+        speakerCount,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("inworld");
+  } else if (ttsProvider === "smallest") {
+    emit({ stage: "generating", message: "Loading Smallest.ai Waves voice catalog…" });
+    const catalog = await fetchSmallestVoiceCatalog();
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestSmallestVoice(profile.voice_description, catalog, {
+        excludeVoiceIds: assigned,
+        speakerCount,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("smallest");
+  } else if (ttsProvider === "sarvam") {
+    emit({ stage: "generating", message: "Selecting Sarvam TTS voices for speakers…" });
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestSarvamVoice(profile.voice_description, {
+        excludeVoiceIds: assigned,
+        speakerCount,
+        targetLanguage,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("sarvam");
+  } else if (ttsProvider === "gemini") {
+    emit({ stage: "generating", message: "Selecting Gemini TTS voices for speakers…" });
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestGeminiVoice(profile.voice_description, {
+        excludeVoiceIds: assigned,
+        speakerCount,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("gemini");
+  } else if (ttsProvider === "elevenlabs") {
+    emit({ stage: "generating", message: "Selecting ElevenLabs TTS voices for speakers…" });
+    const availableVoices = await fetchAvailableVoices();
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestVoice(profile.voice_description, availableVoices, {
+        excludeVoiceIds: assigned,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("elevenlabs");
+  } else {
+    emit({ stage: "generating", message: "Selecting OpenAI TTS voices for speakers…" });
+    const assigned = [];
+    for (const profile of speakerProfiles) {
+      const voice = await selectBestOpenAIVoice(profile.voice_description, {
+        excludeVoiceIds: assigned,
+        speakerCount,
+      });
+      assigned.push(voice);
+      voiceMap[profile.speaker_id] = voice;
+      updatedProfiles.push({
+        speaker_id: profile.speaker_id,
+        voice_description: profile.voice_description,
+        elevenlabs_voice_id: voice,
+      });
+    }
+    await persist("openai");
+  }
+
+  return { resolvedProvider, voiceMap, updatedProfiles };
+}
+
+async function sendDubbingCompletionEmailIfNeeded(userId, finalJob) {
+  try {
+    const alreadySent = Boolean(finalJob?.completionEmailSentAt);
+    if (alreadySent) return;
+
+    const user = await User.findById(userId)
+      .select("email preferences.emailNotifications")
+      .lean();
+    const emailOk =
+      Boolean(user?.email) &&
+      user?.preferences?.emailNotifications !== false;
+    if (!emailOk) return;
+
+    await sendDubbingCompletedEmail({
+      email: user.email,
+      jobId: finalJob._id.toString(),
+      fileName: finalJob.originalFileName,
+      targetLanguage: finalJob.targetLanguage,
+    });
+    await DubbingJob.findByIdAndUpdate(finalJob._id, {
+      completionEmailSentAt: new Date(),
+    }).catch(() => {});
+  } catch (e) {
+    console.warn("[dubbing] completion email failed (non-fatal):", e.message);
+  }
 }
 
 async function ensureJobEditable(req, jobId) {
@@ -2313,6 +2548,404 @@ exports.startDubbingFromYoutube = async (req, res) => {
     return res.status(status).json({
       message: err.message || "Failed to download YouTube video.",
     });
+  } finally {
+    tmpPaths.forEach(cleanupPath);
+  }
+};
+
+/**
+ * POST /api/dubbing/:id/retarget
+ * Creates a new dubbing job in another language using the source job's
+ * stored transcript, original assets, and background stem.
+ */
+exports.startDubbingRetargetJob = async (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const emit = (data) => {
+    try {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch (_) {}
+  };
+
+  const tmpPaths = [];
+  let job = null;
+
+  try {
+    const sourceJob = req.dubbingRetargetSourceJob;
+    if (!sourceJob) {
+      const err = new Error("Source dubbing job was not prepared.");
+      err.statusCode = 500;
+      throw err;
+    }
+    const targetLanguage = (req.body.targetLanguage || "").trim();
+    if (!targetLanguage) {
+      const err = new Error("targetLanguage is required.");
+      err.statusCode = 422;
+      throw err;
+    }
+    if (
+      targetLanguage.toLowerCase() ===
+      String(sourceJob.targetLanguage || "").trim().toLowerCase()
+    ) {
+      const err = new Error("Choose a different target language for this dub.");
+      err.statusCode = 422;
+      throw err;
+    }
+    if (!sourceJob.originalAudioKey) {
+      const err = new Error("Cannot reuse this dub: original audio is unavailable.");
+      err.statusCode = 422;
+      throw err;
+    }
+    if (!sourceJob.backgroundKey) {
+      const err = new Error("Cannot reuse this dub: background stem is unavailable.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const duration = sourceJob.duration || req.dubbingDurationSeconds || 0;
+    const creditsNeeded = calculateDubbingCredits(duration);
+
+    emit({
+      stage: "validating",
+      message: "Checking saved dub and credits…",
+      durationSec: duration,
+      progress: 5,
+    });
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const err = new Error("User not found.");
+      err.statusCode = 404;
+      throw err;
+    }
+    assertEnoughCredits(user, creditsNeeded);
+
+    const sourceLanguage =
+      (req.body.sourceLanguage || "").trim() ||
+      sourceJob.sourceLanguage ||
+      "auto";
+    const ttsProvider = resolveRetargetTtsProvider(req, targetLanguage);
+
+    job = await DubbingJob.create({
+      user: req.userId,
+      originalFileName: sourceJob.originalFileName,
+      fileType: sourceJob.fileType,
+      sourceLanguage,
+      targetLanguage,
+      duration,
+      creditsUsed: creditsNeeded,
+      status: "translating",
+      idempotencyKey: req.dubbingIdempotencyKey ?? null,
+      reservedSeconds: req.dubbingDurationSeconds ?? duration,
+      processingStartedAt: new Date(),
+      originalVideoKey: sourceJob.originalVideoKey || null,
+      originalAudioKey: sourceJob.originalAudioKey || null,
+      vocalsKey: sourceJob.vocalsKey || null,
+      backgroundKey: sourceJob.backgroundKey || null,
+      thumbnailKey: sourceJob.thumbnailKey || null,
+      separationMethod: sourceJob.separationMethod || null,
+    });
+
+    await createProjectForDubbingJob(req.userId, job._id);
+    const projectId = await findProjectIdByJobId(job._id, "dubbing");
+    const jobIdStr = job._id.toString();
+    const localOutputPath = getJobOutputDir(jobIdStr);
+    fs.mkdirSync(localOutputPath, { recursive: true });
+
+    emit({
+      stage: "validating",
+      message: "Job created from saved dub.",
+      jobId: job._id,
+      progress: 10,
+    });
+
+    emit({
+      stage: "translating",
+      message: "Reusing transcript and background stem from your previous dub…",
+      progress: 30,
+    });
+
+    const backgroundBody = await storage.getFile(sourceJob.backgroundKey);
+    const backgroundPath = path.join(os.tmpdir(), `dub_retarget_bg_${uuidv4()}.mp3`);
+    fs.writeFileSync(backgroundPath, await streamToBuffer(backgroundBody));
+    tmpPaths.push(backgroundPath);
+    saveArtifact(jobIdStr, "03_background_reused.mp3", backgroundPath);
+
+    const originalAudioBody = await storage.getFile(sourceJob.originalAudioKey);
+    const originalAudioPath = path.join(os.tmpdir(), `dub_retarget_original_${uuidv4()}.mp3`);
+    fs.writeFileSync(originalAudioPath, await streamToBuffer(originalAudioBody));
+    tmpPaths.push(originalAudioPath);
+    saveArtifact(jobIdStr, "01_full_audio_reused.mp3", originalAudioPath);
+
+    const reusableSegments = (sourceJob.segments || [])
+      .map((seg) => ({
+        start: Number(seg.start) || 0,
+        end: Number(seg.end) || 0,
+        speaker_id: String(seg.speaker_id || "").trim(),
+        text: String(seg.originalText || "").trim(),
+        voiceProfile: seg.voiceProfile,
+      }))
+      .filter((seg) => seg.speaker_id && seg.text && seg.end > seg.start)
+      .sort((a, b) => a.start - b.start);
+
+    if (!reusableSegments.length) {
+      const err = new Error("Source job does not have reusable transcript segments.");
+      err.statusCode = 422;
+      throw err;
+    }
+
+    const speakerProfiles = (sourceJob.speakerProfiles || []).map((profile) => ({
+      speaker_id: profile.speaker_id,
+      voice_description: profile.voice_description || "",
+    }));
+
+    emit({
+      stage: "translating",
+      message: `Translating to ${targetLanguage}…`,
+      progress: 40,
+    });
+    const translationMode =
+      String(req.body.translationMode || "auto").trim() || "auto";
+    const { results: translatedSegments, usage: translationUsage } =
+      await translateToSpeechReady(
+        reusableSegments,
+        targetLanguage,
+        speakerProfiles,
+        { sourceLanguage, translationMode },
+      );
+
+    if (translationUsage && projectId) {
+      await recordProjectUsage(projectId, {
+        model: "gpt-4o-mini",
+        inputTokens: translationUsage.prompt_tokens,
+        outputTokens: translationUsage.completion_tokens,
+      });
+    }
+
+    emit({ stage: "translating", message: "Translation complete.", progress: 50 });
+    await DubbingJob.findByIdAndUpdate(job._id, { status: "generating" });
+
+    const {
+      resolvedProvider,
+      voiceMap,
+      updatedProfiles,
+    } = await selectVoicesForRetarget({
+      job,
+      ttsProvider,
+      speakerProfiles,
+      targetLanguage,
+      emit,
+    });
+
+    emit({
+      stage: "generating",
+      message: "Generating dubbed audio for each segment…",
+      progress: 55,
+    });
+
+    const ttsRows = flattenTranslatedSegmentsForTts(translatedSegments);
+    const maxAtempo = resolveMaxAtempo(targetLanguage);
+    const segmentIds = translatedSegments.map(() => uuidv4());
+    const segmentAudioKeys = new Map();
+    const { wordTsForRows, syncedBuffers } =
+      await pipelineTtsSyncUploadForDubbing({
+        DubbingJob,
+        jobMongoId: job._id,
+        ttsRows,
+        synthesizeProvider: resolvedProvider,
+        voiceMap,
+        targetLanguage,
+        syncOpts: { maxAtempo },
+        tmpPaths,
+        emit,
+        jobIdStr,
+        segmentIds,
+        segmentAudioKeys,
+        userId: req.userId,
+        projectId,
+      });
+
+    const timelineSegments = ttsRows.map((row) => ({
+      start: row.start,
+      end: row.end,
+      speaker_id: row.speaker_id,
+      translatedText: row.text,
+    }));
+    const timeline = buildTimeline(timelineSegments, syncedBuffers);
+
+    const parentSubSegments = new Map();
+    const parentSolo = new Map();
+    translatedSegments.forEach((_, i) => parentSubSegments.set(i, []));
+    for (let k = 0; k < ttsRows.length; k++) {
+      const row = ttsRows[k];
+      const sync = syncedBuffers[k];
+      const wts = wordTsForRows[k];
+      if (row.subIndex >= 0) {
+        parentSubSegments.get(row.parentIndex).push({
+          relStart: row.relStart,
+          relEnd: row.relEnd,
+          translatedText: row.text,
+          timingStrategy: sync.strategy,
+          ttsWordTimestamps: wts && wts.length ? wts : undefined,
+        });
+      } else {
+        parentSolo.set(row.parentIndex, {
+          timingStrategy: sync.strategy,
+          ttsWordTimestamps: wts && wts.length ? wts : undefined,
+        });
+      }
+    }
+
+    emit({
+      stage: "merging",
+      message: "Mixing dubbed speech with reused background audio…",
+      progress: 82,
+    });
+    await DubbingJob.findByIdAndUpdate(job._id, { status: "merging" });
+
+    const mixedAudioPath = path.join(os.tmpdir(), `dub_retarget_mixed_${uuidv4()}.mp3`);
+    tmpPaths.push(mixedAudioPath);
+    await layerSpeechOverBackground(timeline, backgroundPath, mixedAudioPath, duration);
+
+    const mixTargetSec = Math.max(
+      duration,
+      (await getFileDuration(backgroundPath).catch(() => 0)) || 0,
+    );
+    const paddedMixPath = path.join(os.tmpdir(), `dub_retarget_pad_${uuidv4()}.mp3`);
+    const mixResult = await ensureMinAudioDuration(
+      mixedAudioPath,
+      mixTargetSec,
+      paddedMixPath,
+    );
+    if (mixResult.padded) tmpPaths.push(paddedMixPath);
+    const mixedAudioForOutput = mixResult.path;
+    saveArtifact(jobIdStr, "final_dubbed.mp3", mixedAudioForOutput);
+
+    emit({ stage: "merging", message: "Uploading dubbed audio…", progress: 90 });
+    const dubbedAudioKey = `dubbing/${req.userId}/${uuidv4()}_dubbed_audio.mp3`;
+    await storage.saveFile(
+      fs.readFileSync(mixedAudioForOutput),
+      dubbedAudioKey,
+      "audio/mpeg",
+    );
+
+    emit({ stage: "saving", message: "Saving results…", progress: 94 });
+    if (req.dubbingUsageReserved) {
+      await confirmDubbingUsage(
+        req.userId,
+        job._id,
+        req.dubbingDurationSeconds ?? duration,
+        duration,
+      ).catch((e) =>
+        console.warn("[dubbing] Usage confirm failed (non-fatal):", e.message),
+      );
+    }
+
+    await DubbingJob.findByIdAndUpdate(job._id, {
+      processedSeconds: duration,
+    }).catch(() => {});
+
+    await deductCredits(
+      req.userId,
+      creditsNeeded,
+      "dubbing_job",
+      `Dubbed ${job.originalFileName} → ${targetLanguage} (${creditsNeeded} credits)`,
+      {
+        fileName: job.originalFileName,
+        fileType: sourceJob.fileType,
+        sourceLanguage: sourceLanguage || "auto",
+        targetLanguage,
+        duration,
+        jobId: job._id,
+        sourceJobId: sourceJob._id,
+      },
+    );
+
+    const segmentsForDb = translatedSegments.map((ts, i) => {
+      const subs = parentSubSegments.get(i) || [];
+      const solo = parentSolo.get(i);
+      return {
+        segmentId: segmentIds[i],
+        revision: 0,
+        start: ts.start,
+        end: ts.end,
+        speaker_id: ts.speaker_id,
+        originalText: ts.originalText,
+        translatedText: ts.translatedText,
+        subSegments: subs.length ? subs : [],
+        timingStrategy: subs.length ? null : (solo?.timingStrategy ?? null),
+        ttsWordTimestamps: subs.length ? undefined : solo?.ttsWordTimestamps,
+        voiceProfile: ts.voiceProfile,
+        dubbedAudioKey: subs.length ? null : (segmentAudioKeys.get(i) ?? null),
+      };
+    });
+
+    const finalJob = await DubbingJob.findByIdAndUpdate(
+      job._id,
+      {
+        status: "completed",
+        dubbedVideoKey: sourceJob.originalVideoKey || null,
+        dubbedVideoUrl: null,
+        dubbedAudioKey,
+        dubbedAudioUrl: null,
+        separationMethod: sourceJob.separationMethod || "no_separation",
+        ttsProvider: resolvedProvider,
+        segments: segmentsForDb,
+        speakerProfiles: updatedProfiles,
+      },
+      { new: true },
+    );
+    await refreshProjectFilterFieldsForDubbingJob(finalJob._id, finalJob).catch(() => {});
+
+    emit({
+      stage: "done",
+      message: "Dubbing complete!",
+      job: finalJob,
+      dubbedUrl: dubbedAudioKey,
+      progress: 100,
+    });
+
+    await sendDubbingCompletionEmailIfNeeded(req.userId, finalJob);
+    res.end();
+  } catch (err) {
+    console.error("Dubbing retarget pipeline error:", err);
+
+    if (req.dubbingUsageReserved && req.dubbingDurationSeconds) {
+      const processedSec =
+        job && job.processedSeconds != null ? job.processedSeconds : 0;
+      await refundDubbingUsage(
+        req.userId,
+        job?._id ?? "unknown",
+        req.dubbingDurationSeconds,
+        processedSec,
+      ).catch((e) =>
+        console.warn("[dubbing] Usage refund failed (non-fatal):", e.message),
+      );
+    }
+
+    if (job) {
+      await DubbingJob.findByIdAndUpdate(job._id, {
+        status: "failed",
+        error: err.message || "Unknown error",
+      }).catch(() => {});
+      await refreshProjectFilterFieldsForDubbingJob(job._id, {
+        status: "failed",
+        fileType: job.fileType,
+      }).catch(() => {});
+    }
+
+    try {
+      emit({
+        stage: "error",
+        message: err.message || "An unexpected error occurred.",
+        statusCode: err.statusCode || 500,
+        jobId: job?._id || null,
+      });
+      res.end();
+    } catch (_) {}
   } finally {
     tmpPaths.forEach(cleanupPath);
   }

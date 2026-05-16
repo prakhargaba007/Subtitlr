@@ -12,6 +12,8 @@ import {
   getPendingSourceLanguage,
   getPendingTargetLanguage,
   getPendingYoutubeUrl,
+  getPendingSourceDubbingJobId,
+  setPendingSourceDubbingJobId,
 } from "@/utils/fileStore";
 import axios from "axios";
 import axiosInstance from "@/utils/axios";
@@ -184,8 +186,9 @@ export default function ProcessingView() {
 
     const file = getPendingFile();
     const youtubeUrl = getPendingYoutubeUrl();
+    const sourceDubbingJobId = getPendingSourceDubbingJobId();
 
-    if (!file && !youtubeUrl) {
+    if (!file && !youtubeUrl && !sourceDubbingJobId) {
       router.replace(homeHref);
       return;
     }
@@ -253,6 +256,7 @@ export default function ProcessingView() {
 
         if (event.stage === "done" && event.job) {
           setPendingFile(null);
+          setPendingSourceDubbingJobId("");
           setTimeout(() => {
             if (mode === "dubbing") {
               router.push(`/dashboard/dubbing/export?jobId=${event.job!._id}`);
@@ -268,7 +272,10 @@ export default function ProcessingView() {
       const headers: Record<string, string> = {};
       let body: FormData | Record<string, string>;
 
-      if (mode === "dubbing" && youtubeUrl) {
+      if (mode === "dubbing" && sourceDubbingJobId) {
+        body = { targetLanguage, sourceLanguage };
+        headers["Content-Type"] = "application/json";
+      } else if (mode === "dubbing" && youtubeUrl) {
         body = { youtubeUrl, targetLanguage, sourceLanguage };
         headers["Content-Type"] = "application/json";
       } else if (file) {
@@ -351,7 +358,9 @@ export default function ProcessingView() {
 
       const url =
         mode === "dubbing"
-          ? youtubeUrl
+          ? sourceDubbingJobId
+            ? `/api/dubbing/${sourceDubbingJobId}/retarget`
+            : youtubeUrl
             ? "/api/dubbing/start-youtube"
             : "/api/dubbing/start"
           : "/api/subtitles/generate";

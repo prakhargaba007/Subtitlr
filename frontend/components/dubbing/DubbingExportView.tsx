@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Download,
@@ -21,11 +21,28 @@ import {
   FileText,
   FileCode2,
   Film,
+  Languages,
 } from "lucide-react";
 import axiosInstance, { s3Url } from "@/utils/axios";
 import type { EditorJob } from "@/components/dubbingEditor/types";
 import { fmtTimeShort } from "@/components/dubbingEditor/types";
 import DubbingVideoPlayer from "@/components/dubbing/DubbingVideoPlayer";
+import SearchableDropdown, { type SearchableDropdownOption } from "@/components/ui/SearchableDropdown";
+import {
+  setPendingMode,
+  setPendingSourceDubbingJobId,
+  setPendingSourceLanguage,
+  setPendingTargetLanguage,
+} from "@/utils/fileStore";
+
+type DubbingLanguage = {
+  lang_name: string;
+  label: string;
+  value: string;
+  iso_code?: string | null;
+  isoCode?: string | null;
+  dubbingTts?: string | null;
+};
 
 /** Server uploaded a muxed dubbed MP4 (not v1 placeholder where dubbedVideoKey === originalVideoKey). */
 function hasMuxedDubbedVideoFile(job: EditorJob): boolean {
@@ -465,6 +482,136 @@ function SubtitleModal({
   );
 }
 
+function DubAnotherLanguageModal({
+  job,
+  onClose,
+  onStart,
+}: {
+  job: EditorJob;
+  onClose: () => void;
+  onStart: (targetLanguage: string) => void;
+}) {
+  const [languages, setLanguages] = useState<DubbingLanguage[]>([]);
+  const [selected, setSelected] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    axiosInstance
+      .get<{ languages: DubbingLanguage[] }>("/api/subtitles/languages?mode=dubbing")
+      .then((res) => {
+        if (cancelled) return;
+        const raw = Array.isArray(res.data?.languages) ? res.data.languages : [];
+        const normalized = raw
+          .map((lang) => ({
+            value: String(lang.value || "").trim(),
+            lang_name: String(lang.lang_name || "").trim(),
+            label: String(lang.label || lang.value || "").trim(),
+            iso_code: typeof lang.isoCode === "string" ? lang.isoCode : null,
+            // Optionally keep .dubbingTts field if needed in future:
+            // dubbing_tts: lang.dubbingTts ?? null,
+          }))
+          .filter((lang) => lang.lang_name && lang.label);
+        setLanguages(normalized);
+        const current = String(job.targetLanguage || "").trim().toLowerCase();
+        const firstOther = normalized.find(
+          (lang) => lang.lang_name.toLowerCase() !== current,
+        );
+        setSelected(firstOther?.lang_name || "");
+        setError(null);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not load dubbing languages. Try again later.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.targetLanguage]);
+
+  const options: SearchableDropdownOption[] = languages.map((lang) => ({
+    value: lang.lang_name,
+    label: lang.label,
+    icon: "language",
+    description: lang.iso_code ? lang.iso_code.toUpperCase() : undefined,
+  }));
+  const sameLanguage =
+    selected.trim().toLowerCase() === String(job.targetLanguage || "").trim().toLowerCase();
+  const canStart = Boolean(selected.trim()) && !sameLanguage && !loading;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-surface rounded-[2rem] border border-outline-variant/20 shadow-2xl p-6">
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-xl font-headline font-bold text-on-surface">
+              Dub in another language
+            </h3>
+            <p className="mt-2 text-sm text-on-surface-variant leading-relaxed">
+              We&apos;ll reuse this project&apos;s transcript and background audio, so you do not need to upload or separate the video again.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs font-headline font-bold uppercase tracking-widest text-on-surface-variant">
+            New dubbing language
+          </p>
+          {loading ? (
+            <div className="h-[46px] rounded-2xl bg-surface-container-low/50 border border-outline-variant/15 animate-pulse" />
+          ) : error ? (
+            <p className="text-sm text-red-600">{error}</p>
+          ) : (
+            <SearchableDropdown
+              options={options}
+              value={selected}
+              onChange={setSelected}
+              placeholder="Choose a language"
+              searchPlaceholder="Search language..."
+              emptyText="No languages"
+              icon="language"
+            />
+          )}
+          {sameLanguage && (
+            <p className="text-xs text-amber-600">
+              Choose a language different from the current dub.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-8 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-full bg-surface-container-low border border-outline-variant/20 text-on-surface text-sm font-headline font-bold hover:bg-surface-container transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!canStart}
+            onClick={() => onStart(selected)}
+            className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-sm font-headline font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          >
+            Start dubbing
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DownloadPanel({
   job,
   jobId,
@@ -478,9 +625,11 @@ function DownloadPanel({
   onMuxExportStart: () => void;
   onMuxExportEnd: () => void;
 }) {
+  const router = useRouter();
   const [downloading, setDownloading] = useState<string | null>(null);
   const [muxStatus, setMuxStatus] = useState<string | null>(null);
   const [showSubtitleModal, setShowSubtitleModal] = useState(false);
+  const [showDubAnotherModal, setShowDubAnotherModal] = useState(false);
 
   const handleDownload = async (url: string, filename: string, key: string) => {
     setDownloading(key);
@@ -548,6 +697,14 @@ function DownloadPanel({
   const dubbedVideoDisabled = !canDownloadDubbedVideo || dubbedVideoBusy;
 
   const baseName = job.originalFileName.replace(/\.[^/.]+$/, "");
+  const handleDubAnotherLanguage = (targetLanguage: string) => {
+    setPendingMode("dubbing");
+    setPendingSourceDubbingJobId(jobId);
+    setPendingTargetLanguage(targetLanguage);
+    setPendingSourceLanguage(job.sourceLanguage || "");
+    const nextPath = `/dashboard/processing?name=${encodeURIComponent(job.originalFileName)}&size=0`;
+    router.push(nextPath);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -603,6 +760,17 @@ function DownloadPanel({
         <p className="text-xs text-on-surface-variant leading-relaxed font-body">{muxStatus}</p>
       )}
 
+      <button
+        type="button"
+        onClick={() => setShowDubAnotherModal(true)}
+        disabled={!job.segments?.length}
+        title={job.segments?.length ? "Reuse this dub to create another language" : "Transcript segments are unavailable for this job"}
+        className="group flex items-center justify-center gap-2 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-sm font-bold hover:bg-surface-container-low hover:border-primary/30 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
+      >
+        <Languages size={16} className="text-on-surface-variant group-hover:text-primary transition-colors" />
+        <span>Dub in Another Language</span>
+      </button>
+
       <div className="grid grid-cols-2 gap-3">
         {/* Secondary: dubbed audio (video jobs) */}
         {showDubbedVideo && (
@@ -644,6 +812,14 @@ function DownloadPanel({
           sourceLanguage={job.sourceLanguage}
           targetLanguage={job.targetLanguage}
           onClose={() => setShowSubtitleModal(false)}
+        />
+      )}
+
+      {showDubAnotherModal && (
+        <DubAnotherLanguageModal
+          job={job}
+          onClose={() => setShowDubAnotherModal(false)}
+          onStart={handleDubAnotherLanguage}
         />
       )}
     </div>

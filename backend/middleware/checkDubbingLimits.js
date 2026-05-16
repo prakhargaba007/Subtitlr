@@ -96,6 +96,169 @@ function limitError(message, statusCode = 429) {
   return err;
 }
 
+async function reserveDubbingUsage({
+  userId,
+  durationSeconds,
+  enforceDurationLimit = true,
+}) {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    throw limitError("File has no detectable duration.", 422);
+  }
+
+  // ── Load plan limits ───────────────────────────────────────────────────────
+  const user = await User.findById(userId)
+    .select("activeSubscriptionId")
+    .lean();
+  if (!user) throw limitError("User not found.", 404);
+
+  let planFlags = {};
+  let sub = null;
+
+  if (user.activeSubscriptionId) {
+    sub = await UserSubscription.findById(user.activeSubscriptionId)
+      .select("status planCatalog previousBillingDate")
+      .lean();
+
+    if (sub && sub.status === "active" && sub.planCatalog) {
+      const plan = await PlanCatalog.findById(sub.planCatalog)
+        .select("featureFlags")
+        .lean();
+      if (plan?.featureFlags) planFlags = plan.featureFlags;
+    }
+  }
+
+  // featureFlags is a flat object — read it directly (no nested "dubbing" sub-key).
+  const flags = (planFlags && typeof planFlags === "object") ? planFlags : {};
+
+  // ── Hard limit: max duration per request ───────────────────────────────────
+  // Retarget jobs reuse a previously accepted source job; callers may skip this.
+  const maxInputMinutes   = flags.maxInputMinutes ?? null;
+  const maxDurPerRequest  = maxInputMinutes !== null ? maxInputMinutes * 60 : null;
+  if (
+    enforceDurationLimit &&
+    maxDurPerRequest !== null &&
+    durationSeconds > maxDurPerRequest
+  ) {
+    throw limitError(
+      `File duration ${Math.ceil(durationSeconds / 60)} min exceeds the plan limit of ${maxInputMinutes} min per request.`,
+      413,
+    );
+  }
+
+  // ── Load usage document (upsert on first use) ──────────────────────────────
+  const today        = todayUTC();
+  const cycleStart   = billingCycleStartDate(sub);
+
+  // Use findOneAndUpdate with upsert to avoid a separate create() race.
+  let usage = await UserUsage.findOneAndUpdate(
+    { user: userId },
+    { $setOnInsert: { user: userId, dailyWindowDate: today, billingCycleStart: cycleStart } },
+    { upsert: true, new: true },
+  );
+
+  // ── Determine if windows need resetting ────────────────────────────────────
+  const needsDailyReset   = usage.dailyWindowDate   !== today;
+  const needsMonthlyReset = usage.billingCycleStart !== cycleStart;
+
+  // Snapshot the effective values AFTER applying any pending resets.
+  const effectiveDailyUsed   = needsDailyReset   ? 0 : (usage.dailyUsedSeconds   || 0) + (usage.dailyReservedSeconds   || 0);
+  const effectiveMonthlyUsed = needsMonthlyReset ? 0 : (usage.monthlyUsedSeconds  || 0) + (usage.monthlyReservedSeconds || 0);
+  const activeJobsCount      = needsDailyReset   ? 0 : (usage.activeJobsCount     || 0);
+
+  // ── Atomic concurrency check (using activeJobsCount, not countDocuments) ───
+  const maxConcurrent = getFlag(flags, "maxConcurrentJobs");
+  if (maxConcurrent !== null && activeJobsCount >= maxConcurrent) {
+    throw limitError(
+      `You already have ${activeJobsCount} active job(s). Your plan allows a maximum of ${maxConcurrent} concurrent job(s). Please wait for your current job to complete.`,
+      429,
+    );
+  }
+
+  // ── Daily quota check ──────────────────────────────────────────────────────
+  const dailyLimit = getFlag(flags, "dailyLimitSeconds");
+  if (dailyLimit !== null && effectiveDailyUsed + durationSeconds > dailyLimit) {
+    const remaining = Math.max(0, dailyLimit - effectiveDailyUsed);
+    throw limitError(
+      `Daily dubbing quota exceeded. Remaining today: ${Math.floor(remaining)}s. Your file is ${Math.ceil(durationSeconds)}s.`,
+      429,
+    );
+  }
+
+  // ── Cost-based daily safety cap check ──────────────────────────────────────
+  // checkCostSafetyCap uses effectiveDailyUsed which already accounts for resets.
+  const effectiveUsageForCostCheck = {
+    dailyUsedSeconds:     needsDailyReset ? 0 : (usage.dailyUsedSeconds   || 0),
+    dailyReservedSeconds: needsDailyReset ? 0 : (usage.dailyReservedSeconds || 0),
+  };
+  const costCheck = checkCostSafetyCap(effectiveUsageForCostCheck, flags, durationSeconds, getFlag);
+  if (costCheck.blocked) {
+    throw limitError(costCheck.reason, 429);
+  }
+
+  // ── Monthly quota check ────────────────────────────────────────────────────
+  const monthlyLimit   = getFlag(flags, "monthlyLimitSeconds");
+  const overageAllowed = getFlag(flags, "overageAllowed") === true;
+
+  if (monthlyLimit !== null && !overageAllowed && effectiveMonthlyUsed + durationSeconds > monthlyLimit) {
+    const remaining = Math.max(0, monthlyLimit - effectiveMonthlyUsed);
+    throw limitError(
+      `Monthly dubbing quota exceeded. Remaining this billing cycle: ${Math.floor(remaining)}s. Upgrade your plan for more.`,
+      402,
+    );
+  }
+
+  // ── ATOMIC RESERVATION ─────────────────────────────────────────────────────
+  // This is the single operation that prevents race conditions and also resets
+  // stale daily/monthly windows atomically.
+  const matchQuery = { user: userId };
+  const updateDoc  = { $inc: {}, $set: {} };
+
+  if (needsDailyReset) {
+    updateDoc.$set.dailyWindowDate      = today;
+    updateDoc.$set.dailyUsedSeconds     = 0;
+    updateDoc.$set.dailyReservedSeconds = durationSeconds;
+    updateDoc.$set.activeJobsCount      = 1;
+  } else {
+    if (dailyLimit !== null) {
+      matchQuery.dailyUsedSeconds = {
+        $lte: dailyLimit - (usage.dailyReservedSeconds || 0) - durationSeconds,
+      };
+    }
+    updateDoc.$inc.dailyReservedSeconds = durationSeconds;
+    updateDoc.$inc.activeJobsCount      = 1;
+  }
+
+  if (needsMonthlyReset) {
+    updateDoc.$set.billingCycleStart       = cycleStart;
+    updateDoc.$set.monthlyUsedSeconds      = 0;
+    updateDoc.$set.monthlyReservedSeconds  = durationSeconds;
+  } else {
+    if (monthlyLimit !== null && !overageAllowed) {
+      matchQuery.monthlyUsedSeconds = {
+        $lte: monthlyLimit - (usage.monthlyReservedSeconds || 0) - durationSeconds,
+      };
+    }
+    updateDoc.$inc.monthlyReservedSeconds = durationSeconds;
+  }
+
+  if (!Object.keys(updateDoc.$inc).length) delete updateDoc.$inc;
+
+  const reserveResult = await UserUsage.findOneAndUpdate(
+    matchQuery,
+    updateDoc,
+    { new: true },
+  );
+
+  if (!reserveResult) {
+    throw limitError(
+      "Quota temporarily full due to a concurrent request. Please try again in a moment.",
+      429,
+    );
+  }
+
+  return flags;
+}
+
 // ─── Main Middleware ──────────────────────────────────────────────────────────
 
 /**
@@ -111,7 +274,7 @@ function limitError(message, statusCode = 429) {
  *
  * On reject, calls next(error) — no reservation is made.
  */
-module.exports = async function checkDubbingLimits(req, res, next) {
+async function checkDubbingLimits(req, res, next) {
   let tmpFile = null;
 
   try {
@@ -168,20 +331,17 @@ module.exports = async function checkDubbingLimits(req, res, next) {
       return next(limitError("File has no detectable duration.", 422));
     }
 
-    // ── 3. Load plan limits ───────────────────────────────────────────────────
+    // ── 4a. Hard limit: max file size ─────────────────────────────────────────
     const user = await User.findById(req.userId)
       .select("activeSubscriptionId")
       .lean();
     if (!user) return next(limitError("User not found.", 404));
 
     let planFlags = {};
-    let sub = null;
-
     if (user.activeSubscriptionId) {
-      sub = await UserSubscription.findById(user.activeSubscriptionId)
-        .select("status planCatalog previousBillingDate")
+      const sub = await UserSubscription.findById(user.activeSubscriptionId)
+        .select("status planCatalog")
         .lean();
-
       if (sub && sub.status === "active" && sub.planCatalog) {
         const plan = await PlanCatalog.findById(sub.planCatalog)
           .select("featureFlags")
@@ -189,12 +349,8 @@ module.exports = async function checkDubbingLimits(req, res, next) {
         if (plan?.featureFlags) planFlags = plan.featureFlags;
       }
     }
-
-    // featureFlags is a flat object — read it directly (no nested "dubbing" sub-key).
-    const flags = (planFlags && typeof planFlags === "object") ? planFlags : {};
-
-    // ── 4a. Hard limit: max file size ─────────────────────────────────────────
-    const maxFileSizeMB = flags.maxFileSizeMB ?? null;
+    const fileSizeFlags = (planFlags && typeof planFlags === "object") ? planFlags : {};
+    const maxFileSizeMB = fileSizeFlags.maxFileSizeMB ?? null;
     if (maxFileSizeMB !== null && fileSize > maxFileSizeMB * 1024 * 1024) {
       return next(limitError(
         `File size ${(fileSize / 1024 / 1024).toFixed(1)} MB exceeds the plan limit of ${maxFileSizeMB} MB.`,
@@ -202,135 +358,13 @@ module.exports = async function checkDubbingLimits(req, res, next) {
       ));
     }
 
-    // ── 4b. Hard limit: max duration per request ──────────────────────────────
-    // Plan stores maxInputMinutes; convert to seconds for comparison.
-    const maxInputMinutes   = flags.maxInputMinutes ?? null;
-    const maxDurPerRequest  = maxInputMinutes !== null ? maxInputMinutes * 60 : null;
-    if (maxDurPerRequest !== null && durationSeconds > maxDurPerRequest) {
-      return next(limitError(
-        `File duration ${Math.ceil(durationSeconds / 60)} min exceeds the plan limit of ${maxInputMinutes} min per request.`,
-        413,
-      ));
-    }
+    const flags = await reserveDubbingUsage({
+      userId: req.userId,
+      durationSeconds,
+    });
 
-    // ── 5. Load usage document (upsert on first use) ──────────────────────────
-    const today        = todayUTC();
-    const cycleStart   = billingCycleStartDate(sub);
-
-    // Use findOneAndUpdate with upsert to avoid a separate create() race.
-    let usage = await UserUsage.findOneAndUpdate(
-      { user: req.userId },
-      { $setOnInsert: { user: req.userId, dailyWindowDate: today, billingCycleStart: cycleStart } },
-      { upsert: true, new: true },
-    );
-
-    // ── 6. Determine if windows need resetting ────────────────────────────────
-    const needsDailyReset   = usage.dailyWindowDate   !== today;
-    const needsMonthlyReset = usage.billingCycleStart !== cycleStart;
-
-    // Snapshot the effective values AFTER applying any pending resets.
-    const effectiveDailyUsed   = needsDailyReset   ? 0 : (usage.dailyUsedSeconds   || 0) + (usage.dailyReservedSeconds   || 0);
-    const effectiveMonthlyUsed = needsMonthlyReset ? 0 : (usage.monthlyUsedSeconds  || 0) + (usage.monthlyReservedSeconds || 0);
-    const activeJobsCount      = needsDailyReset   ? 0 : (usage.activeJobsCount     || 0);
-
-    // ── 7. Atomic concurrency check (using activeJobsCount, not countDocuments) ─
-    const maxConcurrent = getFlag(flags, "maxConcurrentJobs");
-    if (maxConcurrent !== null && activeJobsCount >= maxConcurrent) {
-      return next(limitError(
-        `You already have ${activeJobsCount} active job(s). Your plan allows a maximum of ${maxConcurrent} concurrent job(s). Please wait for your current job to complete.`,
-        429,
-      ));
-    }
-
-    // ── 8. Daily quota check ──────────────────────────────────────────────────
-    const dailyLimit = getFlag(flags, "dailyLimitSeconds");
-    if (dailyLimit !== null && effectiveDailyUsed + durationSeconds > dailyLimit) {
-      const remaining = Math.max(0, dailyLimit - effectiveDailyUsed);
-      return next(limitError(
-        `Daily dubbing quota exceeded. Remaining today: ${Math.floor(remaining)}s. Your file is ${Math.ceil(durationSeconds)}s.`,
-        429,
-      ));
-    }
-
-    // ── 9. Cost-based daily safety cap check ──────────────────────────────────
-    // checkCostSafetyCap uses effectiveDailyUsed which already accounts for resets.
-    const effectiveUsageForCostCheck = {
-      dailyUsedSeconds:     needsDailyReset ? 0 : (usage.dailyUsedSeconds   || 0),
-      dailyReservedSeconds: needsDailyReset ? 0 : (usage.dailyReservedSeconds || 0),
-    };
-    const costCheck = checkCostSafetyCap(effectiveUsageForCostCheck, flags, durationSeconds, getFlag);
-    if (costCheck.blocked) {
-      return next(limitError(costCheck.reason, 429));
-    }
-
-    // ── 10. Monthly quota check ────────────────────────────────────────────────
-    const monthlyLimit   = getFlag(flags, "monthlyLimitSeconds");
-    const overageAllowed = getFlag(flags, "overageAllowed") === true;
-
-    if (monthlyLimit !== null && !overageAllowed && effectiveMonthlyUsed + durationSeconds > monthlyLimit) {
-      const remaining = Math.max(0, monthlyLimit - effectiveMonthlyUsed);
-      return next(limitError(
-        `Monthly dubbing quota exceeded. Remaining this billing cycle: ${Math.floor(remaining)}s. Upgrade your plan for more.`,
-        402,
-      ));
-    }
-
-    // ── 11. ATOMIC RESERVATION ────────────────────────────────────────────────
-    // Build the match conditions that must still hold at update time.
-    // This is the single operation that prevents all race conditions.
-    // It ALSO resets stale daily/monthly windows atomically (no separate update needed).
-    const matchQuery = { user: req.userId };
-    const updateDoc  = { $inc: {}, $set: {} };
-
-    // ── 11a. Apply daily reset inside the atomic update ────────────────────────
-    if (needsDailyReset) {
-      updateDoc.$set.dailyWindowDate      = today;
-      updateDoc.$set.dailyUsedSeconds     = 0;
-      updateDoc.$set.dailyReservedSeconds = durationSeconds; // = 0 (reset) + new reservation
-      updateDoc.$set.activeJobsCount      = 1;               // = 0 (reset) + 1 for this job
-    } else {
-      // Enforce that the daily budget hasn't been consumed between our check and now.
-      if (dailyLimit !== null) {
-        matchQuery.dailyUsedSeconds = {
-          $lte: dailyLimit - (usage.dailyReservedSeconds || 0) - durationSeconds,
-        };
-      }
-      updateDoc.$inc.dailyReservedSeconds = durationSeconds;
-      updateDoc.$inc.activeJobsCount      = 1;
-    }
-
-    // ── 11b. Apply monthly (billing cycle) reset inside the atomic update ──────
-    if (needsMonthlyReset) {
-      updateDoc.$set.billingCycleStart       = cycleStart;
-      updateDoc.$set.monthlyUsedSeconds      = 0;
-      updateDoc.$set.monthlyReservedSeconds  = durationSeconds; // = 0 (reset) + new reservation
-    } else {
-      if (monthlyLimit !== null && !overageAllowed) {
-        matchQuery.monthlyUsedSeconds = {
-          $lte: monthlyLimit - (usage.monthlyReservedSeconds || 0) - durationSeconds,
-        };
-      }
-      updateDoc.$inc.monthlyReservedSeconds = durationSeconds;
-    }
-
-    // Clean up empty $inc if all fields went into $set (e.g. double reset)
-    if (!Object.keys(updateDoc.$inc).length) delete updateDoc.$inc;
-
-    const reserveResult = await UserUsage.findOneAndUpdate(
-      matchQuery,
-      updateDoc,
-      { new: true },
-    );
-
-    if (!reserveResult) {
-      // Another concurrent request consumed the quota between our check and the atomic update.
-      return next(limitError(
-        "Quota temporarily full due to a concurrent request. Please try again in a moment.",
-        429,
-      ));
-    }
-
-    // ── 12. Pass context to controller ────────────────────────────────────────
+    // ── 4b. Hard limit: max duration / quota reservation ──────────────────────
+    // ── 5. Pass context to controller ─────────────────────────────────────────
     req.dubbingDurationSeconds = durationSeconds;
     req.dubbingTmpProbeFile    = tmpFile;
     req.dubbingPlanFlags       = flags;
@@ -348,4 +382,8 @@ module.exports = async function checkDubbingLimits(req, res, next) {
     }
     next(err);
   }
-};
+}
+
+checkDubbingLimits.reserveDubbingUsage = reserveDubbingUsage;
+
+module.exports = checkDubbingLimits;

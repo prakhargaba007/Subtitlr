@@ -4,6 +4,7 @@ const router = express.Router();
 
 const isAuth = require("../middleware/is-auth");
 const checkDubbingLimits = require("../middleware/checkDubbingLimits");
+const checkDubbingRetargetLimits = require("../middleware/checkDubbingRetargetLimits");
 const {
   prepareDubbingStartFromS3,
 } = require("../middleware/dubbingPrepareS3Input");
@@ -11,6 +12,7 @@ const AUDIO_VIDEO_MIMES = require("../constants/audioVideoMimes");
 const {
   startDubbingJob,
   startDubbingFromYoutube,
+  startDubbingRetargetJob,
   requestDubbingUploadUrl,
   getDubbingJob,
   getDubbingJobs,
@@ -76,6 +78,15 @@ router.get("/voices/local-inworld", isAuth, listLocalInworldVoices);
 
 // GET /api/dubbing/:id/editor — editor payload (segments + profiles + urls)
 router.get("/:id/editor", isAuth, getDubbingEditor);
+
+// POST /api/dubbing/:id/retarget — dub an existing completed job in another language
+router.post(
+  "/:id/retarget",
+  isAuth,
+  express.json(),
+  checkDubbingRetargetLimits,
+  startDubbingRetargetJob
+);
 
 // PATCH /api/dubbing/:id/segments/:segmentId — edit text/timing/strategy
 router.patch("/:id/segments/:segmentId", isAuth, patchDubbingSegment);

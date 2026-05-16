@@ -9,10 +9,14 @@ let pendingMode: "subtitles" | "dubbing" = "dubbing";
 let pendingTargetLanguage: string = "";
 let pendingSourceLanguage: string = "";
 let pendingYoutubeUrl: string = "";
+let pendingSourceDubbingJobId: string = "";
 
 export const setPendingFile = (file: File | null): void => {
   pendingFile = file;
-  if (file) pendingYoutubeUrl = "";
+  if (file) {
+    pendingYoutubeUrl = "";
+    pendingSourceDubbingJobId = "";
+  }
 };
 
 export const getPendingFile = (): File | null => pendingFile;
@@ -43,7 +47,20 @@ export const getPendingSourceLanguage = (): string => pendingSourceLanguage;
 
 export const setPendingYoutubeUrl = (url: string): void => {
   pendingYoutubeUrl = url;
-  if (url) pendingFile = null;
+  if (url) {
+    pendingFile = null;
+    pendingSourceDubbingJobId = "";
+  }
 };
 
 export const getPendingYoutubeUrl = (): string => pendingYoutubeUrl;
+
+export const setPendingSourceDubbingJobId = (jobId: string): void => {
+  pendingSourceDubbingJobId = jobId;
+  if (jobId) {
+    pendingFile = null;
+    pendingYoutubeUrl = "";
+  }
+};
+
+export const getPendingSourceDubbingJobId = (): string => pendingSourceDubbingJobId;
