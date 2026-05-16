@@ -8,6 +8,7 @@ import LanguageListSection from "@/components/LanguageListSection";
 import FAQSection from "@/components/FAQSection";
 import CTASection from "@/components/CTASection";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import { getSiteUrl } from "@/utils/siteUrl";
 
 export const metadata: Metadata = {
   title: "Subtitles & AI Dubbing in Seconds",
@@ -38,21 +39,21 @@ export default function Home() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://www.kililabs.io/#organization",
+        "@id": `${getSiteUrl()}#organization`,
         name: "Kili",
-        url: "https://www.kililabs.io/",
-        logo: "https://www.kililabs.io/apple-touch-icon.png",
+        url: getSiteUrl(),
+        logo: getSiteUrl("/apple-touch-icon.png"),
       },
       {
         "@type": "SoftwareApplication",
-        "@id": "https://www.kililabs.io/#software",
+        "@id": `${getSiteUrl()}#software`,
         name: "Kili",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
-        url: "https://www.kililabs.io/",
+        url: getSiteUrl(),
         offers: {
           "@type": "Offer",
-          url: "https://www.kililabs.io/pricing",
+          url: getSiteUrl("/pricing"),
         },
       },
     ],

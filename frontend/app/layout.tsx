@@ -1,26 +1,11 @@
 import type { Metadata } from "next";
 import { Manrope, Inter } from "next/font/google";
 import Script from "next/script";
+import { getSiteOrigin } from "@/utils/siteUrl";
 import { Providers } from "./providers";
 import "./globals.css";
 
-function getSiteUrl() {
-  const fallback = "https://www.kililabs.io";
-  const raw =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "";
-
-  try {
-    const url = new URL(raw || fallback);
-    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return fallback;
-    return url.origin;
-  } catch {
-    return fallback;
-  }
-}
-
-const siteUrl = getSiteUrl();
+const siteUrl = getSiteOrigin();
 
 const manrope = Manrope({
   variable: "--font-manrope",
