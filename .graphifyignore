@@ -1,0 +1,33 @@
+.git/
+.DS_Store
+
+# Graphify output
+graphify-out/
+
+# Dependencies and build artifacts
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+**/out/
+build/
+**/build/
+coverage/
+**/coverage/
+.vercel/
+**/.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets and private keys
+.env
+.env.*
+*.pem
+!backend/.env.example
+
+# Uploaded/generated media and temporary files
+voice_data_set/
+backend/public/uploads/
+backend/dubbing-output/
+backend/tmp/

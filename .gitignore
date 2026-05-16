@@ -1,1 +1,4 @@
 /voice_data_set/
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/cost.json
