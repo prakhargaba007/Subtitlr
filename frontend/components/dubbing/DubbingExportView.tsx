@@ -557,9 +557,9 @@ function DubAnotherLanguageModal({
             <h3 className="text-xl font-headline font-bold text-on-surface">
               Dub in another language
             </h3>
-            <p className="mt-2 text-sm text-on-surface-variant leading-relaxed">
+            {/* <p className="mt-2 text-sm text-on-surface-variant leading-relaxed">
               We&apos;ll reuse this project&apos;s transcript and background audio, so you do not need to upload or separate the video again.
-            </p>
+            </p> */}
           </div>
           <button
             type="button"

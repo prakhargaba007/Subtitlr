@@ -26,6 +26,198 @@ const SARVAM_LANGUAGE_GUIDE = {
   odia: { script: "Odia" },
 };
 
+const SARVAM_TARGET_STYLE_GUIDES = {
+  english: {
+    nativeName: "Indian English",
+    script: "English",
+    punctuation: "Use normal English punctuation.",
+    guardrail: "Write natural Indian English. Do not translate proper nouns or common media terms unnecessarily.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "The app team shared a quick update about the new feature.",
+      },
+    ],
+  },
+  hindi: {
+    nativeName: "Hindi",
+    script: "Devanagari",
+    punctuation: "Use Hindi danda (।) when the sentence ends in Hindi.",
+    guardrail:
+      "Use Devanagari for Hindi words. Do not romanize Hindi, but keep natural English words in English script.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team ने new feature के बारे में एक quick update share किया।",
+      },
+    ],
+  },
+  bengali: {
+    nativeName: "Bengali",
+    script: "Bengali",
+    punctuation: "Use Bengali/Indic sentence punctuation naturally when the sentence ends in Bengali.",
+    guardrail:
+      "Use Bengali script for Bengali words. Do not write Hindi or Devanagari for Bengali targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team নতুন feature নিয়ে একটা quick update share করেছে।",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator launch এর জন্য একটা short video post করেছেন।",
+      },
+    ],
+  },
+  gujarati: {
+    nativeName: "Gujarati",
+    script: "Gujarati",
+    punctuation: "Use Gujarati sentence flow; use danda only if it sounds natural for the line.",
+    guardrail:
+      "Use Gujarati script for Gujarati words. Do not write Hindi or Devanagari for Gujarati targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team એ new feature વિશે એક quick update share કર્યો.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator એ launch માટે એક short video post કર્યો.",
+      },
+    ],
+  },
+  kannada: {
+    nativeName: "Kannada",
+    script: "Kannada",
+    punctuation: "Use Kannada sentence flow with clear spoken pauses.",
+    guardrail:
+      "Use Kannada script for Kannada words. Do not write Hindi or Devanagari for Kannada targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team ಹೊಸ feature ಬಗ್ಗೆ ಒಂದು quick update share ಮಾಡಿದೆ.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator launch ಗಾಗಿ ಒಂದು short video post ಮಾಡಿದ್ದಾರೆ.",
+      },
+    ],
+  },
+  malayalam: {
+    nativeName: "Malayalam",
+    script: "Malayalam",
+    punctuation: "Use Malayalam sentence flow with simple spoken punctuation.",
+    guardrail:
+      "Use Malayalam script for Malayalam words. Do not write Hindi or Devanagari for Malayalam targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team പുതിയ feature നെ കുറിച്ച് ഒരു quick update share ചെയ്തു.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator launch നായി ഒരു short video post ചെയ്തു.",
+      },
+    ],
+  },
+  marathi: {
+    nativeName: "Marathi",
+    script: "Devanagari",
+    punctuation: "Use Marathi sentence flow; use danda when the sentence ends in Marathi.",
+    guardrail:
+      "Marathi uses Devanagari, but the vocabulary and grammar must be Marathi, not Hindi.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team ने new feature बद्दल एक quick update share केला.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator ने launch साठी एक short video post केला.",
+      },
+    ],
+  },
+  odia: {
+    nativeName: "Odia",
+    script: "Odia",
+    punctuation: "Use Odia sentence flow with clear spoken pauses.",
+    guardrail:
+      "Use Odia script for Odia words. Do not write Hindi or Devanagari for Odia targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team ନୂଆ feature ବିଷୟରେ ଏକ quick update share କଲା.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator launch ପାଇଁ ଏକ short video post କଲେ.",
+      },
+    ],
+  },
+  punjabi: {
+    nativeName: "Punjabi",
+    script: "Gurmukhi",
+    punctuation: "Use Punjabi sentence flow with natural spoken pauses.",
+    guardrail:
+      "Use Gurmukhi for Punjabi words. Do not write Hindi or Devanagari for Punjabi targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team ਨੇ new feature ਬਾਰੇ ਇੱਕ quick update share ਕੀਤਾ.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator ਨੇ launch ਲਈ ਇੱਕ short video post ਕੀਤਾ.",
+      },
+    ],
+  },
+  tamil: {
+    nativeName: "Tamil",
+    script: "Tamil",
+    punctuation: "Use Tamil sentence flow with clear spoken pauses.",
+    guardrail:
+      "Use Tamil script for Tamil words. Do not write Hindi or Devanagari for Tamil targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team புதிய feature பற்றி ஒரு quick update share செய்தது.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator launch காக ஒரு short video post செய்தார்.",
+      },
+    ],
+  },
+  telugu: {
+    nativeName: "Telugu",
+    script: "Telugu",
+    punctuation: "Use Telugu sentence flow with clear spoken pauses.",
+    guardrail:
+      "Use Telugu script for Telugu words. Do not write Hindi or Devanagari for Telugu targets.",
+    examples: [
+      {
+        source: "The app team shared a quick update about the new feature.",
+        better:
+          "App team కొత్త feature గురించి ఒక quick update share చేసింది.",
+      },
+      {
+        source: "The creator posted a short video for the launch.",
+        better: "Creator launch కోసం ఒక short video post చేశారు.",
+      },
+    ],
+  },
+};
+
 const SARVAM_ALIASES = {
   en: "english",
   "en-in": "english",
@@ -70,30 +262,65 @@ const buildSarvamLanguageList = () =>
 const buildSarvamScriptRule = (targetLanguage) => {
   const key = resolveSarvamLanguageKey(targetLanguage);
   const code = key && SARVAM_BCP47_MAP[key];
-  const script = SARVAM_LANGUAGE_GUIDE[key]?.script || "native script";
+  const guide = key && SARVAM_TARGET_STYLE_GUIDES[key];
+  const script = guide?.script || SARVAM_LANGUAGE_GUIDE[key]?.script || "native script";
   if (!code || key === "english") {
     return "- Write normal Indian English for Sarvam en-IN.";
   }
-  return `- Target is ${key} (${code}). Write local-language words in ${script} script, and write common English words/entities in English script. Do NOT romanize ${key} words.`;
+  return `- Target is ${guide?.nativeName || key} (${key}, ${code}). Write local-language words in ${script} script, and write common English words/entities in English script. Do NOT romanize ${key} words.`;
 };
 
 const SARVAM_TTS_TEXT_RULES = `
 Sarvam Bulbul v3 text rules:
 - Return clean text for TTS. Do not use SSML, XML, Markdown, asterisks, or square-bracket performance tags like [pause].
 - Use punctuation for rhythm: comma for a short pause, sentence punctuation for a medium pause, and "…" only for a real hesitation or trailing thought.
-- If a sentence ends in Hindi or another Indic language, use "।". If it ends in English, use ".".
+- If a sentence ends in the target Indic language, use punctuation that is natural for that language and script. If it ends in English, use ".".
 - Keep sentences breathable. Split very long thoughts into shorter spoken sentences.
 - Use light fillers such as "um", "hmm", "actually…", "basically…", or "I mean…" only when the source tone is casual, hesitant, or the segment needs a tiny natural timing fill.
 - Keep brand names, people names, language names, apps, websites, acronyms, URLs, and common tech/media/business words in English script.
 - For numbers above four digits, use commas, e.g. "10,000".`;
 
-const CODE_MIXING_RULES = `
+const SHARED_CODE_MIXING_RULES = `
 Code-mixing style:
 - Use natural Indian speech, not textbook translation.
 - Keep the target language's natural sentence structure, but keep common English words in English script where people normally say them.
-- Good examples: "यह campaign denim को celebrate करता है।", "आज का weather actually बहुत pleasant है।", "हर Indian अपनी mother tongue में technology use कर सके।"
 - Bad examples: fully romanized Indic text, overly Sanskritized words, or translating common English/media terms when they sound more natural in English.
 - Preserve wordplay and quoted English phrases when translating them would break the meaning, e.g. keep "jeans/genes", "good genes", "blue", "AI", "app", "download".`;
+
+const buildSarvamTargetPrompt = (targetLanguage) => {
+  const key = resolveSarvamLanguageKey(targetLanguage);
+  const code = key && SARVAM_BCP47_MAP[key];
+  const guide = (key && SARVAM_TARGET_STYLE_GUIDES[key]) || null;
+  const targetLabel = guide
+    ? `${guide.nativeName} (${key}, ${code}, ${guide.script} script)`
+    : `${targetLanguage || "target language"}${code ? ` (${code})` : ""}`;
+  const examples = guide?.examples?.length
+    ? guide.examples
+        .map(
+          (example) =>
+            `Source: ${example.source}\nBetter ${guide.nativeName}: ${example.better}`,
+        )
+        .join("\n\n")
+    : "";
+
+  return `
+Translation mode: ANY SOURCE → Sarvam-supported Indian language
+Target language: ${targetLabel}
+Supported Sarvam targets: ${buildSarvamLanguageList()}
+${buildSarvamScriptRule(targetLanguage)}
+- Translate for natural spoken dubbing in the target language, not Hindi unless the target is Hindi.
+- The source text may be English, auto-detected, or any other language. Use it only for meaning; the output language and script must follow the target above.
+- Avoid pure textbook translation. Prefer the kind of code-mixed speech Indians naturally use with Sarvam Bulbul.
+- Fit naturally within \`duration_seconds\`: short clips should be concise; longer clips may be slightly fuller, but do not add new facts.
+- Preserve speaker register and tone from Speaker profiles.
+${guide ? `- ${guide.punctuation}\n- ${guide.guardrail}` : ""}
+
+${SARVAM_TTS_TEXT_RULES}
+
+${SHARED_CODE_MIXING_RULES}
+
+${examples ? `Target-specific examples:\n${examples}` : ""}`.trim();
+};
 
 /**
  * Infer dubbing translation mode from source/target language labels.
@@ -105,16 +332,14 @@ const inferTranslationMode = (sourceLanguage, targetLanguage) => {
   const sarvamSource = resolveSarvamLanguageKey(sourceLanguage);
   const sarvamTarget = resolveSarvamLanguageKey(targetLanguage);
 
-  const englishSource =
-    src === "english" || src === "en" || src === "" || src === "auto";
   const hindiSource = src === "hindi" || src === "hi" || src.includes("hindi");
   const englishTarget = tgt === "english" || tgt === "en";
 
   // Hinglish = Roman-script mixed Hindi (kept separate)
   const hinglishTarget = tgt === "hinglish";
 
-  if (hinglishTarget && englishSource) return "hinglish_concise";
-  if (sarvamTarget && !englishTarget && englishSource) return "sarvam_code_mixed";
+  if (hinglishTarget) return "hinglish_concise";
+  if (sarvamTarget && !englishTarget) return "sarvam_code_mixed";
   if (
     englishTarget &&
     (hindiSource || (sarvamSource && sarvamSource !== "english"))
@@ -166,23 +391,15 @@ const translateToSpeechReady = async (
   let modeRules = "";
   let jsonShape = "";
 
+  const targetLanguageKey = resolveSarvamLanguageKey(targetLanguage);
+  const targetLanguageCode =
+    targetLanguageKey && SARVAM_BCP47_MAP[targetLanguageKey];
+  const targetLanguageGuide =
+    (targetLanguageKey && SARVAM_TARGET_STYLE_GUIDES[targetLanguageKey]) ||
+    null;
+
   if (mode === "sarvam_code_mixed" || mode === "hindi_devanagari") {
-    modeRules = `
-Translation mode: ENGLISH → Sarvam-supported Indian language
-Supported Sarvam targets: ${buildSarvamLanguageList()}
-${buildSarvamScriptRule(targetLanguage)}
-- Translate for natural spoken dubbing in the target language.
-- Avoid pure textbook translation. Prefer the kind of code-mixed speech Indians naturally use with Sarvam Bulbul.
-- Fit naturally within \`duration_seconds\`: short clips should be concise; longer clips may be slightly fuller, but do not add new facts.
-- Preserve speaker register and tone from Speaker profiles.
-
-${SARVAM_TTS_TEXT_RULES}
-
-${CODE_MIXING_RULES}
-
-Example style for Hindi:
-Source: American Eagle faces backlash over a Sydney Sweeney ad accused of racism due to a jeans/genes pun.
-Better: American Eagle को Sydney Sweeney वाले ad पर backlash झेलना पड़ा, क्योंकि jeans/genes pun को कुछ लोगों ने racist बताया।`;
+    modeRules = buildSarvamTargetPrompt(targetLanguage);
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;
   } else if (mode === "hinglish_concise") {
     modeRules = `
@@ -248,6 +465,11 @@ ${jsonShape}`;
         content: JSON.stringify({
           segments_to_translate: inputItems,
           translation_mode: mode,
+          source_language: options.sourceLanguage || "",
+          target_language: targetLanguage,
+          target_language_key: targetLanguageKey,
+          target_bcp47: targetLanguageCode,
+          target_script: targetLanguageGuide?.script || null,
         }),
       },
     ],
