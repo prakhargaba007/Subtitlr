@@ -114,11 +114,17 @@ function resolveDubbingTranscribeLanguage(raw) {
  * (For chunked dubbing, chunkHint clarifies that times are relative to the current clip.)
  */
 const segmentRulesReference = `Segments:
-- Many SHORT lines (about 2–6 seconds of speech each). Split at natural pauses, breaths, or speaker turns — NOT one long block for the whole utterance.
-- start_us / end_us: microseconds from the start of this audio file (numeric). Estimate as well as you can; they will be approximate.
-- If there is silence at the start of the audio, do not include this as a segment; the first segment's start_us and end_us should reflect when someone actually starts speaking.
+- Return many SHORT speech segments. Most normal dialogue lines should be 2–6 seconds each; 8 seconds is already long. Very short spoken sounds, interjections, names, laughs, gasps, or one-word lines at the beginning or anywhere else may be much shorter, even under 1 second. Split at sentence boundaries, speaker turns, breaths, pauses, or any clear change in thought. Never merge separate spoken lines into one large block.
+- start_us / end_us: microseconds from the start of this audio file (numeric). Use the actual speech timing only, not subtitle display timing.
+- If there is any audible speech or vocal sound at the very beginning, include it as the first transcript row with its real short timing. Do not skip it just because it is shorter than 2 seconds.
+- If there is silence at the start of the audio, do not include it in any segment. The first segment's start_us must be when the first audible word or vocal sound starts, whether that is 0s, 1s, 10s, 30s, or later.
+- end_us must be when the last audible word/syllable in that segment ends. Do not extend end_us through following silence, music, background noise, scene gaps, or the next unrelated line.
 - Do NOT omit the opening dialogue: the first transcript row must start at the first spoken words (after any leading silence), with captions for that speech — not a later fragment and not an impossibly short clip.
-- Each segment time span must be long enough to contain the captions (avoid start_us almost equal to end_us unless the line is a single short word).
+- Each segment time span must be long enough to contain the captions, but only the captions in that row. If a line would take more than about 8 seconds, split it into multiple transcript rows with the same speaker.
+- If there is a long pause inside one speaker's dialogue, split before and after the pause instead of making one long segment.
+- Timestamps must be monotonic and should stay within the duration of this audio file.
+- Speaker diarization: identify every distinct speaking voice you can hear. Use Speaker A, Speaker B, Speaker C, Speaker D, etc. for as many speakers as needed; do not collapse different voices into one speaker just because they are short or appear briefly.
+- Keep speaker labels consistent across the whole audio. If the same voice returns later, reuse the same speaker label. If unsure whether two voices are the same, prefer separate speaker labels with accurate voice_description rather than merging different characters.
 - **captions** = verbatim words heard only — no bracket tags, no stage directions.
 - **tts_performance_hint** = REQUIRED on every row: a **Gemini Native Audio / controllable-TTS style** line for this clip. Rules: (1) Use the **exact same spoken words as captions**, same order — do not add, drop, or substitute words. (2) You may **only** insert **inline English** square-bracket **audio tags** between words/phrases where the performance calls for it (Google Gemini TTS style), e.g. [conversational], [excited], [pause], [short pause], [chuckle], [laughs], [whispers], [loud], [sarcastic], [breathless], [gasps], [sighs], [tired], [shouting], or combined like [loud, exaggerated]. (3) If captions are not English, still write **tags in English**; spoken words stay in captions' script/language. (4) For a neutral straight read, prefix once with something like [conversational] or [neutral] then the line; still add [pause] only where you clearly hear a beat or breath gap.
 - **voice_description** = A rich, structured voice persona for this speaker formatted as:
@@ -127,7 +133,7 @@ const segmentRulesReference = `Segments:
 
 JSON schema:
 - transcript: array in time order
-- each: start_us, end_us, speaker ("Speaker A" / "Speaker B" if multiple), captions (exact wording as spoken), tts_performance_hint (same words as captions plus English [audio tags] only — see rules above), speaker_gender ("male", "female", or "unknown" — infer from voice characteristics; be consistent for the same speaker), voice_description (rich structured persona as described above; be consistent for the same speaker across segments.)`;
+- each: start_us, end_us, speaker ("Speaker A", "Speaker B", "Speaker C", etc. — use as many labels as distinct voices heard), captions (exact wording as spoken), tts_performance_hint (same words as captions plus English [audio tags] only — see rules above), speaker_gender ("male", "female", or "unknown" — infer from voice characteristics; be consistent for the same speaker), voice_description (rich structured persona as described above; be consistent for the same speaker across segments.)`;
 
 /**
  * Core prompt for a known language — matches standalone script categories:
@@ -216,14 +222,18 @@ const transcriptItemSchema = {
     start_us: {
       type: SchemaType.NUMBER,
       description:
-        "Segment start time in microseconds from the beginning of the audio",
+        "Exact segment start time in microseconds from the beginning of the audio. Use the first audible word or vocal sound; do not skip very short opening speech.",
     },
     end_us: {
       type: SchemaType.NUMBER,
       description:
-        "Segment end time in microseconds from the beginning of the audio",
+        "Exact segment end time in microseconds from the beginning of the audio. Stop at the last audible word/syllable in this row; do not include trailing silence or unrelated audio.",
     },
-    speaker: { type: SchemaType.STRING },
+    speaker: {
+      type: SchemaType.STRING,
+      description:
+        'Consistent diarization label for the distinct voice, e.g. "Speaker A", "Speaker B", "Speaker C". Use as many speakers as needed; do not collapse different voices.',
+    },
     captions: { type: SchemaType.STRING },
     speaker_gender: {
       type: SchemaType.STRING,
@@ -691,6 +701,9 @@ async function transcribeGeminiChunk(
       console.log(
         `[transcribeGeminiChunk] Gemini response received, length=${text.length}, tokens=${JSON.stringify(usage)}`,
       );
+      console.log(
+        `[transcribeGeminiChunk] Raw Gemini response for chunk ${chunkIndex}: ${text}`,
+      );
       const parsed = parseJsonFromModelText(text);
       if (!Array.isArray(parsed.transcript)) {
         console.error(
@@ -699,6 +712,9 @@ async function transcribeGeminiChunk(
         );
         throw new Error("Gemini response missing transcript array");
       }
+      console.log(
+        `[transcribeGeminiChunk] Parsed transcript for chunk ${chunkIndex}: ${JSON.stringify(parsed.transcript, null, 2)}`,
+      );
       const segments = mapGeminiTranscriptToSegments(
         parsed.transcript,
         timeOffsetSec,

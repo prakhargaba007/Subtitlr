@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>video transcribe — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 3180 nodes, 4171 edges, 238 communities. Commit: 6177039</p>
+<p class="subtitle">Generated from graphify knowledge graph: 3180 nodes, 4171 edges, 238 communities. Commit: e240ef0</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -72,12 +72,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
     <a href="#ingest-cache-update">Ingestion &amp; Updates</a>
     <a href="#serve-api">Serving API</a>
     <a href="#community-5">Community 5</a>
-    <a href="#community-15">Community 15</a>
     <a href="#community-16">Community 16</a>
     <a href="#community-17">Community 17</a>
     <a href="#community-25">Community 25</a>
     <a href="#community-43">Community 43</a>
     <a href="#community-28">Community 28</a>
+    <a href="#community-34">Community 34</a>
     <a href="#other">Other</a>
 </div>
 
@@ -104,8 +104,6 @@ flowchart LR
     class SERVE_API_35EC8E86 module;
     COMMUNITY_5_2966028D("Community 5<br/><small>42 nodes</small>")
     class COMMUNITY_5_2966028D module;
-    COMMUNITY_15_4BECAAD7("Community 15<br/><small>37 nodes</small>")
-    class COMMUNITY_15_4BECAAD7 module;
     COMMUNITY_16_BD3EE841("Community 16<br/><small>33 nodes</small>")
     class COMMUNITY_16_BD3EE841 module;
     COMMUNITY_17_648F8D7C("Community 17<br/><small>32 nodes</small>")
@@ -116,7 +114,9 @@ flowchart LR
     class COMMUNITY_43_5DF3A0B0 module;
     COMMUNITY_28_3AE3708D("Community 28<br/><small>25 nodes</small>")
     class COMMUNITY_28_3AE3708D module;
-    OTHER_D0941E68("Other<br/><small>891 nodes</small>")
+    COMMUNITY_34_80350725("Community 34<br/><small>23 nodes</small>")
+    class COMMUNITY_34_80350725 module;
+    OTHER_D0941E68("Other<br/><small>905 nodes</small>")
     class OTHER_D0941E68 module;
     ANALYSIS_CLUSTERING_C79796DA -->|imports x74| OTHER_D0941E68
     OTHER_D0941E68 -->|imports x39| ANALYSIS_CLUSTERING_C79796DA
@@ -125,10 +125,10 @@ flowchart LR
     ANALYSIS_CLUSTERING_C79796DA -->|imports x16| COMMUNITY_17_648F8D7C
     OTHER_D0941E68 -->|imports x16| EXTRACT_PIPELINE_5F350230
     SERVE_API_35EC8E86 -->|imports x15| OTHER_D0941E68
+    OTHER_D0941E68 -->|imports x13| OUTPUTS_DOCS_ED82387C
     BUILD_GRAPH_321CBB04 -->|imports x12| OTHER_D0941E68
     ANALYSIS_CLUSTERING_C79796DA -->|imports x10| INGEST_CACHE_UPDATE_FF457338
     BUILD_GRAPH_321CBB04 -->|imports x10| ANALYSIS_CLUSTERING_C79796DA
-    OTHER_D0941E68 -->|imports x9| OUTPUTS_DOCS_ED82387C
     OTHER_D0941E68 -->|imports x9| SERVE_API_35EC8E86
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
@@ -146,7 +146,7 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Extraction Pipeline</td><td>128</td><td><code>1, 33, 42, 46, 125</code></td></tr><tr><td>Graph Build</td><td>312</td><td><code>8, 12, 19, 20, 21, 30, 37, 49, 50, 61, 117, 154, 155, 171, 174, 203, 234</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>737</td><td><code>0, 3, 10, 11, 14, 24, 31, 26, 35, 36, 40, 41, 13, 48, 51, 45, 59, 60, 63, 78, 79, 86, 87, 89, 92, 99, 106, 118, 140, 156, 164, 188</code></td></tr><tr><td>Outputs &amp; Docs</td><td>291</td><td><code>7, 23, 69, 75, 93, 103, 109, 110, 116, 129, 130, 131, 132, 143, 144, 145, 146, 153, 168, 169, 170, 177, 178, 182, 183, 192, 193, 194, 196, 197, 198, 199, 204, 210, 211</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>372</td><td><code>2, 4, 32, 39, 62, 68, 88, 96, 97, 111, 112, 122, 123, 124, 136, 138, 148, 149, 150, 151, 161, 162, 163, 175, 176, 180, 184, 185, 186, 187, 195, 213, 214, 226</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>80</td><td><code>9, 101, 104, 105, 127</code></td></tr><tr><td>Serving API</td><td>147</td><td><code>6, 22, 76, 80, 84, 108, 115, 133, 181</code></td></tr><tr><td>Community 5</td><td>42</td><td><code>5</code></td></tr><tr><td>Community 15</td><td>37</td><td><code>15</code></td></tr><tr><td>Community 16</td><td>33</td><td><code>16</code></td></tr><tr><td>Community 17</td><td>32</td><td><code>17</code></td></tr><tr><td>Community 25</td><td>27</td><td><code>25</code></td></tr><tr><td>Community 43</td><td>26</td><td><code>43</code></td></tr><tr><td>Community 28</td><td>25</td><td><code>28</code></td></tr><tr><td>Other</td><td>891</td><td><code>34, 38, 44, 47, 18, 52, 53, 54, 55, 56, 165, 27, 57, 58, 64, 66, 67, 70, 71, 72, 73, 74, 77, 120, 81, 82, 83, 85, 90, 135, 91, 94, 98, 102, 107, 29, 206, 65, 113, 114, 119, 121, 126, 95, 128, 134, 137, 139, 227, 100, 141, 142, 147, 152, 157, 158, 159, 160, 228, 229, 166, 167, 172, 173, 179, 230, 231, 189, 190, 191, 200, 201, 202, 232, 205, 207, 208, 209, 212, 215, 233, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 235, 236, 237</code></td></tr>
+      <tr><td>Extraction Pipeline</td><td>128</td><td><code>1, 33, 42, 46, 125</code></td></tr><tr><td>Graph Build</td><td>312</td><td><code>8, 12, 19, 20, 21, 30, 37, 49, 50, 61, 117, 154, 155, 171, 174, 203, 234</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>737</td><td><code>0, 3, 10, 11, 14, 24, 31, 26, 35, 36, 40, 41, 13, 48, 51, 45, 59, 60, 63, 78, 79, 86, 87, 89, 92, 99, 106, 118, 140, 156, 164, 188</code></td></tr><tr><td>Outputs &amp; Docs</td><td>291</td><td><code>7, 23, 69, 75, 93, 103, 109, 110, 116, 129, 130, 131, 132, 143, 144, 145, 146, 153, 168, 169, 170, 177, 178, 182, 183, 192, 193, 194, 196, 197, 198, 199, 204, 210, 211</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>372</td><td><code>2, 4, 32, 39, 62, 68, 88, 96, 97, 111, 112, 122, 123, 124, 136, 138, 148, 149, 150, 151, 161, 162, 163, 175, 176, 180, 184, 185, 186, 187, 195, 213, 214, 226</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>80</td><td><code>9, 101, 104, 105, 127</code></td></tr><tr><td>Serving API</td><td>147</td><td><code>6, 22, 76, 80, 84, 108, 115, 133, 181</code></td></tr><tr><td>Community 5</td><td>42</td><td><code>5</code></td></tr><tr><td>Community 16</td><td>33</td><td><code>16</code></td></tr><tr><td>Community 17</td><td>32</td><td><code>17</code></td></tr><tr><td>Community 25</td><td>27</td><td><code>25</code></td></tr><tr><td>Community 43</td><td>26</td><td><code>43</code></td></tr><tr><td>Community 28</td><td>25</td><td><code>28</code></td></tr><tr><td>Community 34</td><td>23</td><td><code>34</code></td></tr><tr><td>Other</td><td>905</td><td><code>38, 44, 15, 47, 18, 52, 53, 54, 55, 56, 165, 27, 57, 58, 64, 66, 67, 233, 70, 71, 72, 73, 74, 77, 120, 81, 82, 83, 85, 90, 135, 91, 94, 95, 98, 102, 107, 29, 206, 65, 113, 114, 119, 121, 126, 128, 134, 137, 139, 227, 100, 141, 142, 147, 152, 157, 158, 159, 160, 228, 229, 166, 167, 172, 173, 179, 230, 231, 189, 190, 191, 200, 201, 202, 232, 205, 207, 208, 209, 212, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 235, 236, 237</code></td></tr>
     </table>
   </div>
   <div class="card">
@@ -158,12 +158,12 @@ flowchart LR
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>3180 nodes · 4171 edges · 238 communities (205 shown, 33 thin omitted)</li>
+      <li>3180 nodes · 4171 edges · 238 communities (206 shown, 32 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)</li>
       <li>Token cost: 0 input · 0 output</li>
-      <li>1. `dependencies` - 39 edges</li>
-      <li>2. `getFileDuration()` - 28 edges</li>
-      <li>3. `Backend API — Deep Documentation` - 20 edges</li>
+      <li>1. `getFileDuration()` - 28 edges</li>
+      <li>2. `Backend API — Deep Documentation` - 20 edges</li>
+      <li>3. `Frontend (Next.js) — Deep Documentation` - 18 edges</li>
     </ul>
   </div>
 </div>
@@ -3089,371 +3089,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 10. Community 15 ====== -->
-<h2 id="community-15">10. Community 15</h2>
-<p>Community 15 groups implementation around frontend, components, dubbingeditor, dubbingeditorcontexttsx, mostly in components/dubbingEditor/DubbingEditorContext.tsx, components/dubbingEditor/types.ts, dubbing/editor/page.tsx. This section covers 37 nodes and 61 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Community 15 (37 nodes, 61 edges)
-    subgraph community_15_components_dubbingEditor_DubbingEdi_0f806a81["components/dubbingEditor/DubbingEditorContext.tsx"]
-        frontend_components_dubbingeditor_dubbingeditorc_368575db("DubbingEditorContext.tsx")
-        dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f("useDubbingEditor()<br/><small>components/dubbingEditor/DubbingEditorContext.tsx</small>")
-        dubbingeditor_dubbingeditorcontext_createmediare_cf8223eb("createMediaRegistry()<br/><small>components/dubbingEditor/DubbingEditorContext.tsx</small>")
-        dubbingeditor_dubbingeditorcontext_dubbingeditor_77d62a4c("DubbingEditorProvider()<br/><small>components/dubbingEditor/DubbingEditorContext.tsx</small>")
-        dubbingeditor_dubbingeditorcontext_editormediare_259e6e76("EditorMediaRefs<br/><small>components/dubbingEditor/DubbingEditorContext.tsx</small>")
-    end
-    subgraph community_15_components_dubbingEditor_types_ts_4755e5eb["components/dubbingEditor/types.ts"]
-        dubbingeditor_types_fmttime_4e2eb117("fmtTime()<br/><small>components/dubbingEditor/types.ts</small>")
-        frontend_components_dubbingeditor_types_ts_2586e434("types.ts")
-        dubbingeditor_types_editorjob_64d01ed6("EditorJob<br/><small>components/dubbingEditor/types.ts</small>")
-    end
-    subgraph community_15_components_dubbingEditor_CenterStag_bfb289f8["components/dubbingEditor/CenterStage.tsx"]
-        frontend_components_dubbingeditor_centerstage_ts_2515bd44("CenterStage.tsx")
-        dubbingeditor_centerstage_centerstage_9d3d1b5a("CenterStage()<br/><small>components/dubbingEditor/CenterStage.tsx</small>")
-    end
-    subgraph community_15_components_dubbingEditor_TopBar_tsx_1225bbce["components/dubbingEditor/TopBar.tsx"]
-        frontend_components_dubbingeditor_topbar_tsx_ec1d6047("TopBar.tsx")
-        dubbingeditor_topbar_topbar_325d72db("TopBar()<br/><small>components/dubbingEditor/TopBar.tsx</small>")
-    end
-    subgraph community_15_dubbing_editor_page_tsx_2280106e["dubbing/editor/page.tsx"]
-        frontend_app_dubbing_editor_page_tsx_19a39def("page.tsx")
-        frontend_app_dashboard_dubbing_editor_page_tsx_70092f08("page.tsx")
-    end
-    dubbingeditor_bottomtimeline_bottomtimeline_907dad3e("BottomTimeline()<br/><small>components/dubbingEditor/BottomTimeline.tsx</small>")
-    frontend_components_dubbingeditor_editorshell_ts_b76b6bc7("EditorShell.tsx")
-    dubbingeditor_leftpanel_leftpanel_edcbdb25("LeftPanel()<br/><small>components/dubbingEditor/LeftPanel.tsx</small>")
-    dubbingeditor_rightinspector_rightinspector_1c39fb43("RightInspector()<br/><small>components/dubbingEditor/RightInspector.tsx</small>")
-    dubbingeditor_topbar_topbar_325d72db -->|calls| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
-    dubbingeditor_centerstage_centerstage_9d3d1b5a -->|calls| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
-    dubbingeditor_bottomtimeline_bottomtimeline_907dad3e -->|calls| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
-    dubbingeditor_dubbingeditorcontext_createmediare_cf8223eb -->|calls| dubbingeditor_dubbingeditorcontext_dubbingeditor_77d62a4c
-    dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f -->|calls| dubbingeditor_leftpanel_leftpanel_edcbdb25
-    dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f -->|calls| dubbingeditor_rightinspector_rightinspector_1c39fb43
-    dubbingeditor_types_fmttime_4e2eb117 -->|calls| dubbingeditor_rightinspector_rightinspector_1c39fb43
-    frontend_app_dashboard_dubbing_editor_page_tsx_70092f08 -->|imports| frontend_app_dubbing_editor_page_tsx_19a39def
-    frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| frontend_components_dubbingeditor_types_ts_2586e434
-    frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| dubbingeditor_types_editorjob_64d01ed6
-    frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| frontend_components_dubbingeditor_dubbingeditorc_368575db
-    frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| dubbingeditor_dubbingeditorcontext_dubbingeditor_77d62a4c
-    frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| frontend_components_dubbingeditor_editorshell_ts_b76b6bc7
-    frontend_components_dubbingeditor_topbar_tsx_ec1d6047 -->|imports| frontend_components_dubbingeditor_dubbingeditorc_368575db
-    frontend_components_dubbingeditor_topbar_tsx_ec1d6047 -->|imports| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
-    frontend_components_dubbingeditor_topbar_tsx_ec1d6047 -->|imports| frontend_components_dubbingeditor_editorshell_ts_b76b6bc7
-    frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| frontend_components_dubbingeditor_dubbingeditorc_368575db
-    frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
-    frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| dubbingeditor_dubbingeditorcontext_editormediare_259e6e76
-    frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| frontend_components_dubbingeditor_types_ts_2586e434
-    frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| frontend_components_dubbingeditor_editorshell_ts_b76b6bc7
-    frontend_components_dubbingeditor_dubbingeditorc_368575db -->|imports| frontend_components_dubbingeditor_types_ts_2586e434
-    frontend_components_dubbingeditor_dubbingeditorc_368575db -->|imports| dubbingeditor_types_editorjob_64d01ed6
-    %% Omitted for readability: 19 nodes, 0 edges
-    class frontend_components_dubbingeditor_dubbingeditorc_368575db ui;
-    class dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f ui;
-    class dubbingeditor_dubbingeditorcontext_createmediare_cf8223eb ui;
-    class dubbingeditor_dubbingeditorcontext_dubbingeditor_77d62a4c ui;
-    class dubbingeditor_dubbingeditorcontext_editormediare_259e6e76 ui;
-    class dubbingeditor_types_fmttime_4e2eb117 function;
-    class frontend_components_dubbingeditor_types_ts_2586e434 module;
-    class dubbingeditor_types_editorjob_64d01ed6 klass;
-    class frontend_components_dubbingeditor_centerstage_ts_2515bd44 ui;
-    class dubbingeditor_centerstage_centerstage_9d3d1b5a ui;
-    class frontend_components_dubbingeditor_topbar_tsx_ec1d6047 ui;
-    class dubbingeditor_topbar_topbar_325d72db ui;
-    class frontend_app_dubbing_editor_page_tsx_19a39def ui;
-    class frontend_app_dashboard_dubbing_editor_page_tsx_70092f08 ui;
-    class dubbingeditor_bottomtimeline_bottomtimeline_907dad3e ui;
-    class frontend_components_dubbingeditor_editorshell_ts_b76b6bc7 ui;
-    class dubbingeditor_leftpanel_leftpanel_edcbdb25 ui;
-    class dubbingeditor_rightinspector_rightinspector_1c39fb43 test;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td>Module file in dubbing/editor/page.tsx.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>metadata</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>metadata node in dubbing/editor/page.tsx.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>DashboardDubbingEditorPage()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Organizes documentation pages, navigation, or content lookup.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>DubbingEditorProvider()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>EditorJob</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br>+2 more</td>
-  <td>Module file in dubbing/editor/page.tsx.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>DubbingEditorLoading()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>DubbingEditorLoading() node in dubbing/editor/page.tsx.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>DubbingEditorPageInner()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Organizes documentation pages, navigation, or content lookup.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>DubbingEditorPage()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Organizes documentation pages, navigation, or content lookup.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>TopBar.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/TopBar.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>EditorShell.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/EditorShell.tsx</small><br><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td>Module file in components/dubbingEditor/TopBar.tsx.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>TopBar()</code><br><small style="color:var(--muted)">components/dubbingEditor/TopBar.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td>TopBar() node in components/dubbingEditor/TopBar.tsx.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>EditorMediaRefs</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>EditorShell.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/EditorShell.tsx</small><br>+3 more</td>
-  <td>Module file in components/dubbingEditor/CenterStage.tsx.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>DubbingStageNativeVideo()</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>DubbingStageNativeVideo() node in components/dubbingEditor/CenterStage.tsx.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>CenterStage()</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td>CenterStage() node in components/dubbingEditor/CenterStage.tsx.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>BottomTimeline()</code><br><small style="color:var(--muted)">components/dubbingEditor/BottomTimeline.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td>BottomTimeline() node in components/dubbingEditor/BottomTimeline.tsx.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small><br><code>TopBar.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/TopBar.tsx</small></td>
-  <td><code>EditorJob</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br><code>LeftPanel.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small><br><code>RightInspector.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small><br>+1 more</td>
-  <td>Module file in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>EditorMediaRefs</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
-  <td>No direct outbound edge</td>
-  <td>EditorMediaRefs node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>createMediaRegistry()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>DubbingEditorProvider()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td>createMediaRegistry() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>17</td>
-  <td><code>BusyState</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>BusyState node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>18</td>
-  <td><code>UndoEntry</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>UndoEntry node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>19</td>
-  <td><code>DubbingEditorContextValue</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>DubbingEditorContextValue node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>20</td>
-  <td><code>DubbingEditorContext</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>DubbingEditorContext node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>stripUrlParams()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>stripUrlParams() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>DubbingEditorProvider()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>createMediaRegistry()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td>No direct outbound edge</td>
-  <td>DubbingEditorProvider() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>BottomTimeline()</code><br><small style="color:var(--muted)">components/dubbingEditor/BottomTimeline.tsx</small><br><code>CenterStage()</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br>+2 more</td>
-  <td><code>LeftPanel()</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small><br><code>LeftPanel.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small><br><code>RightInspector()</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small><br>+1 more</td>
-  <td>useDubbingEditor() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
-</tr>
-<tr>
-  <td>24</td>
-  <td><code>types.ts</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td><code>LeftPanel.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small><br><code>RightInspector.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small></td>
-  <td>Module file in components/dubbingEditor/types.ts.</td>
-</tr>
-<tr>
-  <td>25</td>
-  <td><code>SpeakerProfile</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>SpeakerProfile node in components/dubbingEditor/types.ts.</td>
-</tr>
-<tr>
-  <td>26</td>
-  <td><code>EditorJob</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
-  <td>No direct outbound edge</td>
-  <td>EditorJob node in components/dubbingEditor/types.ts.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>fmtTime()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>RightInspector()</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small><br><code>RightInspector.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small></td>
-  <td>fmtTime() node in components/dubbingEditor/types.ts.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>fmtTimeShort()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
-  <td><code>LeftPanel.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small></td>
-  <td>fmtTimeShort() node in components/dubbingEditor/types.ts.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>LeftPanel.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>fmtTimeShort()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br><code>types.ts</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br>+1 more</td>
-  <td><code>EditorShell.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/EditorShell.tsx</small></td>
-  <td>Module file in components/dubbingEditor/LeftPanel.tsx.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>TABS</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>TABS node in components/dubbingEditor/LeftPanel.tsx.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>components/dubbingEditor/DubbingEditorContext.tsx</code></td><td>10 nodes</td></tr>
-<tr><td><code>components/dubbingEditor/types.ts</code></td><td>5 nodes</td></tr>
-<tr><td><code>dubbing/editor/page.tsx</code></td><td>4 nodes</td></tr>
-<tr><td><code>components/dubbingEditor/RightInspector.tsx</code></td><td>4 nodes</td></tr>
-<tr><td><code>dubbing/editor/page.tsx</code></td><td>3 nodes</td></tr>
-<tr><td><code>components/dubbingEditor/CenterStage.tsx</code></td><td>3 nodes</td></tr>
-<tr><td><code>components/dubbingEditor/LeftPanel.tsx</code></td><td>3 nodes</td></tr>
-<tr><td><code>components/dubbingEditor/EditorShell.tsx</code></td><td>2 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x27, imports x16, imports x11, calls x7. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 11. Community 16 ====== -->
-<h2 id="community-16">11. Community 16</h2>
+<!-- ====== 10. Community 16 ====== -->
+<h2 id="community-16">10. Community 16</h2>
 <p>Community 16 groups implementation around frontend, dashboard, components, projectlisttsx, mostly in components/dashboard/ProjectList.tsx, components/dashboard/ProjectCard.tsx, dashboard/projects/page.tsx. This section covers 33 nodes and 41 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -3794,8 +3431,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 12. Community 17 ====== -->
-<h2 id="community-17">12. Community 17</h2>
+<!-- ====== 11. Community 17 ====== -->
+<h2 id="community-17">11. Community 17</h2>
 <p>Community 17 groups implementation around backend, dubbingsegmentaudioservicejs, services, dubbing, mostly in services/dubbing/dubbingSegmentAudioService.js, backend/utils/dubbingTextUtils.js, backend/utils/dubbingConfig.js. This section covers 32 nodes and 48 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -4160,8 +3797,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Community 25 ====== -->
-<h2 id="community-25">13. Community 25</h2>
+<!-- ====== 12. Community 25 ====== -->
+<h2 id="community-25">12. Community 25</h2>
 <p>Community 25 groups implementation around projectcontrollerjs, backend, controllers, mongoose, mostly in backend/controllers/projectController.js. This section covers 27 nodes and 26 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -4486,8 +4123,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 14. Community 43 ====== -->
-<h2 id="community-43">14. Community 43</h2>
+<!-- ====== 13. Community 43 ====== -->
+<h2 id="community-43">13. Community 43</h2>
 <p>Community 43 groups implementation around frontend, pricingdisplayts, utils, pricingplansgridtsx, mostly in frontend/utils/pricingDisplay.ts, frontend/components/PricingPlansGrid.tsx, frontend/utils/plansApi.ts. This section covers 26 nodes and 49 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -4798,8 +4435,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 15. Community 28 ====== -->
-<h2 id="community-28">15. Community 28</h2>
+<!-- ====== 14. Community 28 ====== -->
+<h2 id="community-28">14. Community 28</h2>
 <p>Community 28 groups implementation around frontend, app, processing, filestorets, mostly in frontend/utils/fileStore.ts, app/processing/ProcessingView.tsx, dashboard/processing/page.tsx. This section covers 25 nodes and 36 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -5102,69 +4739,71 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 16. Other ====== -->
-<h2 id="other">16. Other</h2>
-<p>Other groups implementation around backend, admin, components, frontend, mostly in backend/services/billingSubscriptionService.js, backend/utils/storage.js, backend/controllers/authController.js. This section covers 891 nodes and 1092 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 15. Community 34 ====== -->
+<h2 id="community-34">15. Community 34</h2>
+<p>Community 34 groups implementation around admin, components, pagetsx, app, mostly in admin/components/VideoSelector.tsx, admin/components/LessonForm.tsx, lessons/all-lessons/page.tsx. This section covers 23 nodes and 26 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Other (891 nodes, 1092 edges)
-    subgraph other_app_dashboard_page_tsx_ea97908b["app/dashboard/page.tsx"]
-        dashboard_page_gettimegreeting_d633b3e1("getTimeGreeting()<br/><small>app/dashboard/page.tsx</small>")
-        dashboard_page_dashboardpage_6cc25d76("DashboardPage()<br/><small>app/dashboard/page.tsx</small>")
+    %% Section: Community 34 (23 nodes, 26 edges)
+    subgraph community_34_admin_components_LessonForm_tsx_a759de8f["admin/components/LessonForm.tsx"]
+        admin_components_lessonform_tsx_26ef8833("LessonForm.tsx")
+        components_lessonform_lessonform_b101cfb7("LessonForm()<br/><small>admin/components/LessonForm.tsx</small>")
+        components_lessonform_lessonformprops_87193e91("LessonFormProps<br/><small>admin/components/LessonForm.tsx</small>")
+        components_lessonform_optiontype_0ddf1fb1("OptionType<br/><small>admin/components/LessonForm.tsx</small>")
     end
-    subgraph other_components_dashboard_ProjectSearchModal_ts_1b4b20cc["components/dashboard/ProjectSearchModal.tsx"]
-        dashboard_projectsearchmodal_formatduration_98a2a28f("formatDuration()<br/><small>components/dashboard/ProjectSearchModal.tsx</small>")
-        dashboard_projectsearchmodal_mapsearchprojectres_13744665("mapSearchProjectResult()<br/><small>components/dashboard/ProjectSearchModal.tsx</small>")
+    subgraph community_34_admin_components_CategorySelector_t_2d13ec91["admin/components/CategorySelector.tsx"]
+        admin_components_categoryselector_tsx_9051820a("CategorySelector.tsx")
+        components_categoryselector_categoryselector_e08ca96f("CategorySelector()<br/><small>admin/components/CategorySelector.tsx</small>")
+        components_categoryselector_categoryselectorprop_ffebed88("CategorySelectorProps<br/><small>admin/components/CategorySelector.tsx</small>")
     end
-    subgraph other_frontend_components_UploadCard_tsx_19a563ec["frontend/components/UploadCard.tsx"]
-        components_uploadcard_formatbytes_feba8bb5("formatBytes()<br/><small>frontend/components/UploadCard.tsx</small>")
-        components_uploadcard_uploadcardinner_4b9b5577("UploadCardInner()<br/><small>frontend/components/UploadCard.tsx</small>")
+    subgraph community_34_admin_components_QuizForm_tsx_56fa5ea1["admin/components/QuizForm.tsx"]
+        admin_components_quizform_tsx_d0a24323("QuizForm.tsx")
+        components_quizform_quizform_581d5571("QuizForm()<br/><small>admin/components/QuizForm.tsx</small>")
+        components_quizform_quizformprops_bc6eae02("QuizFormProps<br/><small>admin/components/QuizForm.tsx</small>")
     end
-    subgraph other_frontend_hooks_use_toast_ts_0fd1cd1b["frontend/hooks/use-toast.ts"]
-        hooks_use_toast_usetoastertoasts_87c423ae("useToasterToasts()<br/><small>frontend/hooks/use-toast.ts</small>")
-        hooks_use_toast_usetoast_77052326("useToast()<br/><small>frontend/hooks/use-toast.ts</small>")
+    subgraph community_34_admin_components_TagSelector_tsx_f48328c6["admin/components/TagSelector.tsx"]
+        admin_components_tagselector_tsx_4e8db567("TagSelector.tsx")
+        components_tagselector_tagselector_d4518aef("TagSelector()<br/><small>admin/components/TagSelector.tsx</small>")
+        components_tagselector_tagselectorprops_3274747d("TagSelectorProps<br/><small>admin/components/TagSelector.tsx</small>")
     end
-    subgraph other_frontend_utils_convertToAudio_ts_009ca9c7["frontend/utils/convertToAudio.ts"]
-        utils_converttoaudio_audiobuffertowav_6e342298("audioBufferToWav()<br/><small>frontend/utils/convertToAudio.ts</small>")
-        utils_converttoaudio_converttoaudio_e526d985("convertToAudio()<br/><small>frontend/utils/convertToAudio.ts</small>")
+    subgraph community_34_admin_components_VideoSelector_tsx_71cbd923["admin/components/VideoSelector.tsx"]
+        admin_components_videoselector_tsx_951b1b0b("VideoSelector.tsx")
+        components_videoselector_videodata_d55d4ff0("VideoData<br/><small>admin/components/VideoSelector.tsx</small>")
+        components_videoselector_videoselector_fda6db35("VideoSelector()<br/><small>admin/components/VideoSelector.tsx</small>")
     end
-    backend_models_user_js_5b5b1132("User.js")
-    utils_storage_localstorageadapter_20bf7acb("LocalStorageAdapter<br/><small>backend/utils/storage.js</small>")
-    auth_authform_authform_44c819a9("AuthForm()<br/><small>components/auth/AuthForm.tsx</small>")
-    frontend_components_dubbingeditor_bottomtimeline_7bcc29f9("BottomTimeline.tsx")
-    admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c("page.tsx")
-    frontend_app_dashboard_settings_page_tsx_7329c08e("page.tsx")
-    components_toaster_toaster_7d987abb("Toaster()<br/><small>frontend/components/Toaster.tsx</small>")
-    frontend_utils_axios_ts_790d852d("axios.ts")
-    dashboard_page_gettimegreeting_d633b3e1 -->|calls| dashboard_page_dashboardpage_6cc25d76
-    utils_converttoaudio_audiobuffertowav_6e342298 -->|calls| utils_converttoaudio_converttoaudio_e526d985
-    components_toaster_toaster_7d987abb -->|calls| hooks_use_toast_usetoastertoasts_87c423ae
-    components_uploadcard_formatbytes_feba8bb5 -->|calls| components_uploadcard_uploadcardinner_4b9b5577
-    auth_authform_authform_44c819a9 -->|calls| hooks_use_toast_usetoast_77052326
-    dashboard_projectsearchmodal_formatduration_98a2a28f -->|calls| dashboard_projectsearchmodal_mapsearchprojectres_13744665
-    frontend_app_dashboard_settings_page_tsx_7329c08e -->|imports| frontend_utils_axios_ts_790d852d
-    frontend_utils_axios_ts_790d852d -->|imports| frontend_components_dubbingeditor_bottomtimeline_7bcc29f9
-    %% Omitted for readability: 873 nodes, 0 edges
-    class dashboard_page_gettimegreeting_d633b3e1 ui;
-    class dashboard_page_dashboardpage_6cc25d76 ui;
-    class dashboard_projectsearchmodal_formatduration_98a2a28f ui;
-    class dashboard_projectsearchmodal_mapsearchprojectres_13744665 ui;
-    class components_uploadcard_formatbytes_feba8bb5 ui;
-    class components_uploadcard_uploadcardinner_4b9b5577 ui;
-    class hooks_use_toast_usetoastertoasts_87c423ae ui;
-    class hooks_use_toast_usetoast_77052326 ui;
-    class utils_converttoaudio_audiobuffertowav_6e342298 function;
-    class utils_converttoaudio_converttoaudio_e526d985 function;
-    class backend_models_user_js_5b5b1132 klass;
-    class utils_storage_localstorageadapter_20bf7acb klass;
-    class auth_authform_authform_44c819a9 ui;
-    class frontend_components_dubbingeditor_bottomtimeline_7bcc29f9 ui;
-    class admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c ui;
-    class frontend_app_dashboard_settings_page_tsx_7329c08e ui;
-    class components_toaster_toaster_7d987abb ui;
-    class frontend_utils_axios_ts_790d852d module;
+    admin_app_dashboard_lessons_all_lessons_page_tsx_11b415a1("page.tsx")
+    admin_app_dashboard_quizzes_all_quizzes_page_tsx_820d9b43("page.tsx")
+    admin_app_dashboard_lessons_all_lessons_page_tsx_11b415a1 -->|imports| admin_components_lessonform_tsx_26ef8833
+    admin_app_dashboard_lessons_all_lessons_page_tsx_11b415a1 -->|imports| admin_components_categoryselector_tsx_9051820a
+    admin_app_dashboard_lessons_all_lessons_page_tsx_11b415a1 -->|imports| admin_components_tagselector_tsx_4e8db567
+    admin_app_dashboard_quizzes_all_quizzes_page_tsx_820d9b43 -->|imports| admin_components_quizform_tsx_d0a24323
+    admin_app_dashboard_quizzes_all_quizzes_page_tsx_820d9b43 -->|imports| admin_components_categoryselector_tsx_9051820a
+    admin_components_categoryselector_tsx_9051820a -->|imports| admin_components_quizform_tsx_d0a24323
+    admin_components_categoryselector_tsx_9051820a -->|imports| admin_components_lessonform_tsx_26ef8833
+    admin_components_quizform_tsx_d0a24323 -->|imports| admin_components_tagselector_tsx_4e8db567
+    admin_components_tagselector_tsx_4e8db567 -->|imports| admin_components_lessonform_tsx_26ef8833
+    admin_components_videoselector_tsx_951b1b0b -->|imports| admin_components_lessonform_tsx_26ef8833
+    %% Omitted for readability: 5 nodes, 0 edges
+    class admin_components_lessonform_tsx_26ef8833 ui;
+    class components_lessonform_lessonform_b101cfb7 ui;
+    class components_lessonform_lessonformprops_87193e91 ui;
+    class components_lessonform_optiontype_0ddf1fb1 ui;
+    class admin_components_categoryselector_tsx_9051820a ui;
+    class components_categoryselector_categoryselector_e08ca96f ui;
+    class components_categoryselector_categoryselectorprop_ffebed88 ui;
+    class admin_components_quizform_tsx_d0a24323 ui;
+    class components_quizform_quizform_581d5571 ui;
+    class components_quizform_quizformprops_bc6eae02 ui;
+    class admin_components_tagselector_tsx_4e8db567 ui;
+    class components_tagselector_tagselector_d4518aef ui;
+    class components_tagselector_tagselectorprops_3274747d ui;
+    class admin_components_videoselector_tsx_951b1b0b ui;
+    class components_videoselector_videodata_d55d4ff0 ui;
+    class components_videoselector_videoselector_fda6db35 ui;
+    class admin_app_dashboard_lessons_all_lessons_page_tsx_11b415a1 ui;
+    class admin_app_dashboard_quizzes_all_quizzes_page_tsx_820d9b43 ui;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -5191,7 +4830,7 @@ flowchart LR
   <td><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br>+1 more</td>
+  <td><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br><code>TagSelector.tsx</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small></td>
   <td>Module file in lessons/all-lessons/page.tsx.</td>
 </tr>
 <tr>
@@ -5215,7 +4854,7 @@ flowchart LR
   <td><code>page.tsx</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
   <td>Module file in quizzes/all-quizzes/page.tsx.</td>
 </tr>
 <tr>
@@ -5238,8 +4877,8 @@ flowchart LR
   <td>7</td>
   <td><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
-  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small><br>+1 more</td>
-  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br><code>PostModal.tsx</code><br><small style="color:var(--muted)">admin/components/PostModal.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small></td>
+  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
   <td>Module file in admin/components/CategorySelector.tsx.</td>
 </tr>
 <tr>
@@ -5286,8 +4925,8 @@ flowchart LR
   <td>13</td>
   <td><code>TagSelector.tsx</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
-  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">courses/all-courses/page.tsx</small><br>+1 more</td>
-  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br><code>PostModal.tsx</code><br><small style="color:var(--muted)">admin/components/PostModal.tsx</small></td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
   <td>Module file in admin/components/TagSelector.tsx.</td>
 </tr>
 <tr>
@@ -5310,7 +4949,7 @@ flowchart LR
   <td>16</td>
   <td><code>VideoSelector.tsx</code><br><small style="color:var(--muted)">admin/components/VideoSelector.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
-  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small></td>
+  <td>External entry / no inbound edge</td>
   <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
   <td>Module file in admin/components/VideoSelector.tsx.</td>
 </tr>
@@ -5342,7 +4981,7 @@ flowchart LR
   <td>20</td>
   <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
-  <td><code>AuthorSelector.tsx</code><br><small style="color:var(--muted)">admin/components/AuthorSelector.tsx</small><br><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>FileSelector.tsx</code><br><small style="color:var(--muted)">admin/components/FileSelector.tsx</small><br>+3 more</td>
+  <td><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small><br><code>TagSelector.tsx</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small><br>+1 more</td>
   <td>No direct outbound edge</td>
   <td>Module file in admin/components/LessonForm.tsx.</td>
 </tr>
@@ -5370,8 +5009,115 @@ flowchart LR
   <td>No direct outbound edge</td>
   <td>LessonForm() node in admin/components/LessonForm.tsx.</td>
 </tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>admin/components/LessonForm.tsx</code></td><td>4 nodes</td></tr>
+<tr><td><code>admin/components/VideoSelector.tsx</code></td><td>4 nodes</td></tr>
+<tr><td><code>lessons/all-lessons/page.tsx</code></td><td>3 nodes</td></tr>
+<tr><td><code>quizzes/all-quizzes/page.tsx</code></td><td>3 nodes</td></tr>
+<tr><td><code>admin/components/CategorySelector.tsx</code></td><td>3 nodes</td></tr>
+<tr><td><code>admin/components/QuizForm.tsx</code></td><td>3 nodes</td></tr>
+<tr><td><code>admin/components/TagSelector.tsx</code></td><td>3 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x16, imports x10. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 16. Other ====== -->
+<h2 id="other">16. Other</h2>
+<p>Other groups implementation around backend, frontend, admin, components, mostly in backend/services/billingSubscriptionService.js, backend/utils/storage.js, backend/controllers/authController.js. This section covers 905 nodes and 1128 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Other (905 nodes, 1128 edges)
+    subgraph other_app_dashboard_page_tsx_ea97908b["app/dashboard/page.tsx"]
+        dashboard_page_gettimegreeting_d633b3e1("getTimeGreeting()<br/><small>app/dashboard/page.tsx</small>")
+        dashboard_page_dashboardpage_6cc25d76("DashboardPage()<br/><small>app/dashboard/page.tsx</small>")
+    end
+    subgraph other_components_dashboard_ProjectSearchModal_ts_1b4b20cc["components/dashboard/ProjectSearchModal.tsx"]
+        dashboard_projectsearchmodal_formatduration_98a2a28f("formatDuration()<br/><small>components/dashboard/ProjectSearchModal.tsx</small>")
+        dashboard_projectsearchmodal_mapsearchprojectres_13744665("mapSearchProjectResult()<br/><small>components/dashboard/ProjectSearchModal.tsx</small>")
+    end
+    subgraph other_frontend_components_UploadCard_tsx_19a563ec["frontend/components/UploadCard.tsx"]
+        components_uploadcard_formatbytes_feba8bb5("formatBytes()<br/><small>frontend/components/UploadCard.tsx</small>")
+        components_uploadcard_uploadcardinner_4b9b5577("UploadCardInner()<br/><small>frontend/components/UploadCard.tsx</small>")
+    end
+    subgraph other_frontend_hooks_use_toast_ts_0fd1cd1b["frontend/hooks/use-toast.ts"]
+        hooks_use_toast_usetoastertoasts_87c423ae("useToasterToasts()<br/><small>frontend/hooks/use-toast.ts</small>")
+        hooks_use_toast_usetoast_77052326("useToast()<br/><small>frontend/hooks/use-toast.ts</small>")
+    end
+    subgraph other_frontend_utils_convertToAudio_ts_009ca9c7["frontend/utils/convertToAudio.ts"]
+        utils_converttoaudio_audiobuffertowav_6e342298("audioBufferToWav()<br/><small>frontend/utils/convertToAudio.ts</small>")
+        utils_converttoaudio_converttoaudio_e526d985("convertToAudio()<br/><small>frontend/utils/convertToAudio.ts</small>")
+    end
+    backend_models_user_js_5b5b1132("User.js")
+    utils_storage_localstorageadapter_20bf7acb("LocalStorageAdapter<br/><small>backend/utils/storage.js</small>")
+    auth_authform_authform_44c819a9("AuthForm()<br/><small>components/auth/AuthForm.tsx</small>")
+    frontend_components_dubbingeditor_bottomtimeline_7bcc29f9("BottomTimeline.tsx")
+    admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c("page.tsx")
+    frontend_app_dashboard_settings_page_tsx_7329c08e("page.tsx")
+    components_toaster_toaster_7d987abb("Toaster()<br/><small>frontend/components/Toaster.tsx</small>")
+    frontend_utils_axios_ts_790d852d("axios.ts")
+    dashboard_page_gettimegreeting_d633b3e1 -->|calls| dashboard_page_dashboardpage_6cc25d76
+    utils_converttoaudio_audiobuffertowav_6e342298 -->|calls| utils_converttoaudio_converttoaudio_e526d985
+    components_toaster_toaster_7d987abb -->|calls| hooks_use_toast_usetoastertoasts_87c423ae
+    components_uploadcard_formatbytes_feba8bb5 -->|calls| components_uploadcard_uploadcardinner_4b9b5577
+    auth_authform_authform_44c819a9 -->|calls| hooks_use_toast_usetoast_77052326
+    dashboard_projectsearchmodal_formatduration_98a2a28f -->|calls| dashboard_projectsearchmodal_mapsearchprojectres_13744665
+    frontend_app_dashboard_settings_page_tsx_7329c08e -->|imports| frontend_utils_axios_ts_790d852d
+    frontend_utils_axios_ts_790d852d -->|imports| frontend_components_dubbingeditor_bottomtimeline_7bcc29f9
+    %% Omitted for readability: 887 nodes, 0 edges
+    class dashboard_page_gettimegreeting_d633b3e1 ui;
+    class dashboard_page_dashboardpage_6cc25d76 ui;
+    class dashboard_projectsearchmodal_formatduration_98a2a28f ui;
+    class dashboard_projectsearchmodal_mapsearchprojectres_13744665 ui;
+    class components_uploadcard_formatbytes_feba8bb5 ui;
+    class components_uploadcard_uploadcardinner_4b9b5577 ui;
+    class hooks_use_toast_usetoastertoasts_87c423ae ui;
+    class hooks_use_toast_usetoast_77052326 ui;
+    class utils_converttoaudio_audiobuffertowav_6e342298 function;
+    class utils_converttoaudio_converttoaudio_e526d985 function;
+    class backend_models_user_js_5b5b1132 klass;
+    class utils_storage_localstorageadapter_20bf7acb klass;
+    class auth_authform_authform_44c819a9 ui;
+    class frontend_components_dubbingeditor_bottomtimeline_7bcc29f9 ui;
+    class admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c ui;
+    class frontend_app_dashboard_settings_page_tsx_7329c08e ui;
+    class components_toaster_toaster_7d987abb ui;
+    class frontend_utils_axios_ts_790d852d module;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
 <tr>
-  <td>24</td>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
   <td><code>getDodoClient()</code><br><small style="color:var(--muted)">backend/utils/dodoClient.js</small></td>
   <td><span class="tag tag-cmd">Entry</span></td>
   <td>External entry / no inbound edge</td>
@@ -5379,7 +5125,7 @@ flowchart LR
   <td>getDodoClient() node in backend/utils/dodoClient.js.</td>
 </tr>
 <tr>
-  <td>25</td>
+  <td>2</td>
   <td><code>billingSubscriptionService.js</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-class">Module</span></td>
   <td><code>addCredits()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small><br><code>CreditTransaction.js</code><br><small style="color:var(--muted)">backend/models/CreditTransaction.js</small><br><code>creditUtils.js</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small><br>+7 more</td>
@@ -5387,7 +5133,7 @@ flowchart LR
   <td>billingSubscriptionService.js node in backend/services/billingSubscriptionService.js.</td>
 </tr>
 <tr>
-  <td>26</td>
+  <td>3</td>
   <td><code>mongoose</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -5395,7 +5141,7 @@ flowchart LR
   <td>mongoose node in backend/services/billingSubscriptionService.js.</td>
 </tr>
 <tr>
-  <td>27</td>
+  <td>4</td>
   <td><code>PlanCatalog</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -5403,7 +5149,7 @@ flowchart LR
   <td>PlanCatalog node in backend/services/billingSubscriptionService.js.</td>
 </tr>
 <tr>
-  <td>28</td>
+  <td>5</td>
   <td><code>UserSubscription</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -5411,7 +5157,7 @@ flowchart LR
   <td>UserSubscription node in backend/services/billingSubscriptionService.js.</td>
 </tr>
 <tr>
-  <td>29</td>
+  <td>6</td>
   <td><code>User</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -5419,12 +5165,196 @@ flowchart LR
   <td>User node in backend/services/billingSubscriptionService.js.</td>
 </tr>
 <tr>
-  <td>30</td>
+  <td>7</td>
   <td><code>CreditTransaction</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
   <td>CreditTransaction node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>DodoWebhookReceipt</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>DodoWebhookReceipt node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>{ addCredits, deductCredits, processRefundAtomic }</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>{ addCredits, deductCredits, processRefundAtomic } node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>billingPeriodKey()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>handlePaymentSucceeded()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>handleSubscriptionActive()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>handleSubscriptionRenewed()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>billingPeriodKey() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>mapDodoStatus()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>mapDodoStatus() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>findPlanByDodoProductId()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>findPlanByDodoProductId() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>findPlanByKey()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>findPlanByKey() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>resolveUserIdFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>handleRefund()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>resolveUserIdFromDodo() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>findPlanByDodoProductId()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>findPlanByKey()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>mapDodoStatus()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br>+1 more</td>
+  <td><code>handlePaymentSucceeded()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>handleSubscriptionActive()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>handleSubscriptionRenewed()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br>+3 more</td>
+  <td>syncUserSubscriptionFromDodo() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>grantSubscriptionCredits()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>addCredits()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small></td>
+  <td><code>handlePaymentSucceeded()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>handleSubscriptionActive()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>handleSubscriptionRenewed()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>grantSubscriptionCredits() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>handleSubscriptionActive()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>billingPeriodKey()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>getDodoClient()</code><br><small style="color:var(--muted)">backend/utils/dodoClient.js</small><br><code>grantSubscriptionCredits()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br>+1 more</td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>handleSubscriptionActive() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>handleSubscriptionRenewed()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>billingPeriodKey()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>grantSubscriptionCredits()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>handleSubscriptionRenewed() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>handleSubscriptionUpdated()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>handleSubscriptionUpdated() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>handlePaymentSucceeded()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>billingPeriodKey()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br><code>getDodoClient()</code><br><small style="color:var(--muted)">backend/utils/dodoClient.js</small><br><code>grantSubscriptionCredits()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br>+1 more</td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>handlePaymentSucceeded() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>handleTerminalStatus()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>syncUserSubscriptionFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>handleTerminalStatus() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>handleRefund()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>processRefundAtomic()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small><br><code>resolveUserIdFromDodo()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td>handleRefund() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>processDodoWebhookEvent()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>dodoWebhookController.js</code><br><small style="color:var(--muted)">backend/controllers/dodoWebhookController.js</small><br><code>getDodoClient()</code><br><small style="color:var(--muted)">backend/utils/dodoClient.js</small><br><code>handlePaymentSucceeded()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br>+6 more</td>
+  <td>No direct outbound edge</td>
+  <td>processDodoWebhookEvent() node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">app/dashboard/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>RootState</code><br><small style="color:var(--muted)">frontend/redux/store.ts</small><br><code>store.ts</code><br><small style="color:var(--muted)">frontend/redux/store.ts</small><br><code>UploadZone.tsx</code><br><small style="color:var(--muted)">components/dashboard/UploadZone.tsx</small></td>
+  <td>Module file in app/dashboard/page.tsx.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>getTimeGreeting()</code><br><small style="color:var(--muted)">app/dashboard/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>DashboardPage()</code><br><small style="color:var(--muted)">app/dashboard/page.tsx</small></td>
+  <td>getTimeGreeting() node in app/dashboard/page.tsx.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>DashboardPage()</code><br><small style="color:var(--muted)">app/dashboard/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>getTimeGreeting()</code><br><small style="color:var(--muted)">app/dashboard/page.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>Organizes documentation pages, navigation, or content lookup.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>DashboardInit.tsx</code><br><small style="color:var(--muted)">components/dashboard/DashboardInit.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>layout.tsx</code><br><small style="color:var(--muted)">app/dashboard/layout.tsx</small></td>
+  <td><code>AppDispatch</code><br><small style="color:var(--muted)">frontend/redux/store.ts</small><br><code>fetchUser</code><br><small style="color:var(--muted)">redux/slices/userSlice.ts</small><br><code>RootState</code><br><small style="color:var(--muted)">frontend/redux/store.ts</small><br>+2 more</td>
+  <td>Module file in components/dashboard/DashboardInit.tsx.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>DashboardInit()</code><br><small style="color:var(--muted)">components/dashboard/DashboardInit.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>DashboardInit() node in components/dashboard/DashboardInit.tsx.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>UploadZone.tsx</code><br><small style="color:var(--muted)">components/dashboard/UploadZone.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">app/dashboard/page.tsx</small><br><code>UploadCard.tsx</code><br><small style="color:var(--muted)">frontend/components/UploadCard.tsx</small></td>
+  <td>No direct outbound edge</td>
+  <td>Module file in components/dashboard/UploadZone.tsx.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>UploadZone()</code><br><small style="color:var(--muted)">components/dashboard/UploadZone.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>UploadZone() node in components/dashboard/UploadZone.tsx.</td>
 </tr>
 </table>
 
@@ -5445,7 +5375,7 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x699, imports x171, calls x142, imports x59. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x712, imports x173, calls x149, imports x73. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -5475,7 +5405,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>video transcribe — Architecture Documentation</p>
-  <p>Generated: 2026-05-17 10:16 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-05-17 15:47 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->

@@ -1,16 +1,16 @@
 # Graph Report - video transcribe  (2026-05-17)
 
 ## Corpus Check
-- 335 files · ~384,752 words
+- 335 files · ~385,194 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3180 nodes · 4171 edges · 238 communities (205 shown, 33 thin omitted)
+- 3180 nodes · 4171 edges · 238 communities (206 shown, 32 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `61770391`
+- Built from commit: `e240ef0a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -252,16 +252,16 @@
 - [[_COMMUNITY_Community 237|Community 237]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `dependencies` - 39 edges
-2. `getFileDuration()` - 28 edges
-3. `Backend API — Deep Documentation` - 20 edges
-4. `Frontend (Next.js) — Deep Documentation` - 18 edges
-5. `dependencies` - 17 edges
-6. `compilerOptions` - 16 edges
-7. `compilerOptions` - 16 edges
-8. `runDubbingPipelineFromInput()` - 15 edges
-9. `Documentation (deep dive)` - 15 edges
-10. `Frontend (Next.js) — Documentation` - 15 edges
+1. `getFileDuration()` - 28 edges
+2. `Backend API — Deep Documentation` - 20 edges
+3. `Frontend (Next.js) — Deep Documentation` - 18 edges
+4. `compilerOptions` - 16 edges
+5. `compilerOptions` - 16 edges
+6. `runDubbingPipelineFromInput()` - 15 edges
+7. `Documentation (deep dive)` - 15 edges
+8. `Frontend (Next.js) — Documentation` - 15 edges
+9. `transcribeWithSpeakers()` - 14 edges
+10. `Kili Labs Video Transcribe` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `robots()` --calls--> `getSiteUrl()`  [EXTRACTED]
@@ -275,7 +275,7 @@
 - `TopBar()` --calls--> `useDubbingEditor()`  [EXTRACTED]
   frontend/components/dubbingEditor/TopBar.tsx → frontend/components/dubbingEditor/DubbingEditorContext.tsx
 
-## Communities (238 total, 33 thin omitted)
+## Communities (238 total, 32 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.01
@@ -342,8 +342,8 @@ Cohesion: 0.06
 Nodes (29): Blog, Comment, error, errors, filter, fs, imagePath, oldImagePath (+21 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.09
-Nodes (21): BottomTimeline(), CenterStage(), BusyState, createMediaRegistry(), DubbingEditorContext, DubbingEditorContextValue, DubbingEditorProvider(), EditorMediaRefs (+13 more)
+Cohesion: 0.16
+Nodes (13): BottomTimeline(), CenterStage(), EditorMediaRefs, useDubbingEditor(), LeftPanel(), TABS, AddForm, EMPTY_FORM (+5 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.08
@@ -703,8 +703,8 @@ Cohesion: 0.17
 Nodes (11): accessPermissions, bcrypt, error, filter, isAdminUpdate, numericLimit, numericPage, socialLinks (+3 more)
 
 ### Community 95 - "Community 95"
-Cohesion: 0.36
-Nodes (8): clearAuthCookies(), clearCookieVariants(), crypto, generateTokens(), getCookieDomain(), isProdRequest(), jwt, RefreshToken
+Cohesion: 0.24
+Nodes (10): mongoose, RefreshTokenSchema, clearAuthCookies(), clearCookieVariants(), crypto, generateTokens(), getCookieDomain(), isProdRequest() (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.17
@@ -1150,10 +1150,14 @@ Nodes (4): billingController, express, isAuth, router
 Cohesion: 0.5
 Nodes (3): mongoose, SegmentSchema, SubtitleJobSchema
 
+### Community 233 - "Community 233"
+Cohesion: 0.15
+Nodes (8): BusyState, createMediaRegistry(), DubbingEditorContext, DubbingEditorContextValue, DubbingEditorProvider(), UndoEntry, EditorJob, metadata
+
 ## Knowledge Gaps
 - **1816 isolated node(s):** `config`, `config`, `name`, `version`, `private` (+1811 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **33 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_

@@ -1125,7 +1125,7 @@
       "source_file": "frontend/app/dashboard/dubbing/editor/page.tsx",
       "source_location": "L1",
       "id": "frontend_app_dashboard_dubbing_editor_page_tsx",
-      "community": 15,
+      "community": 233,
       "norm_label": "page.tsx"
     },
     {
@@ -1134,7 +1134,7 @@
       "source_file": "frontend/app/dashboard/dubbing/editor/page.tsx",
       "source_location": "L4",
       "id": "editor_page_metadata",
-      "community": 15,
+      "community": 233,
       "norm_label": "metadata"
     },
     {
@@ -1143,7 +1143,7 @@
       "source_file": "frontend/app/dashboard/dubbing/editor/page.tsx",
       "source_location": "L9",
       "id": "editor_page_dashboarddubbingeditorpage",
-      "community": 15,
+      "community": 233,
       "norm_label": "dashboarddubbingeditorpage()"
     },
     {
@@ -1611,7 +1611,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L1",
       "id": "frontend_app_dubbing_editor_page_tsx",
-      "community": 15,
+      "community": 233,
       "norm_label": "page.tsx"
     },
     {
@@ -1620,7 +1620,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L11",
       "id": "editor_page_dubbingeditorloading",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorloading()"
     },
     {
@@ -1629,7 +1629,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L22",
       "id": "editor_page_dubbingeditorpageinner",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorpageinner()"
     },
     {
@@ -1638,7 +1638,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L106",
       "id": "editor_page_dubbingeditorpage",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorpage()"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L1",
       "id": "frontend_components_dubbingeditor_dubbingeditorcontext_tsx",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorcontext.tsx"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L22",
       "id": "dubbingeditor_dubbingeditorcontext_createmediaregistry",
-      "community": 15,
+      "community": 233,
       "norm_label": "createmediaregistry()"
     },
     {
@@ -3879,7 +3879,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L38",
       "id": "dubbingeditor_dubbingeditorcontext_busystate",
-      "community": 15,
+      "community": 233,
       "norm_label": "busystate"
     },
     {
@@ -3888,7 +3888,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L40",
       "id": "dubbingeditor_dubbingeditorcontext_undoentry",
-      "community": 15,
+      "community": 233,
       "norm_label": "undoentry"
     },
     {
@@ -3897,7 +3897,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L49",
       "id": "dubbingeditor_dubbingeditorcontext_dubbingeditorcontextvalue",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorcontextvalue"
     },
     {
@@ -3906,7 +3906,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L88",
       "id": "dubbingeditor_dubbingeditorcontext_dubbingeditorcontext",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorcontext"
     },
     {
@@ -3915,7 +3915,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L90",
       "id": "dubbingeditor_dubbingeditorcontext_stripurlparams",
-      "community": 15,
+      "community": 233,
       "norm_label": "stripurlparams()"
     },
     {
@@ -3924,7 +3924,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L97",
       "id": "dubbingeditor_dubbingeditorcontext_dubbingeditorprovider",
-      "community": 15,
+      "community": 233,
       "norm_label": "dubbingeditorprovider()"
     },
     {
@@ -4032,7 +4032,7 @@
       "source_file": "frontend/components/dubbingEditor/types.ts",
       "source_location": "L19",
       "id": "dubbingeditor_types_editorjob",
-      "community": 15,
+      "community": 233,
       "norm_label": "editorjob"
     },
     {
@@ -11716,7 +11716,7 @@
       "label": "buildSarvamTargetPrompt()",
       "file_type": "code",
       "source_file": "backend/utils/translationUtils.js",
-      "source_location": "L290",
+      "source_location": "L294",
       "id": "utils_translationutils_buildsarvamtargetprompt",
       "community": 120,
       "norm_label": "buildsarvamtargetprompt()"
@@ -11725,7 +11725,7 @@
       "label": "inferTranslationMode()",
       "file_type": "code",
       "source_file": "backend/utils/translationUtils.js",
-      "source_location": "L329",
+      "source_location": "L334",
       "id": "utils_translationutils_infertranslationmode",
       "community": 120,
       "norm_label": "infertranslationmode()"
@@ -11734,7 +11734,7 @@
       "label": "translateToSpeechReady()",
       "file_type": "code",
       "source_file": "backend/utils/translationUtils.js",
-      "source_location": "L361",
+      "source_location": "L366",
       "id": "utils_translationutils_translatetospeechready",
       "community": 120,
       "norm_label": "translatetospeechready()"
@@ -12769,7 +12769,7 @@
       "label": "buildPromptReferenceCore()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L136",
+      "source_location": "L142",
       "id": "utils_transcribeutils_buildpromptreferencecore",
       "community": 10,
       "norm_label": "buildpromptreferencecore()"
@@ -12778,7 +12778,7 @@
       "label": "buildDubbingPrompt()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L184",
+      "source_location": "L190",
       "id": "utils_transcribeutils_builddubbingprompt",
       "community": 10,
       "norm_label": "builddubbingprompt()"
@@ -12787,7 +12787,7 @@
       "label": "transcriptItemSchema",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L213",
+      "source_location": "L219",
       "id": "utils_transcribeutils_transcriptitemschema",
       "community": 10,
       "norm_label": "transcriptitemschema"
@@ -12796,7 +12796,7 @@
       "label": "transcriptResponseSchema",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L255",
+      "source_location": "L265",
       "id": "utils_transcribeutils_transcriptresponseschema",
       "community": 10,
       "norm_label": "transcriptresponseschema"
@@ -12805,7 +12805,7 @@
       "label": "getGeminiApiKey()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L266",
+      "source_location": "L276",
       "id": "utils_transcribeutils_getgeminiapikey",
       "community": 10,
       "norm_label": "getgeminiapikey()"
@@ -12814,7 +12814,7 @@
       "label": "waitForFileActive()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L273",
+      "source_location": "L283",
       "id": "utils_transcribeutils_waitforfileactive",
       "community": 10,
       "norm_label": "waitforfileactive()"
@@ -12823,7 +12823,7 @@
       "label": "parseJsonFromModelText()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L285",
+      "source_location": "L295",
       "id": "utils_transcribeutils_parsejsonfrommodeltext",
       "community": 10,
       "norm_label": "parsejsonfrommodeltext()"
@@ -12832,7 +12832,7 @@
       "label": "buildGeminiMediaPart()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L292",
+      "source_location": "L302",
       "id": "utils_transcribeutils_buildgeminimediapart",
       "community": 10,
       "norm_label": "buildgeminimediapart()"
@@ -12841,7 +12841,7 @@
       "label": "deleteUploadedFile()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L315",
+      "source_location": "L325",
       "id": "utils_transcribeutils_deleteuploadedfile",
       "community": 10,
       "norm_label": "deleteuploadedfile()"
@@ -12850,7 +12850,7 @@
       "label": "normalizeSpeakerId()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L324",
+      "source_location": "L334",
       "id": "utils_transcribeutils_normalizespeakerid",
       "community": 10,
       "norm_label": "normalizespeakerid()"
@@ -12859,7 +12859,7 @@
       "label": "normalizeRawTimestamps()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L348",
+      "source_location": "L358",
       "id": "utils_transcribeutils_normalizerawtimestamps",
       "community": 10,
       "norm_label": "normalizerawtimestamps()"
@@ -12868,7 +12868,7 @@
       "label": "mapGeminiTranscriptToSegments()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L381",
+      "source_location": "L391",
       "id": "utils_transcribeutils_mapgeminitranscripttosegments",
       "community": 10,
       "norm_label": "mapgeminitranscripttosegments()"
@@ -12877,7 +12877,7 @@
       "label": "buildSyntheticSpeakerProfiles()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L421",
+      "source_location": "L431",
       "id": "utils_transcribeutils_buildsyntheticspeakerprofiles",
       "community": 10,
       "norm_label": "buildsyntheticspeakerprofiles()"
@@ -12886,7 +12886,7 @@
       "label": "mergeSpeakerProfiles()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L470",
+      "source_location": "L480",
       "id": "utils_transcribeutils_mergespeakerprofiles",
       "community": 10,
       "norm_label": "mergespeakerprofiles()"
@@ -12895,7 +12895,7 @@
       "label": "deduplicateSegments()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L489",
+      "source_location": "L499",
       "id": "utils_transcribeutils_deduplicatesegments",
       "community": 10,
       "norm_label": "deduplicatesegments()"
@@ -12904,7 +12904,7 @@
       "label": "calibrateSegmentTimestampsWithVocals()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L503",
+      "source_location": "L513",
       "id": "utils_transcribeutils_calibratesegmenttimestampswithvocals",
       "community": 90,
       "norm_label": "calibratesegmenttimestampswithvocals()"
@@ -12913,7 +12913,7 @@
       "label": "resolveDubbingVadIntervals()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L546",
+      "source_location": "L556",
       "id": "utils_transcribeutils_resolvedubbingvadintervals",
       "community": 10,
       "norm_label": "resolvedubbingvadintervals()"
@@ -12922,7 +12922,7 @@
       "label": "finalizeTranscription()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L564",
+      "source_location": "L574",
       "id": "utils_transcribeutils_finalizetranscription",
       "community": 10,
       "norm_label": "finalizetranscription()"
@@ -12931,7 +12931,7 @@
       "label": "transcribeGeminiChunk()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L621",
+      "source_location": "L631",
       "id": "utils_transcribeutils_transcribegeminichunk",
       "community": 10,
       "norm_label": "transcribegeminichunk()"
@@ -12940,7 +12940,7 @@
       "label": "fileSize()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L738",
+      "source_location": "L754",
       "id": "utils_transcribeutils_filesize",
       "community": 10,
       "norm_label": "filesize()"
@@ -12949,7 +12949,7 @@
       "label": "writeTranscriptionOutputJson()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L740",
+      "source_location": "L756",
       "id": "utils_transcribeutils_writetranscriptionoutputjson",
       "community": 10,
       "norm_label": "writetranscriptionoutputjson()"
@@ -12958,7 +12958,7 @@
       "label": "transcribeWithSpeakers()",
       "file_type": "code",
       "source_file": "backend/utils/transcribeUtils.js",
-      "source_location": "L760",
+      "source_location": "L776",
       "id": "utils_transcribeutils_transcribewithspeakers",
       "community": 10,
       "norm_label": "transcribewithspeakers()"
@@ -15192,7 +15192,7 @@
       "source_file": "backend/models/RefreshToken.js",
       "source_location": "L1",
       "id": "backend_models_refreshtoken_js",
-      "community": 233,
+      "community": 95,
       "norm_label": "refreshtoken.js"
     },
     {
@@ -15201,7 +15201,7 @@
       "source_file": "backend/models/RefreshToken.js",
       "source_location": "L1",
       "id": "models_refreshtoken_mongoose",
-      "community": 233,
+      "community": 95,
       "norm_label": "mongoose"
     },
     {
@@ -15210,7 +15210,7 @@
       "source_file": "backend/models/RefreshToken.js",
       "source_location": "L4",
       "id": "models_refreshtoken_refreshtokenschema",
-      "community": 233,
+      "community": 95,
       "norm_label": "refreshtokenschema"
     },
     {
@@ -33197,9 +33197,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_components_pricingplansgrid_tsx",
-      "target": "components_pricingplansgrid_getmonthlycredits",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_getmonthlycredits"
     },
     {
       "relation": "contains",
@@ -33207,9 +33207,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_components_pricingplansgrid_tsx",
-      "target": "components_pricingplansgrid_formatcreditallowance",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_formatcreditallowance"
     },
     {
       "relation": "contains",
@@ -33217,9 +33217,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_components_pricingplansgrid_tsx",
-      "target": "components_pricingplansgrid_formatsubtitleminutes",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_formatsubtitleminutes"
     },
     {
       "relation": "contains",
@@ -33227,9 +33227,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L43",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_components_pricingplansgrid_tsx",
-      "target": "components_pricingplansgrid_formatdubbingminutes",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_formatdubbingminutes"
     },
     {
       "relation": "contains",
@@ -33259,9 +33259,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L32",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_pricingplansgrid_formatcreditallowance",
-      "target": "components_pricingplansgrid_getmonthlycredits",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_getmonthlycredits"
     },
     {
       "relation": "calls",
@@ -33270,9 +33270,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_pricingplansgrid_formatsubtitleminutes",
-      "target": "components_pricingplansgrid_getmonthlycredits",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_getmonthlycredits"
     },
     {
       "relation": "calls",
@@ -33281,9 +33281,9 @@
       "source_file": "frontend/components/PricingPlansGrid.tsx",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_pricingplansgrid_formatdubbingminutes",
-      "target": "components_pricingplansgrid_getmonthlycredits",
-      "confidence_score": 1.0
+      "target": "components_pricingplansgrid_getmonthlycredits"
     },
     {
       "relation": "contains",
@@ -35791,9 +35791,9 @@
       "source_file": "frontend/components/dubbing/DubbingVideoPlayer.tsx",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_components_dubbing_dubbingvideoplayer_tsx",
-      "target": "dubbing_dubbingvideoplayer_mediasrc",
-      "confidence_score": 1.0
+      "target": "dubbing_dubbingvideoplayer_mediasrc"
     },
     {
       "relation": "contains",
@@ -35801,9 +35801,9 @@
       "source_file": "frontend/components/dubbing/DubbingVideoPlayer.tsx",
       "source_location": "L50",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_components_dubbing_dubbingvideoplayer_tsx",
-      "target": "dubbing_dubbingvideoplayer_audiopreviewsrc",
-      "confidence_score": 1.0
+      "target": "dubbing_dubbingvideoplayer_audiopreviewsrc"
     },
     {
       "relation": "contains",
@@ -35844,9 +35844,9 @@
       "source_file": "frontend/components/dubbing/DubbingVideoPlayer.tsx",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dubbing_dubbingvideoplayer_audiopreviewsrc",
-      "target": "dubbing_dubbingvideoplayer_mediasrc",
-      "confidence_score": 1.0
+      "target": "dubbing_dubbingvideoplayer_mediasrc"
     },
     {
       "relation": "calls",
@@ -35855,9 +35855,9 @@
       "source_file": "frontend/components/dubbing/DubbingVideoPlayer.tsx",
       "source_location": "L429",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dubbing_dubbingvideoplayer_dubbingvideoplayer",
-      "target": "dubbing_dubbingvideoplayer_audiopreviewsrc",
-      "confidence_score": 1.0
+      "target": "dubbing_dubbingvideoplayer_audiopreviewsrc"
     },
     {
       "relation": "contains",
@@ -64925,9 +64925,9 @@
       "source_file": ".codex/hooks.json",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "codex_hooks_json",
-      "target": "codex_hooks_hooks",
-      "confidence_score": 1.0
+      "target": "codex_hooks_hooks"
     },
     {
       "relation": "contains",
@@ -64935,9 +64935,9 @@
       "source_file": ".codex/hooks.json",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "codex_hooks_hooks",
-      "target": "codex_hooks_hooks_pretooluse",
-      "confidence_score": 1.0
+      "target": "codex_hooks_hooks_pretooluse"
     },
     {
       "relation": "contains",
@@ -65715,9 +65715,9 @@
       "source_file": "AGENTS.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_md",
-      "target": "video_transcribe_agents_graphify",
-      "confidence_score": 1.0
+      "target": "video_transcribe_agents_graphify"
     },
     {
       "relation": "contains",
@@ -66745,9 +66745,9 @@
       "source_file": ".agents/workflows/graphify.md",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_workflows_graphify_md",
-      "target": "workflows_graphify_workflow_graphify",
-      "confidence_score": 1.0
+      "target": "workflows_graphify_workflow_graphify"
     },
     {
       "relation": "contains",
@@ -66755,9 +66755,9 @@
       "source_file": ".agents/rules/graphify.md",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_rules_graphify_md",
-      "target": "rules_graphify_graphify",
-      "confidence_score": 1.0
+      "target": "rules_graphify_graphify"
     },
     {
       "relation": "contains",
@@ -71651,5 +71651,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "61770391e1545406113a22943109f7653bc134d2"
+  "built_at_commit": "e240ef0a851cec3261ade37871408143dcbf129b"
 }

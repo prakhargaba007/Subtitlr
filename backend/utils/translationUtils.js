@@ -273,18 +273,22 @@ const buildSarvamScriptRule = (targetLanguage) => {
 const SARVAM_TTS_TEXT_RULES = `
 Sarvam Bulbul v3 text rules:
 - Return clean text for TTS. Do not use SSML, XML, Markdown, asterisks, or square-bracket performance tags like [pause].
-- Use punctuation for rhythm: comma for a short pause, sentence punctuation for a medium pause, and "…" only for a real hesitation or trailing thought.
+- Use punctuation for rhythm: comma for a short pause, sentence punctuation for a medium pause, "!" only when the source has emphasis, and "…" only for a real hesitation or trailing thought.
+- Do not overuse ellipses. Prefer commas, sentence punctuation, or a line break between paragraph-length thoughts for regular breathing pauses.
 - If a sentence ends in the target Indic language, use punctuation that is natural for that language and script. If it ends in English, use ".".
 - Keep sentences breathable. Split very long thoughts into shorter spoken sentences.
-- Use light fillers such as "um", "hmm", "actually…", "basically…", or "I mean…" only when the source tone is casual, hesitant, or the segment needs a tiny natural timing fill.
+- Use simple, colloquial vocabulary. Avoid complex Sanskritized or literary words unless the source specifically requires that register.
+- Use light fillers such as "um", "uh", "hmm", "actually…", "basically…", "you know…", or "I mean…" only when the source tone is casual, hesitant, or the segment needs a tiny natural timing fill.
+- For Indic-language targets, write target-language words in the native script. Do not romanize Indic words unless the requested target is explicitly Hinglish.
 - Keep brand names, people names, language names, apps, websites, acronyms, URLs, and common tech/media/business words in English script.
 - For numbers above four digits, use commas, e.g. "10,000".`;
 
 const SHARED_CODE_MIXING_RULES = `
 Code-mixing style:
 - Use natural Indian speech, not textbook translation.
-- Keep the target language's natural sentence structure, but keep common English words in English script where people normally say them.
-- Bad examples: fully romanized Indic text, overly Sanskritized words, or translating common English/media terms when they sound more natural in English.
+- Keep the target language's natural sentence structure. Swap in common English nouns, verbs, and expressions only where Indian speakers naturally would.
+- Write English words in English script and Indic words in the target script. Bad examples: fully romanized Indic text, overly Sanskritized words, or translating common English/media terms when they sound more natural in English.
+- Keep language names and well-known brands in English, e.g. Hindi, Tamil, Telugu, Google, WhatsApp.
 - Preserve wordplay and quoted English phrases when translating them would break the meaning, e.g. keep "jeans/genes", "good genes", "blue", "AI", "app", "download".`;
 
 const buildSarvamTargetPrompt = (targetLanguage) => {
@@ -308,6 +312,7 @@ Translation mode: ANY SOURCE → Sarvam-supported Indian language
 Target language: ${targetLabel}
 Supported Sarvam targets: ${buildSarvamLanguageList()}
 ${buildSarvamScriptRule(targetLanguage)}
+- The downstream TTS call uses target_language_code ${code || "for the chosen target"}; align number reading, abbreviations, and sentence-ending punctuation to that target.
 - Translate for natural spoken dubbing in the target language, not Hindi unless the target is Hindi.
 - The source text may be English, auto-detected, or any other language. Use it only for meaning; the output language and script must follow the target above.
 - Avoid pure textbook translation. Prefer the kind of code-mixed speech Indians naturally use with Sarvam Bulbul.
@@ -404,32 +409,38 @@ const translateToSpeechReady = async (
   } else if (mode === "hinglish_concise") {
     modeRules = `
 Translation mode: ENGLISH → HINGLISH / SPOKEN HINDI (concise dubbing)
-- Return clean Sarvam TTS text. Do not use square-bracket performance tags.
+- Return clean Sarvam TTS text.
 - Prefer natural Hinglish: common English words where Indian speakers would mix them; Roman script is acceptable because Hinglish is explicitly requested.
 - Fit naturally within \`duration_seconds\`: short clips should be concise; longer clips may be slightly fuller, but do not add new facts.
-- Use commas, sentence punctuation, and occasional "…" for rhythm.
 - Avoid long formal Sanskritized Hindi if a shorter mixed or colloquial line carries the same meaning.
-- For laughs/reactions use spoken text such as "ha ha" only when it belongs in the source tone.`;
+- For laughs/reactions use spoken text such as "ha ha" only when it belongs in the source tone.
+
+${SARVAM_TTS_TEXT_RULES}
+
+${SHARED_CODE_MIXING_RULES}`;
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;
   } else if (mode === "split_for_timing") {
     modeRules = `
 Translation mode: Indian language → ENGLISH with SUB-SEGMENTS for timing
-- Write clean Sarvam en-IN TTS text. Do not use square-bracket performance tags.
+- Write clean Sarvam en-IN TTS text.
 - Spoken English is often shorter in wall-clock time than Indian languages for the same ideas, so avoid ultra-terse subtitle-style lines.
 - Split into 2–5 spoken clauses that partition the window [0,1] via rel_start/rel_end (non-overlapping, in order).
 - Prefer fuller natural English: add brief connective phrases or light redundancy so each sub-segment uses most of its time slice.
 - Do not invent facts; stay faithful to the source meaning and names.
-- Use commas, sentence punctuation, and occasional "…" for rhythm.
-- If one continuous English line fits naturally, return a single sub-segment 0→1 matching translated_text.`;
+- If one continuous English line fits naturally, return a single sub-segment 0→1 matching translated_text.
+
+${SARVAM_TTS_TEXT_RULES}`;
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "full line for fallback", "sub_segments": [ { "rel_start": 0, "rel_end": 0.5, "text": "First clause." }, { "rel_start": 0.5, "rel_end": 1, "text": "Second clause." } ] }, ... ] }
 If sub_segments is omitted or empty, translated_text alone will be used as a single segment.`;
   } else {
     modeRules = `
 Translation mode: DEFAULT
 - Translate for SPOKEN delivery. Match speaker register from profiles.
-- Return clean TTS text. Do not use square-bracket performance tags.
+- Return clean TTS text.
 - Fit naturally within \`duration_seconds\`: short clips should be concise; longer clips may be slightly fuller, but do not add new facts.
-- Use punctuation for pauses and delivery; ellipses are optional for trailing tone.`;
+- Use punctuation for pauses and delivery; ellipses are optional for trailing tone.
+
+${SARVAM_TTS_TEXT_RULES}`;
     jsonShape = `Return ONLY valid JSON: { "results": [ { "index": 0, "translated_text": "..." }, ... ] }`;
   }
 
