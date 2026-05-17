@@ -29,7 +29,7 @@ const recordProjectUsage = async (projectId, usage) => {
       
       costUsd = (inputTokens / 1000000) * inputPrice + (outputTokens / 1000000) * outputPrice;
     } else if (pricing.inputPricePer1M && typeof pricing.inputPricePer1M === "object") {
-      // Handle models like gemini-3.1-flash-lite-preview with text/audio split
+      // Handle models like gemini-3.1-flash-lite with text/audio split
       const inputText = usage.inputTokens || 0;
       const inputAudio = usage.inputAudioTokens || 0;
       const inputPriceText = pricing.inputPricePer1M.text || 0;

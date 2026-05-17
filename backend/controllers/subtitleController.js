@@ -318,7 +318,7 @@ exports.generateSubtitles = async (req, res, next) => {
         const isGemini = !!tResult.usage.promptTokenCount;
         const isDeepseek = tResult.provider === "deepseek";
         usageRecords.push({
-          model: tResult.model || (isGemini ? "gemini-3.1-flash-lite-preview" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
+          model: tResult.model || (isGemini ? "gemini-3.1-flash-lite" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
           inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
           outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
         });
@@ -351,7 +351,7 @@ exports.generateSubtitles = async (req, res, next) => {
         const isGemini = !!tResult.usage.promptTokenCount;
         const isDeepseek = tResult.provider === "deepseek";
         usageRecords.push({
-          model: tResult.model || (isGemini ? "gemini-3.1-flash-lite-preview" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
+          model: tResult.model || (isGemini ? "gemini-3.1-flash-lite" : isDeepseek ? "deepseek-chat" : "gpt-4o-mini"),
           inputTokens: isGemini ? tResult.usage.promptTokenCount : tResult.usage.prompt_tokens,
           outputTokens: isGemini ? tResult.usage.candidatesTokenCount : tResult.usage.completion_tokens,
         });
@@ -669,7 +669,7 @@ exports.translateSubtitleJob = async (req, res, next) => {
           model:
             tResult.model ||
             (isGemini
-              ? "gemini-3.1-flash-lite-preview"
+              ? "gemini-3.1-flash-lite"
               : isDeepseek
                 ? "deepseek-chat"
                 : "gpt-4o-mini"),

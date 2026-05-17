@@ -563,7 +563,7 @@ async function runDubbingPipelineFromInput(
   if (Array.isArray(transcribeUsage) && projectId) {
     for (const u of transcribeUsage) {
       await recordProjectUsage(projectId, {
-        model: "gemini-3.1-flash-lite-preview",
+        model: "gemini-3.1-flash-lite",
         inputTokens: u.promptTokenCount,
         outputTokens: u.candidatesTokenCount,
       });
@@ -1047,14 +1047,14 @@ exports.startDubbingJob = async (req, res) => {
               },
             );
           } catch (cloneErr) {
-            console.error("[dubbing] Sarvam voice clone failed:", cloneErr);
+            // console.error("[dubbing] Sarvam voice clone failed:", cloneErr);
             if (cloneFailureMode === "strict") {
               throw cloneErr;
             }
-            console.warn(
-              `[dubbing] Sarvam clone failed for ${profile.speaker_id}; using preset voice:`,
-              cloneErr.message,
-            );
+            // console.warn(
+            //   `[dubbing] Sarvam clone failed for ${profile.speaker_id}; using preset voice:`,
+            //   cloneErr.message,
+            // );
             emit({
               stage: "generating",
               message: `Voice clone failed for ${profile.speaker_id}; using a Sarvam preset voice.`,

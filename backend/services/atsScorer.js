@@ -193,7 +193,7 @@ async function scoreProfile(profile, jobDescription) {
 
   const start = Date.now();
   console.log("[ATS Scorer] Calling Gemini for ATS analysis…");
-  let model = "gemini-3.1-flash-lite-preview";
+  let model = "gemini-3.1-flash-lite";
 
   const response = await gemini.models.generateContent({
     model: model,

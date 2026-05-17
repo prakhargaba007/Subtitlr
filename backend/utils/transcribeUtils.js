@@ -628,7 +628,7 @@ async function transcribeGeminiChunk(
   timeOffsetSec,
   opts = {},
 ) {
-  const modelName = "gemini-3.1-flash-lite-preview";
+  const modelName = "gemini-3.1-flash-lite";
   console.log(`[transcribeGeminiChunk] Using model: ${modelName}`);
 
   const mimeType = "audio/mpeg";

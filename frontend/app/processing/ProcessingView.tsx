@@ -361,8 +361,8 @@ export default function ProcessingView() {
           ? sourceDubbingJobId
             ? `/api/dubbing/${sourceDubbingJobId}/retarget`
             : youtubeUrl
-            ? "/api/dubbing/start-youtube"
-            : "/api/dubbing/start"
+              ? "/api/dubbing/start-youtube"
+              : "/api/dubbing/start"
           : "/api/subtitles/generate";
 
       await axiosInstance.post<string>(url, body as FormData & Record<string, string>, {

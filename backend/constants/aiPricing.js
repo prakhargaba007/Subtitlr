@@ -33,7 +33,7 @@ const AI_API_PRICING = [
   },
   {
     provider: "Google",
-    model: "gemini-3.1-flash-lite-preview",
+    model: "gemini-3.1-flash-lite",
     type: "translation_reasoning",
     inputPricePer1M: { text: 0.25, audio: 0.5 },
     outputPricePer1M: 1.5,

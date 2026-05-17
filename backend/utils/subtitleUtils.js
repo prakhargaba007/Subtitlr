@@ -161,7 +161,7 @@ const transliterateToHinglish = async (segments) => {
 
   const model =
     process.env.SUBTITLE_TRANSLITERATION_MODEL ||
-    "gemini-3.1-flash-lite-preview";
+    "gemini-3.1-flash-lite";
 
   try {
     const response = await geminiCallWithRetry(async (apiKey) => {
@@ -309,7 +309,7 @@ const translateSubtitleSegments = async (
   const geminiModel =
     process.env.SUBTITLE_TRANSLATION_MODEL ||
     process.env.SUBTITLE_TRANSLITERATION_MODEL ||
-    "gemini-3.1-flash-lite-preview";
+    "gemini-3.1-flash-lite";
 
   try {
     const response = await geminiCallWithRetry(async (apiKey) => {
