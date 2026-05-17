@@ -21,6 +21,32 @@ export type PricingPlansGridProps = {
   variant?: "section" | "page";
 };
 
+const SUBTITLE_CREDITS_PER_MINUTE = 5;
+const DUBBING_CREDITS_PER_SECOND = 1;
+
+function getMonthlyCredits(plan: PublicPlan): number {
+  return plan.interval === "annual" ? plan.creditsPerPeriod / 12 : plan.creditsPerPeriod;
+}
+
+function formatCreditAllowance(plan: PublicPlan): string {
+  const monthlyCredits = getMonthlyCredits(plan);
+  const roundedCredits = Math.floor(monthlyCredits);
+  return roundedCredits.toLocaleString();
+}
+
+function formatSubtitleMinutes(plan: PublicPlan): string {
+  const monthlyCredits = getMonthlyCredits(plan);
+  const minutes = Math.floor(monthlyCredits / SUBTITLE_CREDITS_PER_MINUTE);
+  return `${minutes.toLocaleString()} min`;
+}
+
+function formatDubbingMinutes(plan: PublicPlan): string {
+  const monthlyCredits = getMonthlyCredits(plan);
+  const seconds = Math.floor(monthlyCredits / DUBBING_CREDITS_PER_SECOND);
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes.toLocaleString()} min`;
+}
+
 export default function PricingPlansGrid({ variant = "section" }: PricingPlansGridProps) {
   const router = useRouter();
   const [plans, setPlans] = useState<PublicPlan[]>([]);
@@ -69,13 +95,14 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
       const url = res.data?.checkoutUrl as string | undefined;
       if (!url) throw new Error("Missing checkoutUrl from backend.");
       window.location.href = url;
-    } catch (e: any) {
-      if (e.response?.status === 401) {
-        router.push("/login");
-        return;
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else if (typeof e === "string") {
+        setError(e);
+      } else {
+        setError("An unknown error occurred");
       }
-      const msg = e.response?.data?.message || e.message || "Checkout failed";
-      setError(msg);
       setCheckoutPlanKey(null);
     }
   }
@@ -85,9 +112,6 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10 md:mb-12">
         <div className="text-center sm:text-left">
           <h2 className={`font-headline font-bold mb-2 ${titleClass}`}>Transparent Pricing</h2>
-          {/* <p className="text-on-surface-variant text-body max-w-xl">
-            Compare plans. Prices are for display; billing runs through Dodo at checkout.
-          </p> */}
         </div>
 
         <div
@@ -133,147 +157,219 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
       )}
 
       {!loading && !error && visible.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {visible.map((plan, index) => {
-            const free = isFreePlan(plan);
-            const popular = index === popularIndex;
-            const price = getPriceBlock(plan, billing, free);
-            const bullets = featureBullets(plan, index > 0 ? visible[index - 1] : undefined);
-            const bill = billingSubtext(plan, billing, free);
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            {visible.map((plan, index) => {
+              const free = isFreePlan(plan);
+              const popular = index === popularIndex;
+              const price = getPriceBlock(plan, billing, free);
+              const bullets = featureBullets(plan, index > 0 ? visible[index - 1] : undefined);
+              const bill = billingSubtext(plan, billing, free);
 
-            const cardClass = popular
-              ? "border-2 border-primary editorial-glow transform md:scale-105 shadow-2xl z-10"
-              : "border-outline-variant/10 hover:shadow-xl transition-all";
+              const cardClass = popular
+                ? "border-2 border-primary editorial-glow transform md:scale-105 shadow-2xl z-10"
+                : "border-outline-variant/10 hover:shadow-xl transition-all";
 
-            return (
-              <article
-                key={plan._id}
-                className={`bg-surface-container-lowest p-10 rounded-4xl border relative flex flex-col ${cardClass}`}
-              >
-                {(plan.featureFlags?.uiBadges?.length ?? 0) > 0 ? (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-2">
-                    {plan.featureFlags?.uiBadges?.map((badge) => (
-                      <div
-                        key={badge}
-                        className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg"
-                      >
-                        {badge.replace(/_/g, " ")}
+              return (
+                <article
+                  key={plan._id}
+                  className={`bg-surface-container-lowest p-10 rounded-4xl border relative flex flex-col ${cardClass}`}
+                >
+                  {(plan.featureFlags?.uiBadges?.length ?? 0) > 0 ? (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      {plan.featureFlags?.uiBadges?.map((badge) => (
+                        <div
+                          key={badge}
+                          className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full shadow-lg"
+                        >
+                          {badge.replace(/_/g, " ")}
+                        </div>
+                      ))}
+                    </div>
+                  ) : popular ? (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full">
+                      Most popular
+                    </div>
+                  ) : null}
+
+                  <h3 className="font-headline text-h4 font-bold mb-2">{plan.displayName}</h3>
+
+                  <div className="mb-6 min-h-10">
+                    {price.type === "sale" ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-body text-on-surface-variant line-through">{price.original}</p>
+                          <p className="font-bold text-h3 text-primary">{price.sale}</p>
+                          {price.percent > 0 && (
+                            <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded ml-2 uppercase tracking-wide">
+                              Save {price.percent}%
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : popular ? (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1 rounded-full">
-                    Most popular
-                  </div>
-                ) : null}
-
-                <h3 className="font-headline text-h4 font-bold mb-2">{plan.displayName}</h3>
-
-                <div className="mb-6 min-h-10">
-                  {price.type === "sale" ? (
-                    <div className="space-y-1">
+                    ) : (
                       <div className="flex items-center gap-2">
-                        <p className="text-body text-on-surface-variant line-through">{price.original}</p>
-                        <p className="font-bold text-h3 text-primary">{price.sale}</p>
-                        {price.percent > 0 && (
+                        <p className="font-bold text-h3">{price.text}</p>
+                        {promoBadge(plan, price) && (
                           <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded ml-2 uppercase tracking-wide">
-                            Save {price.percent}%
+                            {promoBadge(plan, price)}
                           </span>
                         )}
                       </div>
+                    )}
+                    <div className="flex items-center gap-1 mt-2">
+                      {bill ? (
+                        <div className="text-xs text-on-surface-variant">
+                          <div className="font-headline font-semibold">{bill.line1}</div>
+                          {bill.line2 ? <div>{bill.line2}</div> : null}
+                        </div>
+                      ) : null}
                     </div>
+                  </div>
+
+                  <ul className="space-y-4 mb-10 text-on-surface-variant text-sm flex-1">
+                    {bullets.map((line) => (
+                      <li key={line} className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {free ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="md"
+                      className="w-full rounded-xl"
+                      onClick={() => router.push("/login")}
+                      disabled={currentPlan?.planKey === plan.key}
+                    >
+                      {currentPlan?.planKey === plan.key ? "Current Plan" : "Start free"}
+                    </Button>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-h3">{price.text}</p>
-                      {promoBadge(plan, price) && (
-                        <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded ml-2 uppercase tracking-wide">
-                          {promoBadge(plan, price)}
-                        </span>
-                      )}
-                    </div>
+                    <Button
+                      type="button"
+                      variant={popular && currentPlan?.planKey !== plan.key ? "primary" : "outline"}
+                      size="md"
+                      className={`w-full rounded-xl ${popular ? "hover:scale-[1.02]" : ""}`}
+                      style={popular ? { boxShadow: "0 10px 30px -8px rgba(57,44,193,0.3)" } : undefined}
+                      disabled={checkoutPlanKey === plan.key || currentPlan?.planKey === plan.key}
+                      onClick={() => startDodoCheckout(plan.key)}
+                    >
+                      {currentPlan?.planKey === plan.key
+                        ? "Current Plan"
+                        : currentPlan && (plan.sortOrder ?? 0) < currentPlan.sortOrder
+                          ? "Downgrade"
+                          : currentPlan && (plan.sortOrder ?? 0) > currentPlan.sortOrder
+                            ? "Upgrade"
+                            : checkoutPlanKey === plan.key ? "Redirecting…" : "Get started"}
+                    </Button>
                   )}
-                  <div className="flex items-center gap-1 mt-2">
-                    {bill ? (
-                      <div className="text-xs text-on-surface-variant">
-                        <div className="font-headline font-semibold">{bill.line1}</div>
-                        {bill.line2 ? <div>{bill.line2}</div> : null}
-                      </div>
-                    ) : null}
+                </article>
+              );
+            })}
+
+            {/* <article className="bg-surface-container-lowest p-10 rounded-4xl border relative flex flex-col border-outline-variant/10 hover:shadow-xl transition-all">
+              <h3 className="font-headline text-h4 font-bold mb-2">Enterprise</h3>
+              <div className="mb-6 min-h-10">
+                <p className="font-bold text-h3">Custom</p>
+                <div className="flex items-center gap-1 mt-2">
+                  <div className="text-xs text-on-surface-variant">
+                    <div className="font-headline font-semibold">Volume-based pricing</div>
                   </div>
                 </div>
+              </div>
 
-                <ul className="space-y-4 mb-10 text-on-surface-variant text-sm flex-1">
-                  {bullets.map((line) => (
-                    <li key={line} className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
+              <ul className="space-y-4 mb-10 text-on-surface-variant text-sm flex-1">
+                <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Volume-based pricing</li>
+                <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Team Sync workspaces</li>
+                <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Service level agreements</li>
+                <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Dedicated account manager</li>
+              </ul>
 
-                {free ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="md"
-                    className="w-full rounded-xl"
-                    onClick={() => router.push("/login")}
-                    disabled={currentPlan?.planKey === plan.key}
-                  >
-                    {currentPlan?.planKey === plan.key ? "Current Plan" : "Start free"}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant={popular && currentPlan?.planKey !== plan.key ? "primary" : "outline"}
-                    size="md"
-                    className={`w-full rounded-xl ${popular ? "hover:scale-[1.02]" : ""}`}
-                    style={popular ? { boxShadow: "0 10px 30px -8px rgba(57,44,193,0.3)" } : undefined}
-                    disabled={checkoutPlanKey === plan.key || currentPlan?.planKey === plan.key}
-                    onClick={() => startDodoCheckout(plan.key)}
-                  >
-                    {currentPlan?.planKey === plan.key
-                      ? "Current Plan"
-                      : currentPlan && (plan.sortOrder ?? 0) < currentPlan.sortOrder
-                        ? "Downgrade"
-                        : currentPlan && (plan.sortOrder ?? 0) > currentPlan.sortOrder
-                          ? "Upgrade"
-                          : checkoutPlanKey === plan.key ? "Redirecting…" : "Get started"}
-                  </Button>
-                )}
-              </article>
-            );
-          })}
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                className="w-full rounded-xl"
+                onClick={() => router.push("/feedback")}
+              >
+                Contact sales
+              </Button>
+            </article> */}
+          </div>
 
-          {/* <article className="bg-surface-container-lowest p-10 rounded-4xl border relative flex flex-col border-outline-variant/10 hover:shadow-xl transition-all">
-            <h3 className="font-headline text-h4 font-bold mb-2">Enterprise</h3>
-            <div className="mb-6 min-h-10">
-              <p className="font-bold text-h3">Custom</p>
-              <div className="flex items-center gap-1 mt-2">
-                <div className="text-xs text-on-surface-variant">
-                  <div className="font-headline font-semibold">Volume-based pricing</div>
-                </div>
+          <section className="mt-16 md:mt-20 rounded-4xl border border-outline-variant/10 bg-surface-container-lowest p-8 md:p-10">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-8">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">Credit details</p>
+                <h3 className="font-headline text-h4 md:text-h3 font-bold">What your credits include</h3>
               </div>
             </div>
 
-            <ul className="space-y-4 mb-10 text-on-surface-variant text-sm flex-1">
-              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Volume-based pricing</li>
-              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Team Sync workspaces</li>
-              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Service level agreements</li>
-              <li className="flex items-center gap-3"><span className="material-symbols-outlined text-primary text-lg">check_circle</span> Dedicated account manager</li>
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left">
+                <thead>
+                  <tr className="border-b border-outline-variant/10 text-xs uppercase tracking-widest text-on-surface-variant">
+                    <th className="py-4 pr-6 font-headline font-bold">Plan</th>
+                    <th className="py-4 px-6 font-headline font-bold">Credits / month</th>
+                    <th className="py-4 px-6 font-headline font-bold">Subtitle credits</th>
+                    <th className="py-4 px-6 font-headline font-bold">Dubbing credits</th>
+                    <th className="py-4 pl-6 font-headline font-bold">Best for</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10">
+                  {visible.map((plan) => (
+                    <tr key={`credit-details-${plan._id}`} className="text-sm">
+                      <td className="py-5 pr-6">
+                        <div className="font-headline font-bold text-on-surface">{plan.displayName}</div>
+                        <div className="text-xs text-on-surface-variant">
+                          {plan.interval === "annual" && billing === "yearly"
+                            ? "Annual allowance shown monthly"
+                            : "Monthly allowance"}
+                        </div>
+                      </td>
+                      <td className="py-5 px-6 font-bold text-on-surface">
+                        {formatCreditAllowance(plan)}
+                      </td>
+                      <td className="py-5 px-6 text-on-surface-variant">
+                        Up to {formatSubtitleMinutes(plan)} subtitles
+                      </td>
+                      <td className="py-5 px-6 text-on-surface-variant">
+                        Up to {formatDubbingMinutes(plan)} dubbing
+                      </td>
+                      <td className="py-5 pl-6 text-on-surface-variant">
+                        {isFreePlan(plan)
+                          ? "Trying short clips"
+                          : plan.featureFlags?.queuePriority === "highest"
+                            ? "Teams and high volume"
+                            : plan.featureFlags?.queuePriority === "high"
+                              ? "Regular creators"
+                              : "Growing projects"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              className="w-full rounded-xl"
-              onClick={() => router.push("/feedback")}
-            >
-              Contact sales
-            </Button>
-          </article> */}
-        </div>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-3xl bg-surface-container p-5">
+                <p className="font-headline font-bold mb-1">Subtitle generation</p>
+                <p className="text-sm text-on-surface-variant">5 credits per started minute.</p>
+              </div>
+              <div className="rounded-3xl bg-surface-container p-5">
+                <p className="font-headline font-bold mb-1">Dubbing</p>
+                <p className="text-sm text-on-surface-variant">1 credit per second, rounded up.</p>
+              </div>
+              <div className="rounded-3xl bg-surface-container p-5">
+                <p className="font-headline font-bold mb-1">Unused credits</p>
+                <p className="text-sm text-on-surface-variant">Credits are checked before each job starts.</p>
+              </div>
+            </div>
+          </section>
+        </>
       )}
     </>
   );

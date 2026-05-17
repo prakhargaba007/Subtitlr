@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 
 interface AppNavbarProps {
-  /** Label shown to the right of the logo area (e.g. "Zen Mode") */
+  /** Label shown to the right of the logo area (e.g. "Preparing Your Results") */
   subtitle?: string;
   /** App links shown next to the logo. Defaults to Projects / Library / Team. */
   links?: { label: string; href: string }[];
@@ -59,7 +59,7 @@ export default function AppNavbar({
           )}
         </div>
 
-        {/* Centre — optional subtitle (e.g. "Zen Mode") */}
+        {/* Centre — optional subtitle (e.g. "Preparing Your Results") */}
         {subtitle && (
           <span className="text-sm font-headline font-semibold text-on-surface-variant">
             {subtitle}

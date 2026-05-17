@@ -415,7 +415,7 @@ export default function ProcessingView() {
           {/* Header */}
           <div className="space-y-3">
             <h1 className="font-headline text-h2 font-extrabold tracking-tight text-on-surface">
-              Zen Mode
+              Preparing Your Results
             </h1>
             <p className="text-on-surface-variant text-body-lg leading-relaxed max-w-md">
               {errorMsg
@@ -686,7 +686,7 @@ export default function ProcessingView() {
           "radial-gradient(circle at 30% 40%, rgba(83,74,217,0.04) 0%, transparent 60%)",
       }}
     >
-      <AppNavbar subtitle="Zen Mode" showUserActions={false} />
+      <AppNavbar subtitle="Preparing Your Results" showUserActions={false} />
       {mainContent}
     </div>
   );

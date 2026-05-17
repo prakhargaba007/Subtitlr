@@ -60,7 +60,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 <div class="container">
 
 <h1>video transcribe — Complete Call Flow &amp; Architecture Documentation</h1>
-<p class="subtitle">Generated from graphify knowledge graph: 3165 nodes, 4154 edges, 227 communities. Commit: 11084d1</p>
+<p class="subtitle">Generated from graphify knowledge graph: 3180 nodes, 4171 edges, 238 communities. Commit: 6177039</p>
 
 <div class="nav">
     <a href="#overview">Architecture Overview</a>
@@ -75,9 +75,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
     <a href="#community-15">Community 15</a>
     <a href="#community-16">Community 16</a>
     <a href="#community-17">Community 17</a>
-    <a href="#community-18">Community 18</a>
     <a href="#community-25">Community 25</a>
-    <a href="#community-27">Community 27</a>
+    <a href="#community-43">Community 43</a>
+    <a href="#community-28">Community 28</a>
     <a href="#other">Other</a>
 </div>
 
@@ -88,48 +88,48 @@ hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
 
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>163 nodes</small>")
+    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>128 nodes</small>")
     class EXTRACT_PIPELINE_5F350230 module;
-    BUILD_GRAPH_321CBB04("Graph Build<br/><small>309 nodes</small>")
+    BUILD_GRAPH_321CBB04("Graph Build<br/><small>312 nodes</small>")
     class BUILD_GRAPH_321CBB04 module;
-    ANALYSIS_CLUSTERING_C79796DA("Analysis &amp; Clustering<br/><small>718 nodes</small>")
+    ANALYSIS_CLUSTERING_C79796DA("Analysis &amp; Clustering<br/><small>737 nodes</small>")
     class ANALYSIS_CLUSTERING_C79796DA module;
-    OUTPUTS_DOCS_ED82387C("Outputs &amp; Docs<br/><small>296 nodes</small>")
+    OUTPUTS_DOCS_ED82387C("Outputs &amp; Docs<br/><small>291 nodes</small>")
     class OUTPUTS_DOCS_ED82387C module;
     CLI_SKILLS_9964CBB8("CLI &amp; Skill Installers<br/><small>372 nodes</small>")
     class CLI_SKILLS_9964CBB8 module;
-    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>88 nodes</small>")
+    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>80 nodes</small>")
     class INGEST_CACHE_UPDATE_FF457338 module;
-    SERVE_API_35EC8E86("Serving API<br/><small>144 nodes</small>")
+    SERVE_API_35EC8E86("Serving API<br/><small>147 nodes</small>")
     class SERVE_API_35EC8E86 module;
     COMMUNITY_5_2966028D("Community 5<br/><small>42 nodes</small>")
     class COMMUNITY_5_2966028D module;
-    COMMUNITY_15_4BECAAD7("Community 15<br/><small>34 nodes</small>")
+    COMMUNITY_15_4BECAAD7("Community 15<br/><small>37 nodes</small>")
     class COMMUNITY_15_4BECAAD7 module;
     COMMUNITY_16_BD3EE841("Community 16<br/><small>33 nodes</small>")
     class COMMUNITY_16_BD3EE841 module;
     COMMUNITY_17_648F8D7C("Community 17<br/><small>32 nodes</small>")
     class COMMUNITY_17_648F8D7C module;
-    COMMUNITY_18_A335126F("Community 18<br/><small>31 nodes</small>")
-    class COMMUNITY_18_A335126F module;
     COMMUNITY_25_B1CFFD78("Community 25<br/><small>27 nodes</small>")
     class COMMUNITY_25_B1CFFD78 module;
-    COMMUNITY_27_99AD9ED4("Community 27<br/><small>26 nodes</small>")
-    class COMMUNITY_27_99AD9ED4 module;
-    OTHER_D0941E68("Other<br/><small>850 nodes</small>")
+    COMMUNITY_43_5DF3A0B0("Community 43<br/><small>26 nodes</small>")
+    class COMMUNITY_43_5DF3A0B0 module;
+    COMMUNITY_28_3AE3708D("Community 28<br/><small>25 nodes</small>")
+    class COMMUNITY_28_3AE3708D module;
+    OTHER_D0941E68("Other<br/><small>891 nodes</small>")
     class OTHER_D0941E68 module;
-    ANALYSIS_CLUSTERING_C79796DA -->|imports x72| OTHER_D0941E68
-    OTHER_D0941E68 -->|imports x34| ANALYSIS_CLUSTERING_C79796DA
-    CLI_SKILLS_9964CBB8 -->|imports x23| OTHER_D0941E68
-    EXTRACT_PIPELINE_5F350230 -->|imports x20| ANALYSIS_CLUSTERING_C79796DA
-    ANALYSIS_CLUSTERING_C79796DA -->|imports x18| EXTRACT_PIPELINE_5F350230
+    ANALYSIS_CLUSTERING_C79796DA -->|imports x74| OTHER_D0941E68
+    OTHER_D0941E68 -->|imports x39| ANALYSIS_CLUSTERING_C79796DA
+    ANALYSIS_CLUSTERING_C79796DA -->|imports x20| EXTRACT_PIPELINE_5F350230
+    CLI_SKILLS_9964CBB8 -->|imports x16| OTHER_D0941E68
     ANALYSIS_CLUSTERING_C79796DA -->|imports x16| COMMUNITY_17_648F8D7C
-    SERVE_API_35EC8E86 -->|imports x14| OTHER_D0941E68
-    OTHER_D0941E68 -->|imports x13| EXTRACT_PIPELINE_5F350230
-    OTHER_D0941E68 -->|imports x12| OUTPUTS_DOCS_ED82387C
-    ANALYSIS_CLUSTERING_C79796DA -->|imports x12| INGEST_CACHE_UPDATE_FF457338
+    OTHER_D0941E68 -->|imports x16| EXTRACT_PIPELINE_5F350230
+    SERVE_API_35EC8E86 -->|imports x15| OTHER_D0941E68
     BUILD_GRAPH_321CBB04 -->|imports x12| OTHER_D0941E68
-    OTHER_D0941E68 -->|imports x11| COMMUNITY_18_A335126F
+    ANALYSIS_CLUSTERING_C79796DA -->|imports x10| INGEST_CACHE_UPDATE_FF457338
+    BUILD_GRAPH_321CBB04 -->|imports x10| ANALYSIS_CLUSTERING_C79796DA
+    OTHER_D0941E68 -->|imports x9| OUTPUTS_DOCS_ED82387C
+    OTHER_D0941E68 -->|imports x9| SERVE_API_35EC8E86
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -146,19 +146,19 @@ flowchart LR
     <h4>Architecture Layers</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
-      <tr><td>Extraction Pipeline</td><td>163</td><td><code>1, 13, 33, 42, 46, 125</code></td></tr><tr><td>Graph Build</td><td>309</td><td><code>8, 12, 19, 20, 21, 30, 37, 49, 50, 61, 117, 154, 155, 171, 174, 203</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>718</td><td><code>0, 3, 10, 11, 14, 24, 26, 31, 35, 36, 40, 41, 45, 48, 51, 59, 60, 63, 78, 79, 86, 87, 89, 92, 99, 106, 118, 140, 156, 164, 188</code></td></tr><tr><td>Outputs &amp; Docs</td><td>296</td><td><code>7, 23, 69, 75, 93, 103, 109, 110, 116, 129, 130, 131, 132, 143, 144, 145, 146, 153, 168, 169, 170, 177, 178, 182, 183, 192, 193, 194, 196, 197, 198, 199, 204, 210, 211</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>372</td><td><code>2, 4, 32, 39, 62, 68, 88, 96, 97, 111, 112, 122, 123, 124, 136, 138, 148, 149, 150, 151, 161, 162, 163, 175, 176, 180, 184, 185, 186, 187, 195, 213, 214, 226</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>88</td><td><code>9, 101, 104, 105, 127, 135</code></td></tr><tr><td>Serving API</td><td>144</td><td><code>6, 22, 76, 80, 84, 108, 115, 133, 181</code></td></tr><tr><td>Community 5</td><td>42</td><td><code>5</code></td></tr><tr><td>Community 15</td><td>34</td><td><code>15</code></td></tr><tr><td>Community 16</td><td>33</td><td><code>16</code></td></tr><tr><td>Community 17</td><td>32</td><td><code>17</code></td></tr><tr><td>Community 18</td><td>31</td><td><code>18</code></td></tr><tr><td>Community 25</td><td>27</td><td><code>25</code></td></tr><tr><td>Community 27</td><td>26</td><td><code>27</code></td></tr><tr><td>Other</td><td>850</td><td><code>28, 29, 34, 38, 43, 44, 47, 52, 53, 54, 55, 56, 57, 58, 64, 65, 66, 67, 70, 71, 72, 73, 74, 77, 81, 82, 83, 85, 90, 100, 91, 94, 95, 98, 102, 107, 113, 114, 119, 120, 121, 126, 128, 134, 137, 139, 141, 142, 147, 152, 157, 158, 159, 160, 165, 166, 167, 172, 173, 179, 189, 190, 191, 200, 201, 202, 205, 206, 207, 208, 209, 212, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225</code></td></tr>
+      <tr><td>Extraction Pipeline</td><td>128</td><td><code>1, 33, 42, 46, 125</code></td></tr><tr><td>Graph Build</td><td>312</td><td><code>8, 12, 19, 20, 21, 30, 37, 49, 50, 61, 117, 154, 155, 171, 174, 203, 234</code></td></tr><tr><td>Analysis &amp; Clustering</td><td>737</td><td><code>0, 3, 10, 11, 14, 24, 31, 26, 35, 36, 40, 41, 13, 48, 51, 45, 59, 60, 63, 78, 79, 86, 87, 89, 92, 99, 106, 118, 140, 156, 164, 188</code></td></tr><tr><td>Outputs &amp; Docs</td><td>291</td><td><code>7, 23, 69, 75, 93, 103, 109, 110, 116, 129, 130, 131, 132, 143, 144, 145, 146, 153, 168, 169, 170, 177, 178, 182, 183, 192, 193, 194, 196, 197, 198, 199, 204, 210, 211</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>372</td><td><code>2, 4, 32, 39, 62, 68, 88, 96, 97, 111, 112, 122, 123, 124, 136, 138, 148, 149, 150, 151, 161, 162, 163, 175, 176, 180, 184, 185, 186, 187, 195, 213, 214, 226</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>80</td><td><code>9, 101, 104, 105, 127</code></td></tr><tr><td>Serving API</td><td>147</td><td><code>6, 22, 76, 80, 84, 108, 115, 133, 181</code></td></tr><tr><td>Community 5</td><td>42</td><td><code>5</code></td></tr><tr><td>Community 15</td><td>37</td><td><code>15</code></td></tr><tr><td>Community 16</td><td>33</td><td><code>16</code></td></tr><tr><td>Community 17</td><td>32</td><td><code>17</code></td></tr><tr><td>Community 25</td><td>27</td><td><code>25</code></td></tr><tr><td>Community 43</td><td>26</td><td><code>43</code></td></tr><tr><td>Community 28</td><td>25</td><td><code>28</code></td></tr><tr><td>Other</td><td>891</td><td><code>34, 38, 44, 47, 18, 52, 53, 54, 55, 56, 165, 27, 57, 58, 64, 66, 67, 70, 71, 72, 73, 74, 77, 120, 81, 82, 83, 85, 90, 135, 91, 94, 98, 102, 107, 29, 206, 65, 113, 114, 119, 121, 126, 95, 128, 134, 137, 139, 227, 100, 141, 142, 147, 152, 157, 158, 159, 160, 228, 229, 166, 167, 172, 173, 179, 230, 231, 189, 190, 191, 200, 201, 202, 232, 205, 207, 208, 209, 212, 215, 233, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 235, 236, 237</code></td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Core Flow</h4>
-    <div class="arrow-chain">Community 5 -&gt; Other -&gt; Analysis &amp; Clustering -&gt; Extraction Pipeline -&gt; Community 17 -&gt; Graph Build -&gt; Outputs &amp; Docs</div>
+    <div class="arrow-chain">Community 28 -&gt; Other -&gt; Analysis &amp; Clustering -&gt; Extraction Pipeline -&gt; Community 17 -&gt; Graph Build -&gt; Outputs &amp; Docs</div>
   </div>
 </div>
 <div class="grid">
   <div class="card">
     <h4>Graph Report Highlights</h4>
     <ul>
-      <li>3165 nodes · 4154 edges · 227 communities (198 shown, 29 thin omitted)</li>
+      <li>3180 nodes · 4171 edges · 238 communities (205 shown, 33 thin omitted)</li>
       <li>Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)</li>
       <li>Token cost: 0 input · 0 output</li>
       <li>1. `dependencies` - 39 edges</li>
@@ -170,73 +170,68 @@ flowchart LR
 <hr>
 <!-- ====== 2. Extraction Pipeline ====== -->
 <h2 id="extract-pipeline">2. Extraction Pipeline</h2>
-<p>Extraction Pipeline groups implementation around backend, utils, subtitlecontrollerjs, controllers, mostly in backend/controllers/subtitleController.js, backend/utils/subtitleUtils.js, frontend/DESIGN_LANGUAGE.md. This section covers 163 nodes and 230 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Extraction Pipeline groups implementation around backend, utils, subtitlecontrollerjs, controllers, mostly in backend/controllers/subtitleController.js, backend/utils/subtitleUtils.js, frontend/DESIGN_LANGUAGE.md. This section covers 128 nodes and 162 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Extraction Pipeline (163 nodes, 230 edges)
-    subgraph extract_pipeline_backend_utils_sarvamVoiceCloneU_61fada11["backend/utils/sarvamVoiceCloneUtils.js"]
-        utils_sarvamvoicecloneutils_norm_abce093b("norm()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_normlower_ddafafb1("normLower()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        backend_utils_sarvamvoicecloneutils_js_f6f07c6a("sarvamVoiceCloneUtils.js")
-        utils_sarvamvoicecloneutils_getsarvamvoiceclonec_0ea0ce75("getSarvamVoiceCloneCreateUrl()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_sarvamvoicecloneconf_919479bc("sarvamVoiceCloneConfigMissing()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_extractclonevoiceid_5e058298("extractCloneVoiceId()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095("createSarvamVoiceClone()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_interpolatedeleteurl_b608bd80("interpolateDeleteUrl()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_deletesarvamvoiceclo_1eedfc7e("deleteSarvamVoiceClone()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_istruthy_96c406ed("isTruthy()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_getsarvamclonefailur_97d04cf7("getSarvamCloneFailureMode()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_resolvesarvamlanguag_4c999cf3("resolveSarvamLanguageCode()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_issarvamvoicecloneco_64f4b30c("isSarvamVoiceCloneConfigured()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_picknested_81099e67("pickNested()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-        utils_sarvamvoicecloneutils_buildauthheaders_7af82d0a("buildAuthHeaders()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
-    end
+    %% Section: Extraction Pipeline (128 nodes, 162 edges)
     subgraph extract_pipeline_backend_utils_subtitleUtils_js_77727d4b["backend/utils/subtitleUtils.js"]
         utils_subtitleutils_getopenai_b0ad506d("getOpenAI()<br/><small>backend/utils/subtitleUtils.js</small>")
         utils_subtitleutils_pad_56927caf("pad()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_getdeepseek_e3efdbb9("getDeepseek()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_transcribefilewithwhisper_474ed7af("transcribeFileWithWhisper()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_transliteratetohinglish_7c7d2ac9("transliterateToHinglish()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_translatesubtitlesegments_60a5359d("translateSubtitleSegments()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_parsegeminijsonresponse_3d5aaae9("parseGeminiJsonResponse()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_resolvelanguage_4755221f("resolveLanguage()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_shouldtranslatesubtitles_9ecb2eb2("shouldTranslateSubtitles()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_transcribespeechclip_3741069d("transcribeSpeechClip()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_resolvesubtitleoutputlanguag_b1c3e05e("resolveSubtitleOutputLanguage()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_formatsrttime_5f3a4ff6("formatSRTTime()<br/><small>backend/utils/subtitleUtils.js</small>")
+        utils_subtitleutils_formatvtttime_2483f7cf("formatVTTTime()<br/><small>backend/utils/subtitleUtils.js</small>")
     end
-    utils_translationutils_resolvesarvamlanguagekey_cdf1e7b8("resolveSarvamLanguageKey()<br/><small>backend/utils/translationUtils.js</small>")
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_normlower_ddafafb1
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_getsarvamvoiceclonec_0ea0ce75
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_sarvamvoicecloneconf_919479bc
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_extractclonevoiceid_5e058298
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_interpolatedeleteurl_b608bd80
-    utils_sarvamvoicecloneutils_norm_abce093b -->|calls| utils_sarvamvoicecloneutils_deletesarvamvoiceclo_1eedfc7e
-    utils_sarvamvoicecloneutils_normlower_ddafafb1 -->|calls| utils_sarvamvoicecloneutils_istruthy_96c406ed
-    utils_sarvamvoicecloneutils_normlower_ddafafb1 -->|calls| utils_sarvamvoicecloneutils_getsarvamclonefailur_97d04cf7
-    utils_sarvamvoicecloneutils_normlower_ddafafb1 -->|calls| utils_sarvamvoicecloneutils_resolvesarvamlanguag_4c999cf3
-    utils_sarvamvoicecloneutils_istruthy_96c406ed -->|calls| utils_sarvamvoicecloneutils_sarvamvoicecloneconf_919479bc
-    utils_sarvamvoicecloneutils_resolvesarvamlanguag_4c999cf3 -->|calls| utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095
-    utils_sarvamvoicecloneutils_getsarvamvoiceclonec_0ea0ce75 -->|calls| utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095
-    utils_sarvamvoicecloneutils_sarvamvoicecloneconf_919479bc -->|calls| utils_sarvamvoicecloneutils_issarvamvoicecloneco_64f4b30c
-    utils_sarvamvoicecloneutils_issarvamvoicecloneco_64f4b30c -->|calls| utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095
-    utils_sarvamvoicecloneutils_picknested_81099e67 -->|calls| utils_sarvamvoicecloneutils_extractclonevoiceid_5e058298
-    utils_sarvamvoicecloneutils_extractclonevoiceid_5e058298 -->|calls| utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095
-    utils_sarvamvoicecloneutils_buildauthheaders_7af82d0a -->|calls| utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095
-    utils_sarvamvoicecloneutils_buildauthheaders_7af82d0a -->|calls| utils_sarvamvoicecloneutils_deletesarvamvoiceclo_1eedfc7e
-    utils_sarvamvoicecloneutils_interpolatedeleteurl_b608bd80 -->|calls| utils_sarvamvoicecloneutils_deletesarvamvoiceclo_1eedfc7e
-    %% Omitted for readability: 145 nodes, 0 edges
-    class utils_sarvamvoicecloneutils_norm_abce093b function;
-    class utils_sarvamvoicecloneutils_normlower_ddafafb1 function;
-    class backend_utils_sarvamvoicecloneutils_js_f6f07c6a module;
-    class utils_sarvamvoicecloneutils_getsarvamvoiceclonec_0ea0ce75 function;
-    class utils_sarvamvoicecloneutils_sarvamvoicecloneconf_919479bc function;
-    class utils_sarvamvoicecloneutils_extractclonevoiceid_5e058298 function;
-    class utils_sarvamvoicecloneutils_createsarvamvoiceclo_42e2a095 function;
-    class utils_sarvamvoicecloneutils_interpolatedeleteurl_b608bd80 function;
-    class utils_sarvamvoicecloneutils_deletesarvamvoiceclo_1eedfc7e function;
-    class utils_sarvamvoicecloneutils_istruthy_96c406ed function;
-    class utils_sarvamvoicecloneutils_getsarvamclonefailur_97d04cf7 function;
-    class utils_sarvamvoicecloneutils_resolvesarvamlanguag_4c999cf3 function;
-    class utils_sarvamvoicecloneutils_issarvamvoicecloneco_64f4b30c function;
-    class utils_sarvamvoicecloneutils_picknested_81099e67 function;
-    class utils_sarvamvoicecloneutils_buildauthheaders_7af82d0a function;
+    subgraph extract_pipeline_backend_utils_languageCatalog_j_20b77e97["backend/utils/languageCatalog.js"]
+        backend_utils_languagecatalog_js_419579ca("languageCatalog.js")
+        utils_languagecatalog_capitalizelabel_7471b66d("capitalizeLabel()<br/><small>backend/utils/languageCatalog.js</small>")
+        utils_languagecatalog_buildsubtitlelanguagelist_919d9d7d("buildSubtitleLanguageList()<br/><small>backend/utils/languageCatalog.js</small>")
+        utils_languagecatalog_builddubbinglanguagelist_cec344b7("buildDubbingLanguageList()<br/><small>backend/utils/languageCatalog.js</small>")
+    end
+    utils_sarvamttsutils_norm_76c07561("norm()<br/><small>backend/utils/sarvamTtsUtils.js</small>")
+    utils_languagecatalog_capitalizelabel_7471b66d -->|calls| utils_languagecatalog_buildsubtitlelanguagelist_919d9d7d
+    utils_languagecatalog_capitalizelabel_7471b66d -->|calls| utils_languagecatalog_builddubbinglanguagelist_cec344b7
+    utils_subtitleutils_getopenai_b0ad506d -->|calls| utils_subtitleutils_transcribefilewithwhisper_474ed7af
+    utils_subtitleutils_getopenai_b0ad506d -->|calls| utils_subtitleutils_transliteratetohinglish_7c7d2ac9
+    utils_subtitleutils_getopenai_b0ad506d -->|calls| utils_subtitleutils_translatesubtitlesegments_60a5359d
+    utils_subtitleutils_getdeepseek_e3efdbb9 -->|calls| utils_subtitleutils_transliteratetohinglish_7c7d2ac9
+    utils_subtitleutils_getdeepseek_e3efdbb9 -->|calls| utils_subtitleutils_translatesubtitlesegments_60a5359d
+    utils_subtitleutils_parsegeminijsonresponse_3d5aaae9 -->|calls| utils_subtitleutils_transliteratetohinglish_7c7d2ac9
+    utils_subtitleutils_parsegeminijsonresponse_3d5aaae9 -->|calls| utils_subtitleutils_translatesubtitlesegments_60a5359d
+    utils_subtitleutils_resolvelanguage_4755221f -->|calls| utils_subtitleutils_shouldtranslatesubtitles_9ecb2eb2
+    utils_subtitleutils_transcribefilewithwhisper_474ed7af -->|calls| utils_subtitleutils_transcribespeechclip_3741069d
+    utils_subtitleutils_resolvesubtitleoutputlanguag_b1c3e05e -->|calls| utils_subtitleutils_shouldtranslatesubtitles_9ecb2eb2
+    utils_subtitleutils_resolvesubtitleoutputlanguag_b1c3e05e -->|calls| utils_subtitleutils_translatesubtitlesegments_60a5359d
+    utils_subtitleutils_pad_56927caf -->|calls| utils_subtitleutils_formatsrttime_5f3a4ff6
+    utils_subtitleutils_pad_56927caf -->|calls| utils_subtitleutils_formatvtttime_2483f7cf
+    %% Omitted for readability: 110 nodes, 0 edges
     class utils_subtitleutils_getopenai_b0ad506d function;
     class utils_subtitleutils_pad_56927caf function;
-    class utils_translationutils_resolvesarvamlanguagekey_cdf1e7b8 function;
+    class utils_subtitleutils_getdeepseek_e3efdbb9 function;
+    class utils_subtitleutils_transcribefilewithwhisper_474ed7af function;
+    class utils_subtitleutils_transliteratetohinglish_7c7d2ac9 function;
+    class utils_subtitleutils_translatesubtitlesegments_60a5359d function;
+    class utils_subtitleutils_parsegeminijsonresponse_3d5aaae9 function;
+    class utils_subtitleutils_resolvelanguage_4755221f function;
+    class utils_subtitleutils_shouldtranslatesubtitles_9ecb2eb2 function;
+    class utils_subtitleutils_transcribespeechclip_3741069d entry;
+    class utils_subtitleutils_resolvesubtitleoutputlanguag_b1c3e05e function;
+    class utils_subtitleutils_formatsrttime_5f3a4ff6 function;
+    class utils_subtitleutils_formatvtttime_2483f7cf function;
+    class backend_utils_languagecatalog_js_419579ca module;
+    class utils_languagecatalog_capitalizelabel_7471b66d api;
+    class utils_languagecatalog_buildsubtitlelanguagelist_919d9d7d function;
+    class utils_languagecatalog_builddubbinglanguagelist_cec344b7 function;
+    class utils_sarvamttsutils_norm_76c07561 function;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -573,26 +568,24 @@ flowchart LR
 <tr><td><code>backend/utils/subtitleUtils.js</code></td><td>24 nodes</td></tr>
 <tr><td><code>frontend/DESIGN_LANGUAGE.md</code></td><td>22 nodes</td></tr>
 <tr><td><code>backend/utils/sarvamTtsUtils.js</code></td><td>21 nodes</td></tr>
-<tr><td><code>backend/utils/sarvamVoiceCloneUtils.js</code></td><td>21 nodes</td></tr>
-<tr><td><code>backend/utils/translationUtils.js</code></td><td>14 nodes</td></tr>
 <tr><td><code>backend/utils/languageCatalog.js</code></td><td>10 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x156, calls x55, imports x14, imports x5. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x123, calls x24, imports x12, imports x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
 <!-- ====== 3. Graph Build ====== -->
 <h2 id="build-graph">3. Graph Build</h2>
-<p>Graph Build groups implementation around backend, packagejson, frontend, admin, mostly in backend/package.json, admin/package.json, frontend/package.json. This section covers 309 nodes and 318 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Graph Build groups implementation around backend, packagejson, frontend, admin, mostly in backend/package.json, admin/package.json, frontend/package.json. This section covers 312 nodes and 320 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Graph Build (309 nodes, 318 edges)
+    %% Section: Graph Build (312 nodes, 320 edges)
     subgraph build_graph_backend_utils_inworldTtsUtils_js_1068c174["backend/utils/inworldTtsUtils.js"]
         utils_inworldttsutils_buildinworldauthorizationh_9c995082("buildInworldAuthorizationHeader()<br/><small>backend/utils/inworldTtsUtils.js</small>")
         utils_inworldttsutils_synthesizeinworldtts_1fb6f1f7("synthesizeInworldTts()<br/><small>backend/utils/inworldTtsUtils.js</small>")
@@ -627,7 +620,7 @@ flowchart LR
     utils_inworldttsutils_getforcedinworldvoiceid_05bce915 -->|calls| utils_inworldttsutils_selectbestinworldvoice_ab591cc4
     utils_inworldttsutils_normalizewordtimestamps_b3e515c1 -->|calls| utils_inworldttsutils_extractwordtimestampsfromb_073252d0
     utils_inworldttsutils_extractwordtimestampsfromb_073252d0 -->|calls| utils_inworldttsutils_synthesizeinworldtts_1fb6f1f7
-    %% Omitted for readability: 291 nodes, 0 edges
+    %% Omitted for readability: 294 nodes, 0 edges
     class utils_inworldttsutils_buildinworldauthorizationh_9c995082 function;
     class utils_inworldttsutils_synthesizeinworldtts_1fb6f1f7 function;
     class utils_inworldttsutils_resolveinworldlangcode_17bef481 function;
@@ -926,21 +919,20 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x292, calls x23, imports x2, imports x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x294, calls x23, imports x2, imports x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
 <!-- ====== 4. Analysis & Clustering ====== -->
 <h2 id="analysis-clustering">4. Analysis &amp; Clustering</h2>
-<p>Analysis &amp; Clustering groups implementation around backend, utils, controllers, dubbingcontrollerjs, mostly in backend/controllers/dubbingController.js, backend/app.js, backend/utils/transcribeUtils.js. This section covers 718 nodes and 951 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Analysis &amp; Clustering groups implementation around backend, utils, controllers, dubbingcontrollerjs, mostly in backend/controllers/dubbingController.js, backend/app.js, backend/utils/transcribeUtils.js. This section covers 737 nodes and 996 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Analysis &amp; Clustering (718 nodes, 951 edges)
+    %% Section: Analysis &amp; Clustering (737 nodes, 996 edges)
     subgraph analysis_clustering_backend_middleware_checkDubb_467a3db1["backend/middleware/checkDubbingLimits.js"]
-        backend_middleware_checkdubbinglimits_js_da180857("checkDubbingLimits.js")
         middleware_checkdubbinglimits_todayutc_8a13c69f("todayUTC()<br/><small>backend/middleware/checkDubbingLimits.js</small>")
         middleware_checkdubbinglimits_reservedubbingusag_2b01b34d("reserveDubbingUsage()<br/><small>backend/middleware/checkDubbingLimits.js</small>")
         middleware_checkdubbinglimits_billingcyclestartd_5263c41d("billingCycleStartDate()<br/><small>backend/middleware/checkDubbingLimits.js</small>")
@@ -961,6 +953,7 @@ flowchart LR
     utils_audioutils_getfileduration_9a8ae5d3("getFileDuration()<br/><small>backend/utils/audioUtils.js</small>")
     backend_utils_geminibatchttsutils_js_6481c8d7("geminiBatchTtsUtils.js")
     utils_projectsearch_normalizesearchtext_6b0947c2("normalizeSearchText()<br/><small>backend/utils/projectSearch.js</small>")
+    utils_sarvamvoicecloneutils_norm_abce093b("norm()<br/><small>backend/utils/sarvamVoiceCloneUtils.js</small>")
     utils_usageservice_checkcostsafetycap_0fe7b6a6("checkCostSafetyCap()<br/><small>backend/utils/usageService.js</small>")
     backend_utils_youtubedownloadutils_js_9da79d16("youtubeDownloadUtils.js")
     middleware_checkdubbinglimits_todayutc_8a13c69f -->|calls| middleware_checkdubbinglimits_reservedubbingusag_2b01b34d
@@ -974,15 +967,12 @@ flowchart LR
     middleware_dubbingprepares3input_preparedubbings_308fb4e1 -->|calls| utils_storage_heads3objectmeta_a9246ba7
     middleware_dubbingprepares3input_preparedubbings_308fb4e1 -->|calls| utils_storage_downloads3objecttofile_1379c790
     middleware_dubbingprepares3input_preparedubbings_308fb4e1 -->|calls| routes_dubbingroutes_dubbingmultipartors3_86e54b67
-    backend_middleware_checkdubbinglimits_js_da180857 -->|imports| utils_audioutils_getfileduration_9a8ae5d3
-    backend_middleware_checkdubbinglimits_js_da180857 -->|imports| utils_usageservice_checkcostsafetycap_0fe7b6a6
     backend_middleware_dubbingprepares3input_js_bf898c1c -->|imports| utils_storage_heads3objectmeta_a9246ba7
     backend_middleware_dubbingprepares3input_js_bf898c1c -->|imports| utils_storage_downloads3objecttofile_1379c790
     backend_middleware_subtitleprepares3input_js_f5439e15 -->|imports| utils_storage_heads3objectmeta_a9246ba7
     backend_middleware_subtitleprepares3input_js_f5439e15 -->|imports| utils_storage_downloads3objecttofile_1379c790
     backend_utils_geminibatchttsutils_js_6481c8d7 -->|imports| utils_audioutils_getfileduration_9a8ae5d3
-    %% Omitted for readability: 700 nodes, 0 edges
-    class backend_middleware_checkdubbinglimits_js_da180857 module;
+    %% Omitted for readability: 719 nodes, 0 edges
     class middleware_checkdubbinglimits_todayutc_8a13c69f function;
     class middleware_checkdubbinglimits_reservedubbingusag_2b01b34d function;
     class middleware_checkdubbinglimits_billingcyclestartd_5263c41d function;
@@ -998,6 +988,7 @@ flowchart LR
     class utils_audioutils_getfileduration_9a8ae5d3 function;
     class backend_utils_geminibatchttsutils_js_6481c8d7 module;
     class utils_projectsearch_normalizesearchtext_6b0947c2 function;
+    class utils_sarvamvoicecloneutils_norm_abce093b function;
     class utils_usageservice_checkcostsafetycap_0fe7b6a6 function;
     class backend_utils_youtubedownloadutils_js_9da79d16 module;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
@@ -1025,7 +1016,7 @@ flowchart LR
   <td>1</td>
   <td><code>dubbingController.js</code><br><small style="color:var(--muted)">backend/controllers/dubbingController.js</small></td>
   <td><span class="tag tag-class">Module</span></td>
-  <td><code>audioMergeUtils.js</code><br><small style="color:var(--muted)">backend/utils/audioMergeUtils.js</small><br><code>audioUtils.js</code><br><small style="color:var(--muted)">backend/utils/audioUtils.js</small><br><code>audioVideoMimes.js</code><br><small style="color:var(--muted)">backend/constants/audioVideoMimes.js</small><br>+44 more</td>
+  <td><code>audioMergeUtils.js</code><br><small style="color:var(--muted)">backend/utils/audioMergeUtils.js</small><br><code>audioUtils.js</code><br><small style="color:var(--muted)">backend/utils/audioUtils.js</small><br><code>audioVideoMimes.js</code><br><small style="color:var(--muted)">backend/constants/audioVideoMimes.js</small><br>+50 more</td>
   <td>No direct outbound edge</td>
   <td>dubbingController.js node in backend/controllers/dubbingController.js.</td>
 </tr>
@@ -1360,41 +1351,39 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x660, calls x157, imports x70, imports x63. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x679, calls x177, imports x75, imports x64. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
 <!-- ====== 5. Outputs & Docs ====== -->
 <h2 id="outputs-docs">5. Outputs &amp; Docs</h2>
-<p>Outputs &amp; Docs groups implementation around documentationmd, backend, frontend, admin, mostly in backend/DOCUMENTATION.md, admin/DOCUMENTATION.md, frontend/DOCUMENTATION.md. This section covers 296 nodes and 300 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Outputs &amp; Docs groups implementation around documentationmd, backend, frontend, admin, mostly in backend/DOCUMENTATION.md, admin/DOCUMENTATION.md, frontend/DOCUMENTATION.md. This section covers 291 nodes and 291 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Outputs &amp; Docs (296 nodes, 300 edges)
+    %% Section: Outputs &amp; Docs (291 nodes, 291 edges)
+    subgraph outputs_docs_app_export_ExportView_tsx_c47c9e02["app/export/ExportView.tsx"]
+        frontend_app_export_exportview_tsx_10bd7067("ExportView.tsx")
+        export_exportview_formatdurationsecs_8b5486d7("formatDurationSecs()<br/><small>app/export/ExportView.tsx</small>")
+        export_exportview_exportview_a0597928("ExportView()<br/><small>app/export/ExportView.tsx</small>")
+        export_exportview_downloads_76e0ad3a("DOWNLOADS<br/><small>app/export/ExportView.tsx</small>")
+        export_exportview_segment_e9fd2682("Segment<br/><small>app/export/ExportView.tsx</small>")
+        export_exportview_subtitlejob_38a8bbb2("SubtitleJob<br/><small>app/export/ExportView.tsx</small>")
+        export_exportview_formattime_7f5d69ff("formatTime()<br/><small>app/export/ExportView.tsx</small>")
+    end
     subgraph outputs_docs_components_dubbing_DubbingExportVie_bb288415["components/dubbing/DubbingExportView.tsx"]
         dubbing_dubbingexportview_hasmuxeddubbedvideofil_f2e40343("hasMuxedDubbedVideoFile()<br/><small>components/dubbing/DubbingExportView.tsx</small>")
         dubbing_dubbingexportview_muxeddubbedvideofetchu_e9d4608a("muxedDubbedVideoFetchUrl()<br/><small>components/dubbing/DubbingExportView.tsx</small>")
         dubbing_dubbingexportview_downloadpanel_811d0b2c("DownloadPanel()<br/><small>components/dubbing/DubbingExportView.tsx</small>")
         frontend_components_dubbing_dubbingexportview_ts_a5b8874c("DubbingExportView.tsx")
     end
-    subgraph outputs_docs_app_export_ExportView_tsx_c47c9e02["app/export/ExportView.tsx"]
-        frontend_app_export_exportview_tsx_10bd7067("ExportView.tsx")
-        export_exportview_formatdurationsecs_8b5486d7("formatDurationSecs()<br/><small>app/export/ExportView.tsx</small>")
-        export_exportview_exportview_a0597928("ExportView()<br/><small>app/export/ExportView.tsx</small>")
-    end
-    subgraph outputs_docs_components_dubbing_DubbingVideoPlay_449d4bb2["components/dubbing/DubbingVideoPlayer.tsx"]
-        dubbing_dubbingvideoplayer_fmt_adbc8668("fmt()<br/><small>components/dubbing/DubbingVideoPlayer.tsx</small>")
-        dubbing_dubbingvideoplayer_getactiveseg_db418c32("getActiveSeg()<br/><small>components/dubbing/DubbingVideoPlayer.tsx</small>")
-        dubbing_dubbingvideoplayer_dubbingvideoplayer_cde51386("DubbingVideoPlayer()<br/><small>components/dubbing/DubbingVideoPlayer.tsx</small>")
-    end
     subgraph outputs_docs_dubbing_export_page_tsx_0964aeed["dubbing/export/page.tsx"]
         frontend_app_dashboard_dubbing_export_page_tsx_e94d8547("page.tsx")
         frontend_app_dubbing_export_page_tsx_2b6bec5e("page.tsx")
     end
     frontend_app_export_page_tsx_1cdc076e("page.tsx")
-    dubbingeditor_types_dubbingsegment_7487396c("DubbingSegment<br/><small>components/dubbingEditor/types.ts</small>")
     frontend_components_export_translatelanguagedial_06aef2d4("TranslateLanguageDialog.tsx")
     settings_settingscards_profilecard_8d148022("ProfileCard()<br/><small>components/settings/SettingsCards.tsx</small>")
     frontend_app_dashboard_export_page_tsx_cf9d8959("page.tsx")
@@ -1403,32 +1392,29 @@ flowchart LR
     utils_axios_s3url_2f899c86 -->|calls| settings_settingscards_profilecard_8d148022
     utils_axios_s3url_2f899c86 -->|calls| dubbing_dubbingexportview_muxeddubbedvideofetchu_e9d4608a
     utils_axios_s3url_2f899c86 -->|calls| dubbing_dubbingexportview_downloadpanel_811d0b2c
-    utils_axios_s3url_2f899c86 -->|calls| dubbing_dubbingvideoplayer_dubbingvideoplayer_cde51386
     dubbing_dubbingexportview_hasmuxeddubbedvideofil_f2e40343 -->|calls| dubbing_dubbingexportview_muxeddubbedvideofetchu_e9d4608a
     dubbing_dubbingexportview_muxeddubbedvideofetchu_e9d4608a -->|calls| dubbing_dubbingexportview_downloadpanel_811d0b2c
-    dubbing_dubbingvideoplayer_fmt_adbc8668 -->|calls| dubbing_dubbingvideoplayer_dubbingvideoplayer_cde51386
-    dubbing_dubbingvideoplayer_getactiveseg_db418c32 -->|calls| dubbing_dubbingvideoplayer_dubbingvideoplayer_cde51386
     frontend_app_dashboard_dubbing_export_page_tsx_e94d8547 -->|imports| frontend_components_dubbing_dubbingexportview_ts_a5b8874c
     frontend_app_dashboard_export_page_tsx_cf9d8959 -->|imports| frontend_app_export_exportview_tsx_10bd7067
     frontend_app_dubbing_export_page_tsx_2b6bec5e -->|imports| frontend_components_dubbing_dubbingexportview_ts_a5b8874c
     frontend_app_export_exportview_tsx_10bd7067 -->|imports| frontend_components_export_translatelanguagedial_06aef2d4
     frontend_app_export_exportview_tsx_10bd7067 -->|imports| frontend_app_export_page_tsx_1cdc076e
     utils_axios_s3url_2f899c86 -->|imports| frontend_components_dubbing_dubbingexportview_ts_a5b8874c
-    %% Omitted for readability: 278 nodes, 0 edges
+    %% Omitted for readability: 273 nodes, 0 edges
+    class frontend_app_export_exportview_tsx_10bd7067 ui;
+    class export_exportview_formatdurationsecs_8b5486d7 ui;
+    class export_exportview_exportview_a0597928 ui;
+    class export_exportview_downloads_76e0ad3a ui;
+    class export_exportview_segment_e9fd2682 ui;
+    class export_exportview_subtitlejob_38a8bbb2 ui;
+    class export_exportview_formattime_7f5d69ff ui;
     class dubbing_dubbingexportview_hasmuxeddubbedvideofil_f2e40343 ui;
     class dubbing_dubbingexportview_muxeddubbedvideofetchu_e9d4608a ui;
     class dubbing_dubbingexportview_downloadpanel_811d0b2c ui;
     class frontend_components_dubbing_dubbingexportview_ts_a5b8874c ui;
-    class frontend_app_export_exportview_tsx_10bd7067 ui;
-    class export_exportview_formatdurationsecs_8b5486d7 ui;
-    class export_exportview_exportview_a0597928 ui;
-    class dubbing_dubbingvideoplayer_fmt_adbc8668 ui;
-    class dubbing_dubbingvideoplayer_getactiveseg_db418c32 ui;
-    class dubbing_dubbingvideoplayer_dubbingvideoplayer_cde51386 ui;
     class frontend_app_dashboard_dubbing_export_page_tsx_e94d8547 ui;
     class frontend_app_dubbing_export_page_tsx_2b6bec5e ui;
     class frontend_app_export_page_tsx_1cdc076e ui;
-    class dubbingeditor_types_dubbingsegment_7487396c klass;
     class frontend_components_export_translatelanguagedial_06aef2d4 ui;
     class settings_settingscards_profilecard_8d148022 ui;
     class frontend_app_dashboard_export_page_tsx_cf9d8959 ui;
@@ -1708,12 +1694,12 @@ flowchart LR
 <tr><td><code>components/dubbing/DubbingExportView.tsx</code></td><td>16 nodes</td></tr>
 <tr><td><code>app/export/ExportView.tsx</code></td><td>8 nodes</td></tr>
 <tr><td><code>backend/DOCUMENTATION_DUBBING_WORKER.md</code></td><td>7 nodes</td></tr>
-<tr><td><code>components/dubbing/DubbingVideoPlayer.tsx</code></td><td>4 nodes</td></tr>
+<tr><td><code>components/export/TranslateLanguageDialog.tsx</code></td><td>4 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x282, calls x9, imports x6, imports x3. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x279, calls x6, imports x5, imports x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -2073,12 +2059,12 @@ flowchart LR
 
 <!-- ====== 7. Ingestion & Updates ====== -->
 <h2 id="ingest-cache-update">7. Ingestion &amp; Updates</h2>
-<p>Ingestion &amp; Updates groups implementation around readmemd, backend, routes, dubbing, mostly in README.md, docs/AI_DUBBING_PIPELINE.md, backend/routes/dubbingRoutes.js. This section covers 88 nodes and 83 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Ingestion &amp; Updates groups implementation around readmemd, backend, routes, dubbing, mostly in README.md, docs/AI_DUBBING_PIPELINE.md, backend/routes/dubbingRoutes.js. This section covers 80 nodes and 76 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Ingestion &amp; Updates (88 nodes, 83 edges)
+    %% Section: Ingestion &amp; Updates (80 nodes, 76 edges)
     subgraph ingest_cache_update_backend_routes_dubbingRoutes_bdc17282["backend/routes/dubbingRoutes.js"]
         routes_dubbingroutes_audio_video_mimes_39f2b6e1("AUDIO_VIDEO_MIMES<br/><small>backend/routes/dubbingRoutes.js</small>")
         routes_dubbingroutes_checkdubbinglimits_0f5b0af3("checkDubbingLimits<br/><small>backend/routes/dubbingRoutes.js</small>")
@@ -2103,7 +2089,7 @@ flowchart LR
     middleware_subtitleprepares3input_preparesubtitl_3b19cc1c("prepareSubtitleStartFromS3()<br/><small>backend/middleware/subtitlePrepareS3Input.js</small>")
     middleware_subtitleprepares3input_preparesubtitl_3b19cc1c -->|calls| routes_subtitleroutes_subtitlemultipartors3_ddb6f237
     middleware_subtitleprepares3input_preparesubtitl_3b19cc1c -->|imports| backend_routes_subtitleroutes_js_14bd03d9
-    %% Omitted for readability: 70 nodes, 0 edges
+    %% Omitted for readability: 62 nodes, 0 edges
     class routes_dubbingroutes_audio_video_mimes_39f2b6e1 klass;
     class routes_dubbingroutes_checkdubbinglimits_0f5b0af3 function;
     class routes_dubbingroutes_checkdubbingretargetlimits_600bcc4e function;
@@ -2394,7 +2380,6 @@ flowchart LR
 <tr><td><code>backend/routes/dubbingRoutes.js</code></td><td>11 nodes</td></tr>
 <tr><td><code>docs/AI_DUBBING_PIPELINE.md</code></td><td>11 nodes</td></tr>
 <tr><td><code>backend/routes/subtitleRoutes.js</code></td><td>10 nodes</td></tr>
-<tr><td><code>backend/routes/transcribeTestRoutes.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>video-details/[id]/page.tsx</code></td><td>5 nodes</td></tr>
 <tr><td><code>profiles/[id]/page.tsx</code></td><td>3 nodes</td></tr>
 <tr><td><code>backend/middleware/subtitlePrepareS3Input.js</code></td><td>1 nodes</td></tr>
@@ -2402,19 +2387,19 @@ flowchart LR
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x81, imports x1, calls x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x74, imports x1, calls x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
 <!-- ====== 8. Serving API ====== -->
 <h2 id="serve-api">8. Serving API</h2>
-<p>Serving API groups implementation around backend, admin, utils, apits, mostly in admin/utils/api.ts, backend/README.md, admin/components/DocumentsTab.tsx. This section covers 144 nodes and 146 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Serving API groups implementation around backend, admin, utils, apits, mostly in admin/utils/api.ts, backend/README.md, admin/components/DocumentsTab.tsx. This section covers 147 nodes and 149 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Serving API (144 nodes, 146 edges)
+    %% Section: Serving API (147 nodes, 149 edges)
     subgraph serve_api_admin_utils_api_ts_d5ac6573["admin/utils/api.ts"]
         admin_utils_api_ts_ce62e6fd("api.ts")
         utils_api_getdashboardstats_5d4a0926("getDashboardStats()<br/><small>admin/utils/api.ts</small>")
@@ -2436,9 +2421,9 @@ flowchart LR
     backend_middleware_is_auth_js_5218bd65("is-auth.js")
     backend_routes_adminbillingroutes_js_f0da9acd("adminBillingRoutes.js")
     backend_routes_adminplanroutes_js_58ec0a5d("adminPlanRoutes.js")
-    backend_routes_billingroutes_js_b43ef62f("billingRoutes.js")
     backend_routes_fileroutes_js_a7ef4933("fileRoutes.js")
     backend_routes_projectroutes_js_a53a4104("projectRoutes.js")
+    backend_routes_transcribetestroutes_js_324bf81f("transcribeTestRoutes.js")
     types_index_leaddocument_8c160dcd -->|imports| admin_components_documentstab_tsx_e24ee7e9
     types_index_projectdocument_3ee24d22 -->|imports| admin_components_documentstab_tsx_e24ee7e9
     admin_app_dashboard_page_tsx_d53a26b8 -->|imports| admin_utils_api_ts_ce62e6fd
@@ -2449,13 +2434,13 @@ flowchart LR
     utils_api_updateproject_bb063d92 -->|imports| admin_components_documentstab_tsx_e24ee7e9
     backend_middleware_is_auth_js_5218bd65 -->|imports| backend_routes_adminplanroutes_js_58ec0a5d
     backend_middleware_is_auth_js_5218bd65 -->|imports| backend_routes_projectroutes_js_a53a4104
+    backend_middleware_is_auth_js_5218bd65 -->|imports| backend_routes_transcribetestroutes_js_324bf81f
     backend_middleware_is_auth_js_5218bd65 -->|imports| backend_routes_adminbillingroutes_js_f0da9acd
-    backend_middleware_is_auth_js_5218bd65 -->|imports| backend_routes_billingroutes_js_b43ef62f
     backend_middleware_is_auth_js_5218bd65 -->|imports| backend_routes_fileroutes_js_a7ef4933
     backend_middleware_is_admin_js_8936322b -->|imports| backend_routes_adminplanroutes_js_58ec0a5d
     backend_middleware_is_admin_js_8936322b -->|imports| backend_routes_adminbillingroutes_js_f0da9acd
     backend_middleware_is_admin_js_8936322b -->|imports| backend_routes_fileroutes_js_a7ef4933
-    %% Omitted for readability: 126 nodes, 0 edges
+    %% Omitted for readability: 129 nodes, 0 edges
     class admin_utils_api_ts_ce62e6fd api;
     class utils_api_getdashboardstats_5d4a0926 function;
     class utils_api_gettimebasedstats_e9ad634e function;
@@ -2471,9 +2456,9 @@ flowchart LR
     class backend_middleware_is_auth_js_5218bd65 module;
     class backend_routes_adminbillingroutes_js_f0da9acd api;
     class backend_routes_adminplanroutes_js_58ec0a5d api;
-    class backend_routes_billingroutes_js_b43ef62f api;
     class backend_routes_fileroutes_js_a7ef4933 api;
     class backend_routes_projectroutes_js_a53a4104 api;
+    class backend_routes_transcribetestroutes_js_324bf81f test;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -2748,13 +2733,13 @@ flowchart LR
 <tr><td><code>backend/DOCUMENTATION.md</code></td><td>9 nodes</td></tr>
 <tr><td><code>app/dashboard/page.tsx</code></td><td>8 nodes</td></tr>
 <tr><td><code>backend/routes/fileRoutes.js</code></td><td>8 nodes</td></tr>
+<tr><td><code>backend/routes/transcribeTestRoutes.js</code></td><td>8 nodes</td></tr>
 <tr><td><code>backend/routes/adminBillingRoutes.js</code></td><td>6 nodes</td></tr>
-<tr><td><code>backend/routes/adminPlanRoutes.js</code></td><td>6 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x128, imports x11, imports x7. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x131, imports x11, imports x7. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -3106,12 +3091,12 @@ flowchart LR
 
 <!-- ====== 10. Community 15 ====== -->
 <h2 id="community-15">10. Community 15</h2>
-<p>Community 15 groups implementation around frontend, components, dubbingeditor, dubbingeditorcontexttsx, mostly in components/dubbingEditor/DubbingEditorContext.tsx, components/dubbingEditor/types.ts, dubbing/editor/page.tsx. This section covers 34 nodes and 58 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<p>Community 15 groups implementation around frontend, components, dubbingeditor, dubbingeditorcontexttsx, mostly in components/dubbingEditor/DubbingEditorContext.tsx, components/dubbingEditor/types.ts, dubbing/editor/page.tsx. This section covers 37 nodes and 61 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 15 (34 nodes, 58 edges)
+    %% Section: Community 15 (37 nodes, 61 edges)
     subgraph community_15_components_dubbingEditor_DubbingEdi_0f806a81["components/dubbingEditor/DubbingEditorContext.tsx"]
         frontend_components_dubbingeditor_dubbingeditorc_368575db("DubbingEditorContext.tsx")
         dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f("useDubbingEditor()<br/><small>components/dubbingEditor/DubbingEditorContext.tsx</small>")
@@ -3123,7 +3108,6 @@ flowchart LR
         dubbingeditor_types_fmttime_4e2eb117("fmtTime()<br/><small>components/dubbingEditor/types.ts</small>")
         frontend_components_dubbingeditor_types_ts_2586e434("types.ts")
         dubbingeditor_types_editorjob_64d01ed6("EditorJob<br/><small>components/dubbingEditor/types.ts</small>")
-        dubbingeditor_types_fmttimeshort_659cc10d("fmtTimeShort()<br/><small>components/dubbingEditor/types.ts</small>")
     end
     subgraph community_15_components_dubbingEditor_CenterStag_bfb289f8["components/dubbingEditor/CenterStage.tsx"]
         frontend_components_dubbingeditor_centerstage_ts_2515bd44("CenterStage.tsx")
@@ -3133,11 +3117,14 @@ flowchart LR
         frontend_components_dubbingeditor_topbar_tsx_ec1d6047("TopBar.tsx")
         dubbingeditor_topbar_topbar_325d72db("TopBar()<br/><small>components/dubbingEditor/TopBar.tsx</small>")
     end
+    subgraph community_15_dubbing_editor_page_tsx_2280106e["dubbing/editor/page.tsx"]
+        frontend_app_dubbing_editor_page_tsx_19a39def("page.tsx")
+        frontend_app_dashboard_dubbing_editor_page_tsx_70092f08("page.tsx")
+    end
     dubbingeditor_bottomtimeline_bottomtimeline_907dad3e("BottomTimeline()<br/><small>components/dubbingEditor/BottomTimeline.tsx</small>")
     frontend_components_dubbingeditor_editorshell_ts_b76b6bc7("EditorShell.tsx")
     dubbingeditor_leftpanel_leftpanel_edcbdb25("LeftPanel()<br/><small>components/dubbingEditor/LeftPanel.tsx</small>")
     dubbingeditor_rightinspector_rightinspector_1c39fb43("RightInspector()<br/><small>components/dubbingEditor/RightInspector.tsx</small>")
-    frontend_app_dubbing_editor_page_tsx_19a39def("page.tsx")
     dubbingeditor_topbar_topbar_325d72db -->|calls| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
     dubbingeditor_centerstage_centerstage_9d3d1b5a -->|calls| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
     dubbingeditor_bottomtimeline_bottomtimeline_907dad3e -->|calls| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
@@ -3145,6 +3132,7 @@ flowchart LR
     dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f -->|calls| dubbingeditor_leftpanel_leftpanel_edcbdb25
     dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f -->|calls| dubbingeditor_rightinspector_rightinspector_1c39fb43
     dubbingeditor_types_fmttime_4e2eb117 -->|calls| dubbingeditor_rightinspector_rightinspector_1c39fb43
+    frontend_app_dashboard_dubbing_editor_page_tsx_70092f08 -->|imports| frontend_app_dubbing_editor_page_tsx_19a39def
     frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| frontend_components_dubbingeditor_types_ts_2586e434
     frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| dubbingeditor_types_editorjob_64d01ed6
     frontend_app_dubbing_editor_page_tsx_19a39def -->|imports| frontend_components_dubbingeditor_dubbingeditorc_368575db
@@ -3157,11 +3145,10 @@ flowchart LR
     frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f
     frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| dubbingeditor_dubbingeditorcontext_editormediare_259e6e76
     frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| frontend_components_dubbingeditor_types_ts_2586e434
-    frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| dubbingeditor_types_fmttimeshort_659cc10d
     frontend_components_dubbingeditor_centerstage_ts_2515bd44 -->|imports| frontend_components_dubbingeditor_editorshell_ts_b76b6bc7
     frontend_components_dubbingeditor_dubbingeditorc_368575db -->|imports| frontend_components_dubbingeditor_types_ts_2586e434
     frontend_components_dubbingeditor_dubbingeditorc_368575db -->|imports| dubbingeditor_types_editorjob_64d01ed6
-    %% Omitted for readability: 16 nodes, 0 edges
+    %% Omitted for readability: 19 nodes, 0 edges
     class frontend_components_dubbingeditor_dubbingeditorc_368575db ui;
     class dubbingeditor_dubbingeditorcontext_usedubbingedi_afa0635f ui;
     class dubbingeditor_dubbingeditorcontext_createmediare_cf8223eb ui;
@@ -3170,16 +3157,16 @@ flowchart LR
     class dubbingeditor_types_fmttime_4e2eb117 function;
     class frontend_components_dubbingeditor_types_ts_2586e434 module;
     class dubbingeditor_types_editorjob_64d01ed6 klass;
-    class dubbingeditor_types_fmttimeshort_659cc10d function;
     class frontend_components_dubbingeditor_centerstage_ts_2515bd44 ui;
     class dubbingeditor_centerstage_centerstage_9d3d1b5a ui;
     class frontend_components_dubbingeditor_topbar_tsx_ec1d6047 ui;
     class dubbingeditor_topbar_topbar_325d72db ui;
+    class frontend_app_dubbing_editor_page_tsx_19a39def ui;
+    class frontend_app_dashboard_dubbing_editor_page_tsx_70092f08 ui;
     class dubbingeditor_bottomtimeline_bottomtimeline_907dad3e ui;
     class frontend_components_dubbingeditor_editorshell_ts_b76b6bc7 ui;
     class dubbingeditor_leftpanel_leftpanel_edcbdb25 ui;
     class dubbingeditor_rightinspector_rightinspector_1c39fb43 test;
-    class frontend_app_dubbing_editor_page_tsx_19a39def ui;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -3206,20 +3193,20 @@ flowchart LR
   <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>DubbingEditorProvider()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>EditorJob</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br>+2 more</td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
   <td>Module file in dubbing/editor/page.tsx.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>DubbingEditorLoading()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
+  <td><code>metadata</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>DubbingEditorLoading() node in dubbing/editor/page.tsx.</td>
+  <td>metadata node in dubbing/editor/page.tsx.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>DubbingEditorPageInner()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
+  <td><code>DashboardDubbingEditorPage()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
@@ -3227,6 +3214,30 @@ flowchart LR
 </tr>
 <tr>
   <td>4</td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
+  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>DubbingEditorProvider()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>EditorJob</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br>+2 more</td>
+  <td>Module file in dubbing/editor/page.tsx.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>DubbingEditorLoading()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>DubbingEditorLoading() node in dubbing/editor/page.tsx.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>DubbingEditorPageInner()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Organizes documentation pages, navigation, or content lookup.</td>
+</tr>
+<tr>
+  <td>7</td>
   <td><code>DubbingEditorPage()</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3234,7 +3245,7 @@ flowchart LR
   <td>Organizes documentation pages, navigation, or content lookup.</td>
 </tr>
 <tr>
-  <td>5</td>
+  <td>8</td>
   <td><code>TopBar.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/TopBar.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3242,7 +3253,7 @@ flowchart LR
   <td>Module file in components/dubbingEditor/TopBar.tsx.</td>
 </tr>
 <tr>
-  <td>6</td>
+  <td>9</td>
   <td><code>TopBar()</code><br><small style="color:var(--muted)">components/dubbingEditor/TopBar.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3250,7 +3261,7 @@ flowchart LR
   <td>TopBar() node in components/dubbingEditor/TopBar.tsx.</td>
 </tr>
 <tr>
-  <td>7</td>
+  <td>10</td>
   <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3258,7 +3269,7 @@ flowchart LR
   <td>Module file in components/dubbingEditor/CenterStage.tsx.</td>
 </tr>
 <tr>
-  <td>8</td>
+  <td>11</td>
   <td><code>DubbingStageNativeVideo()</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3266,7 +3277,7 @@ flowchart LR
   <td>DubbingStageNativeVideo() node in components/dubbingEditor/CenterStage.tsx.</td>
 </tr>
 <tr>
-  <td>9</td>
+  <td>12</td>
   <td><code>CenterStage()</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3274,7 +3285,7 @@ flowchart LR
   <td>CenterStage() node in components/dubbingEditor/CenterStage.tsx.</td>
 </tr>
 <tr>
-  <td>10</td>
+  <td>13</td>
   <td><code>BottomTimeline()</code><br><small style="color:var(--muted)">components/dubbingEditor/BottomTimeline.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3282,7 +3293,7 @@ flowchart LR
   <td>BottomTimeline() node in components/dubbingEditor/BottomTimeline.tsx.</td>
 </tr>
 <tr>
-  <td>11</td>
+  <td>14</td>
   <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small><br><code>TopBar.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/TopBar.tsx</small></td>
@@ -3290,7 +3301,7 @@ flowchart LR
   <td>Module file in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>12</td>
+  <td>15</td>
   <td><code>EditorMediaRefs</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
@@ -3298,7 +3309,7 @@ flowchart LR
   <td>EditorMediaRefs node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>13</td>
+  <td>16</td>
   <td><code>createMediaRegistry()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3306,7 +3317,7 @@ flowchart LR
   <td>createMediaRegistry() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>14</td>
+  <td>17</td>
   <td><code>BusyState</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3314,7 +3325,7 @@ flowchart LR
   <td>BusyState node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>15</td>
+  <td>18</td>
   <td><code>UndoEntry</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3322,7 +3333,7 @@ flowchart LR
   <td>UndoEntry node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>16</td>
+  <td>19</td>
   <td><code>DubbingEditorContextValue</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3330,7 +3341,7 @@ flowchart LR
   <td>DubbingEditorContextValue node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>17</td>
+  <td>20</td>
   <td><code>DubbingEditorContext</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3338,7 +3349,7 @@ flowchart LR
   <td>DubbingEditorContext node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>18</td>
+  <td>21</td>
   <td><code>stripUrlParams()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
@@ -3346,7 +3357,7 @@ flowchart LR
   <td>stripUrlParams() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>19</td>
+  <td>22</td>
   <td><code>DubbingEditorProvider()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>createMediaRegistry()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
@@ -3354,7 +3365,7 @@ flowchart LR
   <td>DubbingEditorProvider() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>20</td>
+  <td>23</td>
   <td><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>BottomTimeline()</code><br><small style="color:var(--muted)">components/dubbingEditor/BottomTimeline.tsx</small><br><code>CenterStage()</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br>+2 more</td>
@@ -3362,7 +3373,7 @@ flowchart LR
   <td>useDubbingEditor() node in components/dubbingEditor/DubbingEditorContext.tsx.</td>
 </tr>
 <tr>
-  <td>21</td>
+  <td>24</td>
   <td><code>types.ts</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
   <td><span class="tag tag-class">Module</span></td>
   <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small><br><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
@@ -3370,7 +3381,7 @@ flowchart LR
   <td>Module file in components/dubbingEditor/types.ts.</td>
 </tr>
 <tr>
-  <td>22</td>
+  <td>25</td>
   <td><code>SpeakerProfile</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
@@ -3378,7 +3389,7 @@ flowchart LR
   <td>SpeakerProfile node in components/dubbingEditor/types.ts.</td>
 </tr>
 <tr>
-  <td>23</td>
+  <td>26</td>
   <td><code>EditorJob</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">dubbing/editor/page.tsx</small></td>
@@ -3386,7 +3397,7 @@ flowchart LR
   <td>EditorJob node in components/dubbingEditor/types.ts.</td>
 </tr>
 <tr>
-  <td>24</td>
+  <td>27</td>
   <td><code>fmtTime()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
@@ -3394,7 +3405,7 @@ flowchart LR
   <td>fmtTime() node in components/dubbingEditor/types.ts.</td>
 </tr>
 <tr>
-  <td>25</td>
+  <td>28</td>
   <td><code>fmtTimeShort()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>CenterStage.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/CenterStage.tsx</small></td>
@@ -3402,7 +3413,7 @@ flowchart LR
   <td>fmtTimeShort() node in components/dubbingEditor/types.ts.</td>
 </tr>
 <tr>
-  <td>26</td>
+  <td>29</td>
   <td><code>LeftPanel.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>fmtTimeShort()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br><code>types.ts</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br>+1 more</td>
@@ -3410,36 +3421,12 @@ flowchart LR
   <td>Module file in components/dubbingEditor/LeftPanel.tsx.</td>
 </tr>
 <tr>
-  <td>27</td>
+  <td>30</td>
   <td><code>TABS</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
   <td>TABS node in components/dubbingEditor/LeftPanel.tsx.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>LeftPanel()</code><br><small style="color:var(--muted)">components/dubbingEditor/LeftPanel.tsx</small></td>
-  <td><span class="tag tag-hook">UI</span></td>
-  <td><code>useDubbingEditor()</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small></td>
-  <td>No direct outbound edge</td>
-  <td>LeftPanel() node in components/dubbingEditor/LeftPanel.tsx.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>RightInspector.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td><code>DubbingEditorContext.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/DubbingEditorContext.tsx</small><br><code>fmtTime()</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br><code>types.ts</code><br><small style="color:var(--muted)">components/dubbingEditor/types.ts</small><br>+1 more</td>
-  <td><code>EditorShell.tsx</code><br><small style="color:var(--muted)">components/dubbingEditor/EditorShell.tsx</small></td>
-  <td>Module file in components/dubbingEditor/RightInspector.tsx.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>AddForm</code><br><small style="color:var(--muted)">components/dubbingEditor/RightInspector.tsx</small></td>
-  <td><span class="tag tag-func">Test</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>AddForm node in components/dubbingEditor/RightInspector.tsx.</td>
 </tr>
 </table>
 
@@ -3452,15 +3439,15 @@ flowchart LR
 <tr><td><code>components/dubbingEditor/types.ts</code></td><td>5 nodes</td></tr>
 <tr><td><code>dubbing/editor/page.tsx</code></td><td>4 nodes</td></tr>
 <tr><td><code>components/dubbingEditor/RightInspector.tsx</code></td><td>4 nodes</td></tr>
+<tr><td><code>dubbing/editor/page.tsx</code></td><td>3 nodes</td></tr>
 <tr><td><code>components/dubbingEditor/CenterStage.tsx</code></td><td>3 nodes</td></tr>
 <tr><td><code>components/dubbingEditor/LeftPanel.tsx</code></td><td>3 nodes</td></tr>
 <tr><td><code>components/dubbingEditor/EditorShell.tsx</code></td><td>2 nodes</td></tr>
-<tr><td><code>components/dubbingEditor/TopBar.tsx</code></td><td>2 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x25, imports x15, imports x11, calls x7. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x27, imports x16, imports x11, calls x7. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -4173,352 +4160,8 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 13. Community 18 ====== -->
-<h2 id="community-18">13. Community 18</h2>
-<p>Community 18 groups implementation around backend, authcontrollerjs, controllers, otputilsjs, mostly in backend/controllers/authController.js, backend/utils/otpUtils.js, backend/models/OTP.js. This section covers 31 nodes and 35 internal edges; the diagram shows only representative relationships to stay readable.</p>
-
-<div class="mermaid">
-%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
-flowchart LR
-    %% Section: Community 18 (31 nodes, 35 edges)
-    subgraph community_18_backend_controllers_authController_f649c6ef["backend/controllers/authController.js"]
-        backend_controllers_authcontroller_js_c2fec784("authController.js")
-        controllers_authcontroller_plancatalog_46a9d005("PlanCatalog<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_refreshtoken_b953fd3a("RefreshToken<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_subtitlejob_f1836555("SubtitleJob<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_user_f497797f("User<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_usersubscription_04242eb9("UserSubscription<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_baseusername_6ee96e49("baseUserName<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_bcrypt_7d6c9276("bcrypt<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_crypto_5f6eb64d("crypto<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_email_65b031c8("email<br/><small>backend/controllers/authController.js</small>")
-        controllers_authcontroller_enrollinfreeplan_722b59f4("enrollInFreePlan()<br/><small>backend/controllers/authController.js</small>")
-    end
-    subgraph community_18_backend_utils_otpUtils_js_9fad2bc4["backend/utils/otpUtils.js"]
-        backend_utils_otputils_js_b9f91b94("otpUtils.js")
-        utils_otputils_generateotp_b7459651("generateOTP()<br/><small>backend/utils/otpUtils.js</small>")
-        utils_otputils_sendemail_d8333095("sendEmail<br/><small>backend/utils/otpUtils.js</small>")
-        utils_otputils_verifyotp_5fdba2ec("verifyOTP()<br/><small>backend/utils/otpUtils.js</small>")
-        utils_otputils_createotp_b2636672("createOTP()<br/><small>backend/utils/otpUtils.js</small>")
-        utils_otputils_sendotpemail_6bad561e("sendOTPEmail()<br/><small>backend/utils/otpUtils.js</small>")
-    end
-    backend_models_otp_js_794ba31d("OTP.js")
-    utils_otputils_sendemail_d8333095 -->|calls| utils_otputils_sendotpemail_6bad561e
-    utils_otputils_generateotp_b7459651 -->|calls| utils_otputils_createotp_b2636672
-    backend_utils_otputils_js_b9f91b94 -->|imports| backend_models_otp_js_794ba31d
-    backend_utils_otputils_js_b9f91b94 -->|imports| backend_controllers_authcontroller_js_c2fec784
-    utils_otputils_createotp_b2636672 -->|imports| backend_controllers_authcontroller_js_c2fec784
-    utils_otputils_verifyotp_5fdba2ec -->|imports| backend_controllers_authcontroller_js_c2fec784
-    utils_otputils_sendotpemail_6bad561e -->|imports| backend_controllers_authcontroller_js_c2fec784
-    %% Omitted for readability: 13 nodes, 0 edges
-    class backend_controllers_authcontroller_js_c2fec784 module;
-    class controllers_authcontroller_plancatalog_46a9d005 klass;
-    class controllers_authcontroller_refreshtoken_b953fd3a klass;
-    class controllers_authcontroller_subtitlejob_f1836555 klass;
-    class controllers_authcontroller_user_f497797f klass;
-    class controllers_authcontroller_usersubscription_04242eb9 klass;
-    class controllers_authcontroller_baseusername_6ee96e49 function;
-    class controllers_authcontroller_bcrypt_7d6c9276 function;
-    class controllers_authcontroller_crypto_5f6eb64d function;
-    class controllers_authcontroller_email_65b031c8 function;
-    class controllers_authcontroller_enrollinfreeplan_722b59f4 function;
-    class backend_utils_otputils_js_b9f91b94 module;
-    class utils_otputils_generateotp_b7459651 function;
-    class utils_otputils_sendemail_d8333095 function;
-    class utils_otputils_verifyotp_5fdba2ec function;
-    class utils_otputils_createotp_b2636672 function;
-    class utils_otputils_sendotpemail_6bad561e function;
-    class backend_models_otp_js_794ba31d klass;
-    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
-    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
-    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
-    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
-    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
-    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
-    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
-    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
-    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
-</div>
-
-<h3>Call Details</h3>
-<table class="call-table">
-<tr>
-  <th style="width:5%">#</th>
-  <th style="width:28%">Node</th>
-  <th style="width:10%">Type</th>
-  <th style="width:17%">Caller</th>
-  <th style="width:20%">Callees</th>
-  <th style="width:20%">Description</th>
-</tr>
-<tr>
-  <td>1</td>
-  <td><code>otpUtils.js</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>authController.js</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small><br><code>OTP.js</code><br><small style="color:var(--muted)">backend/models/OTP.js</small></td>
-  <td>otpUtils.js node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>2</td>
-  <td><code>crypto</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>crypto node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>3</td>
-  <td><code>OTP</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>OTP node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>4</td>
-  <td><code>sendEmail</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>sendOTPEmail()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td>sendEmail node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>5</td>
-  <td><code>generateOTP()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>createOTP()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td>generateOTP() node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>6</td>
-  <td><code>createOTP()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>generateOTP()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><code>authController.js</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td>createOTP() node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>7</td>
-  <td><code>verifyOTP()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>authController.js</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td>verifyOTP() node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>8</td>
-  <td><code>sendOTPEmail()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>sendEmail</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><code>authController.js</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td>sendOTPEmail() node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>9</td>
-  <td><code>cleanupExpiredOTPs()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>cleanupExpiredOTPs() node in backend/utils/otpUtils.js.</td>
-</tr>
-<tr>
-  <td>10</td>
-  <td><code>OTP.js</code><br><small style="color:var(--muted)">backend/models/OTP.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td><code>otpUtils.js</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>OTP.js node in backend/models/OTP.js.</td>
-</tr>
-<tr>
-  <td>11</td>
-  <td><code>mongoose</code><br><small style="color:var(--muted)">backend/models/OTP.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>mongoose node in backend/models/OTP.js.</td>
-</tr>
-<tr>
-  <td>12</td>
-  <td><code>OTPSchema</code><br><small style="color:var(--muted)">backend/models/OTP.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>OTPSchema node in backend/models/OTP.js.</td>
-</tr>
-<tr>
-  <td>13</td>
-  <td><code>authController.js</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>createOTP()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small><br><code>otpUtils.js</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small><br><code>sendOTPEmail()</code><br><small style="color:var(--muted)">backend/utils/otpUtils.js</small><br>+1 more</td>
-  <td>No direct outbound edge</td>
-  <td>authController.js node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>14</td>
-  <td><code>bcrypt</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>bcrypt node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>15</td>
-  <td><code>{ validationResult }</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{ validationResult } node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>16</td>
-  <td><code>User</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>User node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>17</td>
-  <td><code>SubtitleJob</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>SubtitleJob node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>18</td>
-  <td><code>{ createOTP, sendOTPEmail, verifyOTP }</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{ createOTP, sendOTPEmail, verifyOTP } node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>19</td>
-  <td><code>{ OAuth2Client }</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-cmd">Entry</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{ OAuth2Client } node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>20</td>
-  <td><code>{
-  addCredits,
-  DEFAULT_CREDITS,
-  grantWelcomeCreditsOnce,
-}</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{
-  addCredits,
-  DEFAULT_CREDITS,
-  grantWelcomeCreditsOnce,
-} node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>21</td>
-  <td><code>{ generateTokens, clearAuthCookies }</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{ generateTokens, clearAuthCookies } node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>22</td>
-  <td><code>RefreshToken</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>RefreshToken node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>23</td>
-  <td><code>crypto</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>crypto node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>24</td>
-  <td><code>PlanCatalog</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>PlanCatalog node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>25</td>
-  <td><code>UserSubscription</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>UserSubscription node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>26</td>
-  <td><code>enrollInFreePlan()</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>enrollInFreePlan() node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>errors</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>errors node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>error</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>error node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>baseUserName</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>baseUserName node in backend/controllers/authController.js.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>email</code><br><small style="color:var(--muted)">backend/controllers/authController.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>email node in backend/controllers/authController.js.</td>
-</tr>
-</table>
-
-<div class="grid">
-  <div class="card">
-    <h4>Key Files</h4>
-    <table style="width:100%;font-size:0.85rem;">
-      <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>backend/controllers/authController.js</code></td><td>19 nodes</td></tr>
-<tr><td><code>backend/utils/otpUtils.js</code></td><td>9 nodes</td></tr>
-<tr><td><code>backend/models/OTP.js</code></td><td>3 nodes</td></tr>
-    </table>
-  </div>
-  <div class="card">
-    <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x28, imports x3, imports x2, calls x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
-  </div>
-</div>
-<hr>
-
-<!-- ====== 14. Community 25 ====== -->
-<h2 id="community-25">14. Community 25</h2>
+<!-- ====== 13. Community 25 ====== -->
+<h2 id="community-25">13. Community 25</h2>
 <p>Community 25 groups implementation around projectcontrollerjs, backend, controllers, mongoose, mostly in backend/controllers/projectController.js. This section covers 27 nodes and 26 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
@@ -4843,75 +4486,70 @@ flowchart LR
 </div>
 <hr>
 
-<!-- ====== 15. Community 27 ====== -->
-<h2 id="community-27">15. Community 27</h2>
-<p>Community 27 groups implementation around backend, dubbingjobfinalizerjs, utils, services, mostly in services/dubbing/dubbingJobFinalizer.js, backend/utils/usageService.js, backend/utils/dubbingCompletionEmail.js. This section covers 26 nodes and 39 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 14. Community 43 ====== -->
+<h2 id="community-43">14. Community 43</h2>
+<p>Community 43 groups implementation around frontend, pricingdisplayts, utils, pricingplansgridtsx, mostly in frontend/utils/pricingDisplay.ts, frontend/components/PricingPlansGrid.tsx, frontend/utils/plansApi.ts. This section covers 26 nodes and 49 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Community 27 (26 nodes, 39 edges)
-    subgraph community_27_services_dubbing_dubbingJobFinalize_3fd2d05f["services/dubbing/dubbingJobFinalizer.js"]
-        dubbing_dubbingjobfinalizer_markjobfailed_c2fafcb4("markJobFailed()<br/><small>services/dubbing/dubbingJobFinalizer.js</small>")
-        dubbing_dubbingjobfinalizer_refreshcompletedjob_e1e5e57c("refreshCompletedJob()<br/><small>services/dubbing/dubbingJobFinalizer.js</small>")
-        dubbing_dubbingjobfinalizer_sendcompletionemaili_8a69264f("sendCompletionEmailIfNeeded()<br/><small>services/dubbing/dubbingJobFinalizer.js</small>")
-        dubbing_dubbingjobfinalizer_deductdubbingcredits_dc381d63("deductDubbingCredits()<br/><small>services/dubbing/dubbingJobFinalizer.js</small>")
-        dubbing_dubbingjobfinalizer_confirmusageifreserv_f4e017cc("confirmUsageIfReserved()<br/><small>services/dubbing/dubbingJobFinalizer.js</small>")
-        dubbing_dubbingjobfinalizer_refundreservedusageo_69117503("refundReservedUsageOnFailure()<br/><small>services/dubbing/dubbingJobFinalizer.js</small>")
-        backend_services_dubbing_dubbingjobfinalizer_js_2f68173b("dubbingJobFinalizer.js")
+    %% Section: Community 43 (26 nodes, 49 edges)
+    subgraph community_43_frontend_utils_pricingDisplay_ts_dcff4cf3["frontend/utils/pricingDisplay.ts"]
+        utils_pricingdisplay_parsefirstnumber_715f1427("parseFirstNumber()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        frontend_utils_pricingdisplay_ts_6e33f87c("pricingDisplay.ts")
+        utils_pricingdisplay_billingmode_f2b169d5("BillingMode<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_billingsubtext_4b1fedc2("billingSubtext()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_featurebullets_2cb176e6("featureBullets()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_hasstrikethroughsale_057c4bcf("hasStrikeThroughSale()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_normalizemoney_9e6036be("normalizeMoney()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_ispricelike_39fb7d26("isPriceLike()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_getpriceblock_96567656("getPriceBlock()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_promobadge_79a5f1c8("promoBadge()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_withbillingsuffix_0d6d54ad("withBillingSuffix()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_formatmoneynumber_e5a34805("formatMoneyNumber()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+        utils_pricingdisplay_parsepercent_0589bc10("parsePercent()<br/><small>frontend/utils/pricingDisplay.ts</small>")
     end
-    subgraph community_27_backend_utils_dubbingCompletionEmai_31654b8f["backend/utils/dubbingCompletionEmail.js"]
-        backend_utils_dubbingcompletionemail_js_b8e864fb("dubbingCompletionEmail.js")
-        utils_dubbingcompletionemail_sendemail_09107045("sendEmail<br/><small>backend/utils/dubbingCompletionEmail.js</small>")
-        utils_dubbingcompletionemail_senddubbingcomplete_4def0569("sendDubbingCompletedEmail()<br/><small>backend/utils/dubbingCompletionEmail.js</small>")
-        utils_dubbingcompletionemail_safeorigin_4f47344c("safeOrigin()<br/><small>backend/utils/dubbingCompletionEmail.js</small>")
-        utils_dubbingcompletionemail_buildexportlink_f1432981("buildExportLink()<br/><small>backend/utils/dubbingCompletionEmail.js</small>")
+    subgraph community_43_frontend_components_PricingPlansGri_525feabe["frontend/components/PricingPlansGrid.tsx"]
+        components_pricingplansgrid_getmonthlycredits_dc0f48dd("getMonthlyCredits()<br/><small>frontend/components/PricingPlansGrid.tsx</small>")
+        components_pricingplansgrid_formatcreditallowanc_8cb30a91("formatCreditAllowance()<br/><small>frontend/components/PricingPlansGrid.tsx</small>")
+        components_pricingplansgrid_formatsubtitleminute_23e96610("formatSubtitleMinutes()<br/><small>frontend/components/PricingPlansGrid.tsx</small>")
+        components_pricingplansgrid_formatdubbingminutes_d4870e2b("formatDubbingMinutes()<br/><small>frontend/components/PricingPlansGrid.tsx</small>")
     end
-    subgraph community_27_backend_utils_usageService_js_19f3805d["backend/utils/usageService.js"]
-        utils_usageservice_safeneg_69293be9("safeNeg()<br/><small>backend/utils/usageService.js</small>")
-        utils_usageservice_confirmdubbingusage_1d6de52e("confirmDubbingUsage()<br/><small>backend/utils/usageService.js</small>")
-        utils_usageservice_refunddubbingusage_06c7f921("refundDubbingUsage()<br/><small>backend/utils/usageService.js</small>")
-        backend_utils_usageservice_js_8e379c2e("usageService.js")
-    end
-    utils_creditutils_deductcredits_1983988e("deductCredits()<br/><small>backend/utils/creditUtils.js</small>")
-    utils_projectutils_refreshprojectfilterfieldsfor_4ee648c1("refreshProjectFilterFieldsForDubbingJob()<br/><small>backend/utils/projectUtils.js</small>")
-    utils_projectutils_refreshprojectfilterfieldsfor_4ee648c1 -->|calls| dubbing_dubbingjobfinalizer_markjobfailed_c2fafcb4
-    utils_projectutils_refreshprojectfilterfieldsfor_4ee648c1 -->|calls| dubbing_dubbingjobfinalizer_refreshcompletedjob_e1e5e57c
-    utils_dubbingcompletionemail_sendemail_09107045 -->|calls| utils_dubbingcompletionemail_senddubbingcomplete_4def0569
-    utils_dubbingcompletionemail_safeorigin_4f47344c -->|calls| utils_dubbingcompletionemail_buildexportlink_f1432981
-    utils_dubbingcompletionemail_buildexportlink_f1432981 -->|calls| utils_dubbingcompletionemail_senddubbingcomplete_4def0569
-    utils_dubbingcompletionemail_senddubbingcomplete_4def0569 -->|calls| dubbing_dubbingjobfinalizer_sendcompletionemaili_8a69264f
-    utils_creditutils_deductcredits_1983988e -->|calls| dubbing_dubbingjobfinalizer_deductdubbingcredits_dc381d63
-    utils_usageservice_safeneg_69293be9 -->|calls| utils_usageservice_confirmdubbingusage_1d6de52e
-    utils_usageservice_safeneg_69293be9 -->|calls| utils_usageservice_refunddubbingusage_06c7f921
-    utils_usageservice_confirmdubbingusage_1d6de52e -->|calls| dubbing_dubbingjobfinalizer_confirmusageifreserv_f4e017cc
-    utils_usageservice_refunddubbingusage_06c7f921 -->|calls| dubbing_dubbingjobfinalizer_refundreservedusageo_69117503
-    utils_projectutils_refreshprojectfilterfieldsfor_4ee648c1 -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
-    backend_utils_dubbingcompletionemail_js_b8e864fb -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
-    utils_dubbingcompletionemail_senddubbingcomplete_4def0569 -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
-    utils_creditutils_deductcredits_1983988e -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
-    backend_utils_usageservice_js_8e379c2e -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
-    utils_usageservice_confirmdubbingusage_1d6de52e -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
-    utils_usageservice_refunddubbingusage_06c7f921 -->|imports| backend_services_dubbing_dubbingjobfinalizer_js_2f68173b
+    utils_plansapi_publicplan_b46cb9d3("PublicPlan<br/><small>frontend/utils/plansApi.ts</small>")
+    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_hasstrikethroughsale_057c4bcf
+    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_normalizemoney_9e6036be
+    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_ispricelike_39fb7d26
+    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_promobadge_79a5f1c8
+    utils_pricingdisplay_hasstrikethroughsale_057c4bcf -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    utils_pricingdisplay_normalizemoney_9e6036be -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    utils_pricingdisplay_ispricelike_39fb7d26 -->|calls| utils_pricingdisplay_withbillingsuffix_0d6d54ad
+    utils_pricingdisplay_withbillingsuffix_0d6d54ad -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    utils_pricingdisplay_formatmoneynumber_e5a34805 -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    utils_pricingdisplay_parsepercent_0589bc10 -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    components_pricingplansgrid_getmonthlycredits_dc0f48dd -->|calls| components_pricingplansgrid_formatcreditallowanc_8cb30a91
+    components_pricingplansgrid_getmonthlycredits_dc0f48dd -->|calls| components_pricingplansgrid_formatsubtitleminute_23e96610
+    components_pricingplansgrid_getmonthlycredits_dc0f48dd -->|calls| components_pricingplansgrid_formatdubbingminutes_d4870e2b
+    frontend_utils_pricingdisplay_ts_6e33f87c -->|imports| utils_plansapi_publicplan_b46cb9d3
     %% Omitted for readability: 8 nodes, 0 edges
-    class dubbing_dubbingjobfinalizer_markjobfailed_c2fafcb4 function;
-    class dubbing_dubbingjobfinalizer_refreshcompletedjob_e1e5e57c function;
-    class dubbing_dubbingjobfinalizer_sendcompletionemaili_8a69264f function;
-    class dubbing_dubbingjobfinalizer_deductdubbingcredits_dc381d63 function;
-    class dubbing_dubbingjobfinalizer_confirmusageifreserv_f4e017cc function;
-    class dubbing_dubbingjobfinalizer_refundreservedusageo_69117503 function;
-    class backend_services_dubbing_dubbingjobfinalizer_js_2f68173b module;
-    class backend_utils_dubbingcompletionemail_js_b8e864fb module;
-    class utils_dubbingcompletionemail_sendemail_09107045 function;
-    class utils_dubbingcompletionemail_senddubbingcomplete_4def0569 function;
-    class utils_dubbingcompletionemail_safeorigin_4f47344c function;
-    class utils_dubbingcompletionemail_buildexportlink_f1432981 function;
-    class utils_usageservice_safeneg_69293be9 function;
-    class utils_usageservice_confirmdubbingusage_1d6de52e function;
-    class utils_usageservice_refunddubbingusage_06c7f921 function;
-    class backend_utils_usageservice_js_8e379c2e module;
-    class utils_creditutils_deductcredits_1983988e function;
-    class utils_projectutils_refreshprojectfilterfieldsfor_4ee648c1 function;
+    class utils_pricingdisplay_parsefirstnumber_715f1427 function;
+    class frontend_utils_pricingdisplay_ts_6e33f87c module;
+    class utils_pricingdisplay_billingmode_f2b169d5 klass;
+    class utils_pricingdisplay_billingsubtext_4b1fedc2 function;
+    class utils_pricingdisplay_featurebullets_2cb176e6 function;
+    class utils_pricingdisplay_hasstrikethroughsale_057c4bcf function;
+    class utils_pricingdisplay_normalizemoney_9e6036be function;
+    class utils_pricingdisplay_ispricelike_39fb7d26 function;
+    class utils_pricingdisplay_getpriceblock_96567656 function;
+    class utils_pricingdisplay_promobadge_79a5f1c8 function;
+    class utils_pricingdisplay_withbillingsuffix_0d6d54ad function;
+    class utils_pricingdisplay_formatmoneynumber_e5a34805 function;
+    class utils_pricingdisplay_parsepercent_0589bc10 function;
+    class components_pricingplansgrid_getmonthlycredits_dc0f48dd ui;
+    class components_pricingplansgrid_formatcreditallowanc_8cb30a91 ui;
+    class components_pricingplansgrid_formatsubtitleminute_23e96610 ui;
+    class components_pricingplansgrid_formatdubbingminutes_d4870e2b ui;
+    class utils_plansapi_publicplan_b46cb9d3 klass;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -4935,225 +4573,211 @@ flowchart LR
 </tr>
 <tr>
   <td>1</td>
-  <td><code>refreshProjectFilterFieldsForDubbingJob()</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
+  <td><code>pricingDisplay.ts</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><span class="tag tag-class">Module</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small><br><code>markJobFailed()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small><br><code>refreshCompletedJob()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>refreshProjectFilterFieldsForDubbingJob() node in backend/utils/projectUtils.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small><br><code>PublicPlan</code><br><small style="color:var(--muted)">frontend/utils/plansApi.ts</small></td>
+  <td>Module file in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>2</td>
-  <td><code>dubbingCompletionEmail.js</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
+  <td><code>BillingMode</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>dubbingCompletionEmail.js node in backend/utils/dubbingCompletionEmail.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>BillingMode node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>3</td>
-  <td><code>sendEmail</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
+  <td><code>isFreePlan()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>sendDubbingCompletedEmail()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
-  <td>sendEmail node in backend/utils/dubbingCompletionEmail.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>isFreePlan() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>4</td>
-  <td><code>safeOrigin()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
+  <td><code>parseFirstNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>buildExportLink()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
-  <td>safeOrigin() node in backend/utils/dubbingCompletionEmail.js.</td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br><code>hasStrikeThroughSale()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br><code>isPriceLike()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br>+2 more</td>
+  <td>parseFirstNumber() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>5</td>
-  <td><code>buildExportLink()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
+  <td><code>hasStrikeThroughSale()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>safeOrigin()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
-  <td><code>sendDubbingCompletedEmail()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
-  <td>Exports documentation data to a target format.</td>
+  <td><code>parseFirstNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td>hasStrikeThroughSale() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>6</td>
-  <td><code>sendDubbingCompletedEmail()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
+  <td><code>normalizeMoney()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>buildExportLink()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small><br><code>sendEmail</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
-  <td><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small><br><code>sendCompletionEmailIfNeeded()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>sendDubbingCompletedEmail() node in backend/utils/dubbingCompletionEmail.js.</td>
+  <td><code>parseFirstNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td>normalizeMoney() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>7</td>
-  <td><code>deductCredits()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small></td>
+  <td><code>isPriceLike()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>deductDubbingCredits()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small><br><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>deductCredits() node in backend/utils/creditUtils.js.</td>
+  <td><code>parseFirstNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><code>withBillingSuffix()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td>isPriceLike() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>8</td>
-  <td><code>usageService.js</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>usageService.js node in backend/utils/usageService.js.</td>
+  <td><code>withBillingSuffix()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>isPriceLike()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td>withBillingSuffix() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>9</td>
-  <td><code>UserUsage</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>PriceBlock</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-class">Class</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>UserUsage node in backend/utils/usageService.js.</td>
+  <td>PriceBlock node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>10</td>
-  <td><code>safeNeg()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>formatMoneyNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>confirmDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small><br><code>refundDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
-  <td>safeNeg() node in backend/utils/usageService.js.</td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td>formatMoneyNumber() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>11</td>
-  <td><code>confirmDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>billingSubtext()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>safeNeg()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
-  <td><code>confirmUsageIfReserved()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small><br><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>confirmDubbingUsage() node in backend/utils/usageService.js.</td>
+  <td>External entry / no inbound edge</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>billingSubtext() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>12</td>
-  <td><code>refundDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>parsePercent()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td><code>safeNeg()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
-  <td><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small><br><code>refundReservedUsageOnFailure()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td>refundDubbingUsage() node in backend/utils/usageService.js.</td>
+  <td>External entry / no inbound edge</td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td>parsePercent() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>13</td>
-  <td><code>getUserUsageStats()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>getPriceBlock()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>getUserUsageStats() node in backend/utils/usageService.js.</td>
+  <td><code>formatMoneyNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br><code>hasStrikeThroughSale()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br><code>normalizeMoney()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br>+3 more</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>getPriceBlock() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>14</td>
-  <td><code>dubbingJobFinalizer.js</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td><code>confirmDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small><br><code>deductCredits()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small><br><code>dubbingCompletionEmail.js</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small><br>+4 more</td>
-  <td>No direct outbound edge</td>
-  <td>dubbingJobFinalizer.js node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>promoBadge()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td><code>parseFirstNumber()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>promoBadge() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>15</td>
-  <td><code>DubbingJob</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
+  <td><code>filterPlans()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>DubbingJob node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>filterPlans() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>16</td>
-  <td><code>User</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
+  <td><code>sortPlans()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>User node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>sortPlans() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>17</td>
-  <td><code>{ deductCredits }</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
+  <td><code>featuredPlanIndex()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{ deductCredits } node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>featuredPlanIndex() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>18</td>
-  <td><code>{
-  confirmDubbingUsage,
-  refundDubbingUsage,
-}</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
+  <td><code>featureBullets()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{
-  confirmDubbingUsage,
-  refundDubbingUsage,
-} node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>featureBullets() node in frontend/utils/pricingDisplay.ts.</td>
 </tr>
 <tr>
   <td>19</td>
-  <td><code>{
-  refreshProjectFilterFieldsForDubbingJob,
-}</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>{
-  refreshProjectFilterFieldsForDubbingJob,
-} node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>PublicPlan</code><br><small style="color:var(--muted)">frontend/utils/plansApi.ts</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td><code>pricingDisplay.ts</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small></td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>PublicPlan node in frontend/utils/plansApi.ts.</td>
 </tr>
 <tr>
   <td>20</td>
-  <td><code>{
-  sendDubbingCompletedEmail,
-}</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
+  <td><code>PricingPlansGrid.tsx</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>BillingMode</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br><code>billingSubtext()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br><code>featureBullets()</code><br><small style="color:var(--muted)">frontend/utils/pricingDisplay.ts</small><br>+8 more</td>
   <td>No direct outbound edge</td>
-  <td>{
-  sendDubbingCompletedEmail,
-} node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td>Module file in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 <tr>
   <td>21</td>
-  <td><code>confirmUsageIfReserved()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>confirmDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>PricingPlansGridProps</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>confirmUsageIfReserved() node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td>PricingPlansGridProps node in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 <tr>
   <td>22</td>
-  <td><code>deductDubbingCredits()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>deductCredits()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small></td>
-  <td>No direct outbound edge</td>
-  <td>deductDubbingCredits() node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td><code>getMonthlyCredits()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>formatCreditAllowance()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small><br><code>formatDubbingMinutes()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small><br><code>formatSubtitleMinutes()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td>getMonthlyCredits() node in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 <tr>
   <td>23</td>
-  <td><code>sendCompletionEmailIfNeeded()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>sendDubbingCompletedEmail()</code><br><small style="color:var(--muted)">backend/utils/dubbingCompletionEmail.js</small></td>
+  <td><code>formatCreditAllowance()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>getMonthlyCredits()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
   <td>No direct outbound edge</td>
-  <td>sendCompletionEmailIfNeeded() node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td>formatCreditAllowance() node in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 <tr>
   <td>24</td>
-  <td><code>markJobFailed()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>refreshProjectFilterFieldsForDubbingJob()</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
+  <td><code>formatSubtitleMinutes()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>getMonthlyCredits()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
   <td>No direct outbound edge</td>
-  <td>markJobFailed() node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td>formatSubtitleMinutes() node in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 <tr>
   <td>25</td>
-  <td><code>refundReservedUsageOnFailure()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>refundDubbingUsage()</code><br><small style="color:var(--muted)">backend/utils/usageService.js</small></td>
+  <td><code>formatDubbingMinutes()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>getMonthlyCredits()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
   <td>No direct outbound edge</td>
-  <td>refundReservedUsageOnFailure() node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td>formatDubbingMinutes() node in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 <tr>
   <td>26</td>
-  <td><code>refreshCompletedJob()</code><br><small style="color:var(--muted)">services/dubbing/dubbingJobFinalizer.js</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td><code>refreshProjectFilterFieldsForDubbingJob()</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
+  <td><code>PricingPlansGrid()</code><br><small style="color:var(--muted)">frontend/components/PricingPlansGrid.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>refreshCompletedJob() node in services/dubbing/dubbingJobFinalizer.js.</td>
+  <td>PricingPlansGrid() node in frontend/components/PricingPlansGrid.tsx.</td>
 </tr>
 </table>
 
@@ -5162,86 +4786,81 @@ flowchart LR
     <h4>Key Files</h4>
     <table style="width:100%;font-size:0.85rem;">
       <tr><th>File</th><th>Coverage</th></tr>
-      <tr><td><code>services/dubbing/dubbingJobFinalizer.js</code></td><td>13 nodes</td></tr>
-<tr><td><code>backend/utils/usageService.js</code></td><td>6 nodes</td></tr>
-<tr><td><code>backend/utils/dubbingCompletionEmail.js</code></td><td>5 nodes</td></tr>
-<tr><td><code>backend/utils/creditUtils.js</code></td><td>1 nodes</td></tr>
-<tr><td><code>backend/utils/projectUtils.js</code></td><td>1 nodes</td></tr>
+      <tr><td><code>frontend/utils/pricingDisplay.ts</code></td><td>18 nodes</td></tr>
+<tr><td><code>frontend/components/PricingPlansGrid.tsx</code></td><td>7 nodes</td></tr>
+<tr><td><code>frontend/utils/plansApi.ts</code></td><td>1 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x21, calls x11, imports x5, imports x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x23, calls x14, imports x11, imports x1. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
 
-<!-- ====== 16. Other ====== -->
-<h2 id="other">16. Other</h2>
-<p>Other groups implementation around backend, admin, frontend, components, mostly in backend/services/billingSubscriptionService.js, backend/utils/storage.js, admin/types/index.ts. This section covers 850 nodes and 1036 internal edges; the diagram shows only representative relationships to stay readable.</p>
+<!-- ====== 15. Community 28 ====== -->
+<h2 id="community-28">15. Community 28</h2>
+<p>Community 28 groups implementation around frontend, app, processing, filestorets, mostly in frontend/utils/fileStore.ts, app/processing/ProcessingView.tsx, dashboard/processing/page.tsx. This section covers 25 nodes and 36 internal edges; the diagram shows only representative relationships to stay readable.</p>
 
 <div class="mermaid">
 %%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
 flowchart LR
-    %% Section: Other (850 nodes, 1036 edges)
-    subgraph other_frontend_utils_pricingDisplay_ts_2ac37278["frontend/utils/pricingDisplay.ts"]
-        utils_pricingdisplay_parsefirstnumber_715f1427("parseFirstNumber()<br/><small>frontend/utils/pricingDisplay.ts</small>")
-        utils_pricingdisplay_hasstrikethroughsale_057c4bcf("hasStrikeThroughSale()<br/><small>frontend/utils/pricingDisplay.ts</small>")
-        utils_pricingdisplay_normalizemoney_9e6036be("normalizeMoney()<br/><small>frontend/utils/pricingDisplay.ts</small>")
-        utils_pricingdisplay_ispricelike_39fb7d26("isPriceLike()<br/><small>frontend/utils/pricingDisplay.ts</small>")
-        utils_pricingdisplay_getpriceblock_96567656("getPriceBlock()<br/><small>frontend/utils/pricingDisplay.ts</small>")
-        utils_pricingdisplay_promobadge_79a5f1c8("promoBadge()<br/><small>frontend/utils/pricingDisplay.ts</small>")
-        utils_pricingdisplay_withbillingsuffix_0d6d54ad("withBillingSuffix()<br/><small>frontend/utils/pricingDisplay.ts</small>")
+    %% Section: Community 28 (25 nodes, 36 edges)
+    subgraph community_28_frontend_utils_fileStore_ts_a1ca9c5a["frontend/utils/fileStore.ts"]
+        utils_filestore_getpendingmode_7f526792("getPendingMode()<br/><small>frontend/utils/fileStore.ts</small>")
+        frontend_utils_filestore_ts_f8ea3ee8("fileStore.ts")
+        utils_filestore_getpendingfile_c114b8b8("getPendingFile()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_setpendingfile_041ff936("setPendingFile()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_getpendinglanguage_412a70c6("getPendingLanguage()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_getpendingsourcelanguage_e9b59753("getPendingSourceLanguage()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_getpendingtargetlanguage_a03b6ab1("getPendingTargetLanguage()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_getpendingyoutubeurl_bfe39fcd("getPendingYoutubeUrl()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_getpendingsourcedubbingjobid_9cc9fd5a("getPendingSourceDubbingJobId()<br/><small>frontend/utils/fileStore.ts</small>")
+        utils_filestore_setpendingsourcedubbingjobid_7ef82705("setPendingSourceDubbingJobId()<br/><small>frontend/utils/fileStore.ts</small>")
     end
-    subgraph other_app_processing_ProcessingView_tsx_3dcffb18["app/processing/ProcessingView.tsx"]
+    subgraph community_28_app_processing_ProcessingView_tsx_2a15c08e["app/processing/ProcessingView.tsx"]
         frontend_app_processing_processingview_tsx_8539c9d0("ProcessingView.tsx")
         processing_processingview_formatbytes_fa050f41("formatBytes()<br/><small>app/processing/ProcessingView.tsx</small>")
         processing_processingview_processingview_68a05cc0("ProcessingView()<br/><small>app/processing/ProcessingView.tsx</small>")
+        processing_processingview_dubbing_steps_586049e4("DUBBING_STEPS<br/><small>app/processing/ProcessingView.tsx</small>")
+        processing_processingview_preview_lines_a1628baf("PREVIEW_LINES<br/><small>app/processing/ProcessingView.tsx</small>")
+        processing_processingview_sseevent_ac6ca4be("SSEEvent<br/><small>app/processing/ProcessingView.tsx</small>")
     end
-    subgraph other_app_dashboard_page_tsx_ea97908b["app/dashboard/page.tsx"]
-        dashboard_page_gettimegreeting_d633b3e1("getTimeGreeting()<br/><small>app/dashboard/page.tsx</small>")
-        dashboard_page_dashboardpage_6cc25d76("DashboardPage()<br/><small>app/dashboard/page.tsx</small>")
-    end
-    backend_models_user_js_5b5b1132("User.js")
-    utils_storage_localstorageadapter_20bf7acb("LocalStorageAdapter<br/><small>backend/utils/storage.js</small>")
-    admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c("page.tsx")
-    frontend_app_dashboard_settings_page_tsx_7329c08e("page.tsx")
-    frontend_utils_axios_ts_790d852d("axios.ts")
-    utils_filestore_getpendingmode_7f526792("getPendingMode()<br/><small>frontend/utils/fileStore.ts</small>")
+    frontend_app_processing_page_tsx_7320ad58("page.tsx")
+    frontend_app_dashboard_processing_page_tsx_feca022b("page.tsx")
     processing_processingview_formatbytes_fa050f41 -->|calls| processing_processingview_processingview_68a05cc0
     processing_processingview_processingview_68a05cc0 -->|calls| utils_filestore_getpendingmode_7f526792
-    dashboard_page_gettimegreeting_d633b3e1 -->|calls| dashboard_page_dashboardpage_6cc25d76
-    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_hasstrikethroughsale_057c4bcf
-    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_normalizemoney_9e6036be
-    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_ispricelike_39fb7d26
-    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_getpriceblock_96567656
-    utils_pricingdisplay_parsefirstnumber_715f1427 -->|calls| utils_pricingdisplay_promobadge_79a5f1c8
-    utils_pricingdisplay_hasstrikethroughsale_057c4bcf -->|calls| utils_pricingdisplay_getpriceblock_96567656
-    utils_pricingdisplay_normalizemoney_9e6036be -->|calls| utils_pricingdisplay_getpriceblock_96567656
-    utils_pricingdisplay_ispricelike_39fb7d26 -->|calls| utils_pricingdisplay_withbillingsuffix_0d6d54ad
-    utils_pricingdisplay_withbillingsuffix_0d6d54ad -->|calls| utils_pricingdisplay_getpriceblock_96567656
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| frontend_utils_filestore_ts_f8ea3ee8
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendingfile_c114b8b8
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_setpendingfile_041ff936
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendinglanguage_412a70c6
     frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendingmode_7f526792
-    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| frontend_utils_axios_ts_790d852d
-    frontend_app_dashboard_settings_page_tsx_7329c08e -->|imports| frontend_utils_axios_ts_790d852d
-    %% Omitted for readability: 832 nodes, 0 edges
-    class utils_pricingdisplay_parsefirstnumber_715f1427 function;
-    class utils_pricingdisplay_hasstrikethroughsale_057c4bcf function;
-    class utils_pricingdisplay_normalizemoney_9e6036be function;
-    class utils_pricingdisplay_ispricelike_39fb7d26 function;
-    class utils_pricingdisplay_getpriceblock_96567656 function;
-    class utils_pricingdisplay_promobadge_79a5f1c8 function;
-    class utils_pricingdisplay_withbillingsuffix_0d6d54ad function;
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendingsourcelanguage_e9b59753
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendingtargetlanguage_a03b6ab1
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendingyoutubeurl_bfe39fcd
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_getpendingsourcedubbingjobid_9cc9fd5a
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| utils_filestore_setpendingsourcedubbingjobid_7ef82705
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| frontend_app_processing_page_tsx_7320ad58
+    frontend_app_processing_processingview_tsx_8539c9d0 -->|imports| frontend_app_dashboard_processing_page_tsx_feca022b
+    %% Omitted for readability: 7 nodes, 0 edges
+    class utils_filestore_getpendingmode_7f526792 function;
+    class frontend_utils_filestore_ts_f8ea3ee8 ui;
+    class utils_filestore_getpendingfile_c114b8b8 function;
+    class utils_filestore_setpendingfile_041ff936 function;
+    class utils_filestore_getpendinglanguage_412a70c6 function;
+    class utils_filestore_getpendingsourcelanguage_e9b59753 function;
+    class utils_filestore_getpendingtargetlanguage_a03b6ab1 function;
+    class utils_filestore_getpendingyoutubeurl_bfe39fcd function;
+    class utils_filestore_getpendingsourcedubbingjobid_9cc9fd5a function;
+    class utils_filestore_setpendingsourcedubbingjobid_7ef82705 function;
     class frontend_app_processing_processingview_tsx_8539c9d0 ui;
     class processing_processingview_formatbytes_fa050f41 ui;
     class processing_processingview_processingview_68a05cc0 ui;
-    class dashboard_page_gettimegreeting_d633b3e1 ui;
-    class dashboard_page_dashboardpage_6cc25d76 ui;
-    class backend_models_user_js_5b5b1132 klass;
-    class utils_storage_localstorageadapter_20bf7acb klass;
-    class admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c ui;
-    class frontend_app_dashboard_settings_page_tsx_7329c08e ui;
-    class frontend_utils_axios_ts_790d852d module;
-    class utils_filestore_getpendingmode_7f526792 function;
+    class processing_processingview_dubbing_steps_586049e4 ui;
+    class processing_processingview_preview_lines_a1628baf ui;
+    class processing_processingview_sseevent_ac6ca4be async;
+    class frontend_app_processing_page_tsx_7320ad58 ui;
+    class frontend_app_dashboard_processing_page_tsx_feca022b ui;
     classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
     classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
     classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
@@ -5268,7 +4887,7 @@ flowchart LR
   <td><code>ProcessingView.tsx</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td>External entry / no inbound edge</td>
-  <td><code>axios.ts</code><br><small style="color:var(--muted)">frontend/utils/axios.ts</small><br><code>fileStore.ts</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small><br><code>getPendingFile()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small><br>+10 more</td>
+  <td><code>fileStore.ts</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small><br><code>getPendingFile()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small><br><code>getPendingLanguage()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small><br>+9 more</td>
   <td>Module file in app/processing/ProcessingView.tsx.</td>
 </tr>
 <tr>
@@ -5380,7 +4999,7 @@ flowchart LR
   <td><code>fileStore.ts</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
   <td><span class="tag tag-hook">UI</span></td>
   <td><code>ProcessingView.tsx</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small></td>
-  <td><code>UploadCard.tsx</code><br><small style="color:var(--muted)">frontend/components/UploadCard.tsx</small></td>
+  <td>No direct outbound edge</td>
   <td>Module file in frontend/utils/fileStore.ts.</td>
 </tr>
 <tr>
@@ -5388,7 +5007,7 @@ flowchart LR
   <td><code>setPendingFile()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>ProcessingView.tsx</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small></td>
-  <td><code>UploadCard.tsx</code><br><small style="color:var(--muted)">frontend/components/UploadCard.tsx</small></td>
+  <td>No direct outbound edge</td>
   <td>setPendingFile() node in frontend/utils/fileStore.ts.</td>
 </tr>
 <tr>
@@ -5409,14 +5028,6 @@ flowchart LR
 </tr>
 <tr>
   <td>19</td>
-  <td><code>setPendingMode()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
-  <td><span class="tag tag-func">Function</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>UploadCard.tsx</code><br><small style="color:var(--muted)">frontend/components/UploadCard.tsx</small></td>
-  <td>setPendingMode() node in frontend/utils/fileStore.ts.</td>
-</tr>
-<tr>
-  <td>20</td>
   <td><code>getPendingMode()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>ProcessingView()</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small><br><code>ProcessingView.tsx</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small></td>
@@ -5424,7 +5035,7 @@ flowchart LR
   <td>getPendingMode() node in frontend/utils/fileStore.ts.</td>
 </tr>
 <tr>
-  <td>21</td>
+  <td>20</td>
   <td><code>getPendingTargetLanguage()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>ProcessingView.tsx</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small></td>
@@ -5432,12 +5043,20 @@ flowchart LR
   <td>getPendingTargetLanguage() node in frontend/utils/fileStore.ts.</td>
 </tr>
 <tr>
-  <td>22</td>
+  <td>21</td>
   <td><code>getPendingSourceLanguage()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td><code>ProcessingView.tsx</code><br><small style="color:var(--muted)">app/processing/ProcessingView.tsx</small></td>
   <td>No direct outbound edge</td>
   <td>getPendingSourceLanguage() node in frontend/utils/fileStore.ts.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>setPendingYoutubeUrl()</code><br><small style="color:var(--muted)">frontend/utils/fileStore.ts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>setPendingYoutubeUrl() node in frontend/utils/fileStore.ts.</td>
 </tr>
 <tr>
   <td>23</td>
@@ -5463,45 +5082,349 @@ flowchart LR
   <td>No direct outbound edge</td>
   <td>getPendingSourceDubbingJobId() node in frontend/utils/fileStore.ts.</td>
 </tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>frontend/utils/fileStore.ts</code></td><td>11 nodes</td></tr>
+<tr><td><code>app/processing/ProcessingView.tsx</code></td><td>9 nodes</td></tr>
+<tr><td><code>dashboard/processing/page.tsx</code></td><td>3 nodes</td></tr>
+<tr><td><code>app/processing/page.tsx</code></td><td>2 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x22, imports x9, imports x3, calls x2. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 16. Other ====== -->
+<h2 id="other">16. Other</h2>
+<p>Other groups implementation around backend, admin, components, frontend, mostly in backend/services/billingSubscriptionService.js, backend/utils/storage.js, backend/controllers/authController.js. This section covers 891 nodes and 1092 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Other (891 nodes, 1092 edges)
+    subgraph other_app_dashboard_page_tsx_ea97908b["app/dashboard/page.tsx"]
+        dashboard_page_gettimegreeting_d633b3e1("getTimeGreeting()<br/><small>app/dashboard/page.tsx</small>")
+        dashboard_page_dashboardpage_6cc25d76("DashboardPage()<br/><small>app/dashboard/page.tsx</small>")
+    end
+    subgraph other_components_dashboard_ProjectSearchModal_ts_1b4b20cc["components/dashboard/ProjectSearchModal.tsx"]
+        dashboard_projectsearchmodal_formatduration_98a2a28f("formatDuration()<br/><small>components/dashboard/ProjectSearchModal.tsx</small>")
+        dashboard_projectsearchmodal_mapsearchprojectres_13744665("mapSearchProjectResult()<br/><small>components/dashboard/ProjectSearchModal.tsx</small>")
+    end
+    subgraph other_frontend_components_UploadCard_tsx_19a563ec["frontend/components/UploadCard.tsx"]
+        components_uploadcard_formatbytes_feba8bb5("formatBytes()<br/><small>frontend/components/UploadCard.tsx</small>")
+        components_uploadcard_uploadcardinner_4b9b5577("UploadCardInner()<br/><small>frontend/components/UploadCard.tsx</small>")
+    end
+    subgraph other_frontend_hooks_use_toast_ts_0fd1cd1b["frontend/hooks/use-toast.ts"]
+        hooks_use_toast_usetoastertoasts_87c423ae("useToasterToasts()<br/><small>frontend/hooks/use-toast.ts</small>")
+        hooks_use_toast_usetoast_77052326("useToast()<br/><small>frontend/hooks/use-toast.ts</small>")
+    end
+    subgraph other_frontend_utils_convertToAudio_ts_009ca9c7["frontend/utils/convertToAudio.ts"]
+        utils_converttoaudio_audiobuffertowav_6e342298("audioBufferToWav()<br/><small>frontend/utils/convertToAudio.ts</small>")
+        utils_converttoaudio_converttoaudio_e526d985("convertToAudio()<br/><small>frontend/utils/convertToAudio.ts</small>")
+    end
+    backend_models_user_js_5b5b1132("User.js")
+    utils_storage_localstorageadapter_20bf7acb("LocalStorageAdapter<br/><small>backend/utils/storage.js</small>")
+    auth_authform_authform_44c819a9("AuthForm()<br/><small>components/auth/AuthForm.tsx</small>")
+    frontend_components_dubbingeditor_bottomtimeline_7bcc29f9("BottomTimeline.tsx")
+    admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c("page.tsx")
+    frontend_app_dashboard_settings_page_tsx_7329c08e("page.tsx")
+    components_toaster_toaster_7d987abb("Toaster()<br/><small>frontend/components/Toaster.tsx</small>")
+    frontend_utils_axios_ts_790d852d("axios.ts")
+    dashboard_page_gettimegreeting_d633b3e1 -->|calls| dashboard_page_dashboardpage_6cc25d76
+    utils_converttoaudio_audiobuffertowav_6e342298 -->|calls| utils_converttoaudio_converttoaudio_e526d985
+    components_toaster_toaster_7d987abb -->|calls| hooks_use_toast_usetoastertoasts_87c423ae
+    components_uploadcard_formatbytes_feba8bb5 -->|calls| components_uploadcard_uploadcardinner_4b9b5577
+    auth_authform_authform_44c819a9 -->|calls| hooks_use_toast_usetoast_77052326
+    dashboard_projectsearchmodal_formatduration_98a2a28f -->|calls| dashboard_projectsearchmodal_mapsearchprojectres_13744665
+    frontend_app_dashboard_settings_page_tsx_7329c08e -->|imports| frontend_utils_axios_ts_790d852d
+    frontend_utils_axios_ts_790d852d -->|imports| frontend_components_dubbingeditor_bottomtimeline_7bcc29f9
+    %% Omitted for readability: 873 nodes, 0 edges
+    class dashboard_page_gettimegreeting_d633b3e1 ui;
+    class dashboard_page_dashboardpage_6cc25d76 ui;
+    class dashboard_projectsearchmodal_formatduration_98a2a28f ui;
+    class dashboard_projectsearchmodal_mapsearchprojectres_13744665 ui;
+    class components_uploadcard_formatbytes_feba8bb5 ui;
+    class components_uploadcard_uploadcardinner_4b9b5577 ui;
+    class hooks_use_toast_usetoastertoasts_87c423ae ui;
+    class hooks_use_toast_usetoast_77052326 ui;
+    class utils_converttoaudio_audiobuffertowav_6e342298 function;
+    class utils_converttoaudio_converttoaudio_e526d985 function;
+    class backend_models_user_js_5b5b1132 klass;
+    class utils_storage_localstorageadapter_20bf7acb klass;
+    class auth_authform_authform_44c819a9 ui;
+    class frontend_components_dubbingeditor_bottomtimeline_7bcc29f9 ui;
+    class admin_app_dashboard_courses_all_courses_page_tsx_e2cffe2c ui;
+    class frontend_app_dashboard_settings_page_tsx_7329c08e ui;
+    class components_toaster_toaster_7d987abb ui;
+    class frontend_utils_axios_ts_790d852d module;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br>+1 more</td>
+  <td>Module file in lessons/all-lessons/page.tsx.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Lesson</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Lesson node in lessons/all-lessons/page.tsx.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>AllLessonsPage()</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Organizes documentation pages, navigation, or content lookup.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>page.tsx</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td>Module file in quizzes/all-quizzes/page.tsx.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Quiz</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Quiz node in quizzes/all-quizzes/page.tsx.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>AllQuizzesPage()</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Organizes documentation pages, navigation, or content lookup.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small><br>+1 more</td>
+  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br><code>PostModal.tsx</code><br><small style="color:var(--muted)">admin/components/PostModal.tsx</small><br><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td>Module file in admin/components/CategorySelector.tsx.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>CategorySelectorProps</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>CategorySelectorProps node in admin/components/CategorySelector.tsx.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>CategorySelector()</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>CategorySelector() node in admin/components/CategorySelector.tsx.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>QuizForm.tsx</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">quizzes/all-quizzes/page.tsx</small></td>
+  <td><code>TagSelector.tsx</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small></td>
+  <td>Module file in admin/components/QuizForm.tsx.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>QuizFormProps</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>QuizFormProps node in admin/components/QuizForm.tsx.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>QuizForm()</code><br><small style="color:var(--muted)">admin/components/QuizForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>QuizForm() node in admin/components/QuizForm.tsx.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>TagSelector.tsx</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small><br><code>page.tsx</code><br><small style="color:var(--muted)">lessons/all-lessons/page.tsx</small><br><code>page.tsx</code><br><small style="color:var(--muted)">courses/all-courses/page.tsx</small><br>+1 more</td>
+  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small><br><code>PostModal.tsx</code><br><small style="color:var(--muted)">admin/components/PostModal.tsx</small></td>
+  <td>Module file in admin/components/TagSelector.tsx.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>TagSelectorProps</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>TagSelectorProps node in admin/components/TagSelector.tsx.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>TagSelector()</code><br><small style="color:var(--muted)">admin/components/TagSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>TagSelector() node in admin/components/TagSelector.tsx.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>VideoSelector.tsx</code><br><small style="color:var(--muted)">admin/components/VideoSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>axios.ts</code><br><small style="color:var(--muted)">admin/utils/axios.ts</small></td>
+  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
+  <td>Module file in admin/components/VideoSelector.tsx.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>VideoData</code><br><small style="color:var(--muted)">admin/components/VideoSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>VideoData node in admin/components/VideoSelector.tsx.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>VideoSelectorProps</code><br><small style="color:var(--muted)">admin/components/VideoSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>VideoSelectorProps node in admin/components/VideoSelector.tsx.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>VideoSelector()</code><br><small style="color:var(--muted)">admin/components/VideoSelector.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>VideoSelector() node in admin/components/VideoSelector.tsx.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>LessonForm.tsx</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td><code>AuthorSelector.tsx</code><br><small style="color:var(--muted)">admin/components/AuthorSelector.tsx</small><br><code>CategorySelector.tsx</code><br><small style="color:var(--muted)">admin/components/CategorySelector.tsx</small><br><code>FileSelector.tsx</code><br><small style="color:var(--muted)">admin/components/FileSelector.tsx</small><br>+3 more</td>
+  <td>No direct outbound edge</td>
+  <td>Module file in admin/components/LessonForm.tsx.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>LessonFormProps</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>LessonFormProps node in admin/components/LessonForm.tsx.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>OptionType</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>OptionType node in admin/components/LessonForm.tsx.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>LessonForm()</code><br><small style="color:var(--muted)">admin/components/LessonForm.tsx</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>LessonForm() node in admin/components/LessonForm.tsx.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>getDodoClient()</code><br><small style="color:var(--muted)">backend/utils/dodoClient.js</small></td>
+  <td><span class="tag tag-cmd">Entry</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>billingController.js</code><br><small style="color:var(--muted)">backend/controllers/billingController.js</small><br><code>dodoWebhookController.js</code><br><small style="color:var(--muted)">backend/controllers/dodoWebhookController.js</small><br><code>handlePaymentSucceeded()</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small><br>+2 more</td>
+  <td>getDodoClient() node in backend/utils/dodoClient.js.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>billingSubscriptionService.js</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-class">Module</span></td>
+  <td><code>addCredits()</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small><br><code>CreditTransaction.js</code><br><small style="color:var(--muted)">backend/models/CreditTransaction.js</small><br><code>creditUtils.js</code><br><small style="color:var(--muted)">backend/utils/creditUtils.js</small><br>+7 more</td>
+  <td>No direct outbound edge</td>
+  <td>billingSubscriptionService.js node in backend/services/billingSubscriptionService.js.</td>
+</tr>
 <tr>
   <td>26</td>
-  <td><code>projectUtils.js</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
-  <td><span class="tag tag-class">Module</span></td>
-  <td>External entry / no inbound edge</td>
-  <td><code>buildProjectFilterFields()</code><br><small style="color:var(--muted)">backend/utils/projectFilterFields.js</small><br><code>DubbingJob.js</code><br><small style="color:var(--muted)">backend/models/DubbingJob.js</small><br><code>Project.js</code><br><small style="color:var(--muted)">backend/models/Project.js</small><br>+2 more</td>
-  <td>projectUtils.js node in backend/utils/projectUtils.js.</td>
-</tr>
-<tr>
-  <td>27</td>
-  <td><code>Project</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>Project node in backend/utils/projectUtils.js.</td>
-</tr>
-<tr>
-  <td>28</td>
-  <td><code>SubtitleJob</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>SubtitleJob node in backend/utils/projectUtils.js.</td>
-</tr>
-<tr>
-  <td>29</td>
-  <td><code>DubbingJob</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
-  <td><span class="tag tag-class">Class</span></td>
-  <td>External entry / no inbound edge</td>
-  <td>No direct outbound edge</td>
-  <td>DubbingJob node in backend/utils/projectUtils.js.</td>
-</tr>
-<tr>
-  <td>30</td>
-  <td><code>{ buildProjectSearchDocument }</code><br><small style="color:var(--muted)">backend/utils/projectUtils.js</small></td>
+  <td><code>mongoose</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
   <td><span class="tag tag-func">Function</span></td>
   <td>External entry / no inbound edge</td>
   <td>No direct outbound edge</td>
-  <td>{ buildProjectSearchDocument } node in backend/utils/projectUtils.js.</td>
+  <td>mongoose node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>PlanCatalog</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>PlanCatalog node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>UserSubscription</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>UserSubscription node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>User</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>User node in backend/services/billingSubscriptionService.js.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>CreditTransaction</code><br><small style="color:var(--muted)">backend/services/billingSubscriptionService.js</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>CreditTransaction node in backend/services/billingSubscriptionService.js.</td>
 </tr>
 </table>
 
@@ -5515,14 +5438,14 @@ flowchart LR
 <tr><td><code>admin/README.md</code></td><td>19 nodes</td></tr>
 <tr><td><code>admin/types/index.ts</code></td><td>19 nodes</td></tr>
 <tr><td><code>backend/artifacts/implementation_plan.md</code></td><td>19 nodes</td></tr>
+<tr><td><code>backend/controllers/authController.js</code></td><td>19 nodes</td></tr>
 <tr><td><code>backend/utils/geminiKeyManager.js</code></td><td>18 nodes</td></tr>
-<tr><td><code>frontend/utils/pricingDisplay.ts</code></td><td>18 nodes</td></tr>
 <tr><td><code>services/dubbing/dubbingProviderService.js</code></td><td>17 nodes</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Design Notes</h4>
-    <p>This section comes from graphify community clustering. Relationship summary: contains x669, imports x156, calls x124, imports x66. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+    <p>This section comes from graphify community clustering. Relationship summary: contains x699, imports x171, calls x142, imports x59. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
   </div>
 </div>
 <hr>
@@ -5533,17 +5456,17 @@ flowchart LR
   <div class="card">
     <h4>Graph</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>Nodes</td><td>3165</td></tr>
-      <tr><td>Edges</td><td>4154</td></tr>
+      <tr><td>Nodes</td><td>3180</td></tr>
+      <tr><td>Edges</td><td>4171</td></tr>
       <tr><td>Hyperedges</td><td>0</td></tr>
-      <tr><td>Communities</td><td>227</td></tr>
+      <tr><td>Communities</td><td>238</td></tr>
       <tr><td>Documented Sections</td><td>15</td></tr>
     </table>
   </div>
   <div class="card">
     <h4>Edge Confidence</h4>
     <table style="width:100%;font-size:0.85rem;">
-      <tr><td>EXTRACTED</td><td>4150</td></tr>
+      <tr><td>EXTRACTED</td><td>4167</td></tr>
       <tr><td>INFERRED</td><td>4</td></tr>
       <tr><td>AMBIGUOUS</td><td>0</td></tr>
     </table>
@@ -5552,7 +5475,7 @@ flowchart LR
 
 <div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
   <p>video transcribe — Architecture Documentation</p>
-  <p>Generated: 2026-05-16 20:01 UTC · graphify callflow-html</p>
+  <p>Generated: 2026-05-17 10:16 UTC · graphify callflow-html</p>
 </div>
 
 </div><!-- .container -->
