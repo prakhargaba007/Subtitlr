@@ -6,6 +6,7 @@ const OpenAI = require("openai");
 const { v4: uuidv4 } = require("uuid");
 const { getFileDuration } = require("./audioUtils");
 const { SARVAM_BCP47_MAP } = require("./languageCatalog");
+const { callWithSarvamRateLimit } = require("./sarvamRateLimiter");
 
 const BCP_47_MAP = SARVAM_BCP47_MAP;
 
@@ -210,7 +211,7 @@ const selectBestSarvamVoice = async (voiceDescription, options = {}) => {
   return pool[0] || "shubh";
 };
 
-const synthesizeSarvamTts = async (text, voiceKey, targetLanguage) => {
+const synthesizeSarvamTts = async (text, voiceKey, targetLanguage, options = {}) => {
   const languageKey = resolveSarvamLanguageKey(targetLanguage) || "hindi";
   const languageCode = BCP_47_MAP[languageKey] || "hi-IN";
   const pace = parseNumberEnv("SARVAM_TTS_PACE", 1.0, 0.5, 2.0);
@@ -230,12 +231,16 @@ const synthesizeSarvamTts = async (text, voiceKey, targetLanguage) => {
     payload.dict_id = process.env.SARVAM_DICT_ID;
   }
 
-  const response = await axios.post("https://api.sarvam.ai/text-to-speech", payload, {
-    headers: {
-      "api-subscription-key": process.env.SARVAM_API_KEY,
-      "Content-Type": "application/json"
-    }
-  });
+  const response = await callWithSarvamRateLimit(
+    () =>
+      axios.post("https://api.sarvam.ai/text-to-speech", payload, {
+        headers: {
+          "api-subscription-key": process.env.SARVAM_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }),
+    { concurrencyLimit: options.concurrencyLimit },
+  );
 
   const audios = response.data.audios;
   if (!audios || !audios.length) {

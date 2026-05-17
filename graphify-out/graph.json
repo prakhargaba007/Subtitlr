@@ -1611,7 +1611,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L1",
       "id": "frontend_app_dubbing_editor_page_tsx",
-      "community": 233,
+      "community": 229,
       "norm_label": "page.tsx"
     },
     {
@@ -1620,7 +1620,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L11",
       "id": "editor_page_dubbingeditorloading",
-      "community": 233,
+      "community": 229,
       "norm_label": "dubbingeditorloading()"
     },
     {
@@ -1629,7 +1629,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L22",
       "id": "editor_page_dubbingeditorpageinner",
-      "community": 233,
+      "community": 229,
       "norm_label": "dubbingeditorpageinner()"
     },
     {
@@ -1638,7 +1638,7 @@
       "source_file": "frontend/app/dubbing/editor/page.tsx",
       "source_location": "L106",
       "id": "editor_page_dubbingeditorpage",
-      "community": 233,
+      "community": 229,
       "norm_label": "dubbingeditorpage()"
     },
     {
@@ -1890,7 +1890,7 @@
       "source_file": "frontend/utils/fileStore.ts",
       "source_location": "L48",
       "id": "utils_filestore_setpendingyoutubeurl",
-      "community": 28,
+      "community": 67,
       "norm_label": "setpendingyoutubeurl()"
     },
     {
@@ -2160,7 +2160,7 @@
       "source_file": "frontend/utils/axios.ts",
       "source_location": "L17",
       "id": "utils_axios_s3url",
-      "community": 23,
+      "community": 229,
       "norm_label": "s3url()"
     },
     {
@@ -2961,7 +2961,7 @@
       "source_file": "frontend/components/settings/SettingsCards.tsx",
       "source_location": "L67",
       "id": "settings_settingscards_profilecard",
-      "community": 23,
+      "community": 229,
       "norm_label": "profilecard()"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L1",
       "id": "frontend_components_dubbingeditor_dubbingeditorcontext_tsx",
-      "community": 233,
+      "community": 15,
       "norm_label": "dubbingeditorcontext.tsx"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L22",
       "id": "dubbingeditor_dubbingeditorcontext_createmediaregistry",
-      "community": 233,
+      "community": 15,
       "norm_label": "createmediaregistry()"
     },
     {
@@ -3879,7 +3879,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L38",
       "id": "dubbingeditor_dubbingeditorcontext_busystate",
-      "community": 233,
+      "community": 15,
       "norm_label": "busystate"
     },
     {
@@ -3888,7 +3888,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L40",
       "id": "dubbingeditor_dubbingeditorcontext_undoentry",
-      "community": 233,
+      "community": 15,
       "norm_label": "undoentry"
     },
     {
@@ -3897,7 +3897,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L49",
       "id": "dubbingeditor_dubbingeditorcontext_dubbingeditorcontextvalue",
-      "community": 233,
+      "community": 15,
       "norm_label": "dubbingeditorcontextvalue"
     },
     {
@@ -3906,7 +3906,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L88",
       "id": "dubbingeditor_dubbingeditorcontext_dubbingeditorcontext",
-      "community": 233,
+      "community": 15,
       "norm_label": "dubbingeditorcontext"
     },
     {
@@ -3915,7 +3915,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L90",
       "id": "dubbingeditor_dubbingeditorcontext_stripurlparams",
-      "community": 233,
+      "community": 15,
       "norm_label": "stripurlparams()"
     },
     {
@@ -3924,7 +3924,7 @@
       "source_file": "frontend/components/dubbingEditor/DubbingEditorContext.tsx",
       "source_location": "L97",
       "id": "dubbingeditor_dubbingeditorcontext_dubbingeditorprovider",
-      "community": 233,
+      "community": 15,
       "norm_label": "dubbingeditorprovider()"
     },
     {
@@ -4005,7 +4005,7 @@
       "source_file": "frontend/components/dubbingEditor/types.ts",
       "source_location": "L1",
       "id": "frontend_components_dubbingeditor_types_ts",
-      "community": 15,
+      "community": 229,
       "norm_label": "types.ts"
     },
     {
@@ -4023,7 +4023,7 @@
       "source_file": "frontend/components/dubbingEditor/types.ts",
       "source_location": "L13",
       "id": "dubbingeditor_types_speakerprofile",
-      "community": 15,
+      "community": 229,
       "norm_label": "speakerprofile"
     },
     {
@@ -4032,7 +4032,7 @@
       "source_file": "frontend/components/dubbingEditor/types.ts",
       "source_location": "L19",
       "id": "dubbingeditor_types_editorjob",
-      "community": 233,
+      "community": 229,
       "norm_label": "editorjob"
     },
     {
@@ -4041,7 +4041,7 @@
       "source_file": "frontend/components/dubbingEditor/types.ts",
       "source_location": "L41",
       "id": "dubbingeditor_types_fmttime",
-      "community": 15,
+      "community": 229,
       "norm_label": "fmttime()"
     },
     {
@@ -4086,7 +4086,7 @@
       "source_file": "frontend/components/dubbingEditor/RightInspector.tsx",
       "source_location": "L1",
       "id": "frontend_components_dubbingeditor_rightinspector_tsx",
-      "community": 15,
+      "community": 229,
       "norm_label": "rightinspector.tsx"
     },
     {
@@ -4095,7 +4095,7 @@
       "source_file": "frontend/components/dubbingEditor/RightInspector.tsx",
       "source_location": "L9",
       "id": "dubbingeditor_rightinspector_addform",
-      "community": 15,
+      "community": 229,
       "norm_label": "addform"
     },
     {
@@ -4104,7 +4104,7 @@
       "source_file": "frontend/components/dubbingEditor/RightInspector.tsx",
       "source_location": "L16",
       "id": "dubbingeditor_rightinspector_empty_form",
-      "community": 15,
+      "community": 229,
       "norm_label": "empty_form"
     },
     {
@@ -4113,7 +4113,7 @@
       "source_file": "frontend/components/dubbingEditor/RightInspector.tsx",
       "source_location": "L18",
       "id": "dubbingeditor_rightinspector_rightinspector",
-      "community": 15,
+      "community": 229,
       "norm_label": "rightinspector()"
     },
     {
@@ -4147,7 +4147,7 @@
       "label": "DubbingLanguage",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L38",
+      "source_location": "L37",
       "id": "dubbing_dubbingexportview_dubbinglanguage",
       "community": 23,
       "norm_label": "dubbinglanguage"
@@ -4156,7 +4156,7 @@
       "label": "hasMuxedDubbedVideoFile()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L48",
+      "source_location": "L47",
       "id": "dubbing_dubbingexportview_hasmuxeddubbedvideofile",
       "community": 23,
       "norm_label": "hasmuxeddubbedvideofile()"
@@ -4165,7 +4165,7 @@
       "label": "muxedDubbedVideoFetchUrl()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L58",
+      "source_location": "L57",
       "id": "dubbing_dubbingexportview_muxeddubbedvideofetchurl",
       "community": 23,
       "norm_label": "muxeddubbedvideofetchurl()"
@@ -4174,7 +4174,7 @@
       "label": "streamDubbingRebuild()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L66",
+      "source_location": "L65",
       "id": "dubbing_dubbingexportview_streamdubbingrebuild",
       "community": 23,
       "norm_label": "streamdubbingrebuild()"
@@ -4183,7 +4183,7 @@
       "label": "StatusBadge()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L120",
+      "source_location": "L119",
       "id": "dubbing_dubbingexportview_statusbadge",
       "community": 23,
       "norm_label": "statusbadge()"
@@ -4192,7 +4192,7 @@
       "label": "ProcessingStepper()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L136",
+      "source_location": "L135",
       "id": "dubbing_dubbingexportview_processingstepper",
       "community": 23,
       "norm_label": "processingstepper()"
@@ -4201,25 +4201,25 @@
       "label": "LiveTranscription()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L194",
+      "source_location": "L212",
       "id": "dubbing_dubbingexportview_livetranscription",
       "community": 23,
       "norm_label": "livetranscription()"
     },
     {
-      "label": "StatCards()",
+      "label": "ProjectMetric()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L252",
-      "id": "dubbing_dubbingexportview_statcards",
+      "source_location": "L277",
+      "id": "dubbing_dubbingexportview_projectmetric",
       "community": 23,
-      "norm_label": "statcards()"
+      "norm_label": "projectmetric()"
     },
     {
       "label": "SubtitleFormat",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L286",
+      "source_location": "L305",
       "id": "dubbing_dubbingexportview_subtitleformat",
       "community": 23,
       "norm_label": "subtitleformat"
@@ -4228,7 +4228,7 @@
       "label": "SubtitleLang",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L287",
+      "source_location": "L306",
       "id": "dubbing_dubbingexportview_subtitlelang",
       "community": 23,
       "norm_label": "subtitlelang"
@@ -4237,7 +4237,7 @@
       "label": "FORMAT_META",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L289",
+      "source_location": "L308",
       "id": "dubbing_dubbingexportview_format_meta",
       "community": 23,
       "norm_label": "format_meta"
@@ -4246,7 +4246,7 @@
       "label": "SubtitleModal()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L313",
+      "source_location": "L332",
       "id": "dubbing_dubbingexportview_subtitlemodal",
       "community": 23,
       "norm_label": "subtitlemodal()"
@@ -4255,7 +4255,7 @@
       "label": "DubAnotherLanguageModal()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L485",
+      "source_location": "L504",
       "id": "dubbing_dubbingexportview_dubanotherlanguagemodal",
       "community": 23,
       "norm_label": "dubanotherlanguagemodal()"
@@ -4264,7 +4264,7 @@
       "label": "DownloadPanel()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L622",
+      "source_location": "L641",
       "id": "dubbing_dubbingexportview_downloadpanel",
       "community": 23,
       "norm_label": "downloadpanel()"
@@ -4273,7 +4273,7 @@
       "label": "DubbingExportView()",
       "file_type": "code",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L836",
+      "source_location": "L876",
       "id": "dubbing_dubbingexportview_dubbingexportview",
       "community": 23,
       "norm_label": "dubbingexportview()"
@@ -9630,7 +9630,7 @@
       "source_file": "backend/utils/dubbingConfig.js",
       "source_location": "L97",
       "id": "utils_dubbingconfig_getttsbrackettagallowlist",
-      "community": 17,
+      "community": 193,
       "norm_label": "getttsbrackettagallowlist()"
     },
     {
@@ -9639,7 +9639,7 @@
       "source_file": "backend/utils/dubbingConfig.js",
       "source_location": "L122",
       "id": "utils_dubbingconfig_getinworldapplytextnormalization",
-      "community": 21,
+      "community": 90,
       "norm_label": "getinworldapplytextnormalization()"
     },
     {
@@ -9767,6 +9767,177 @@
       "id": "utils_dubbingoutpututils_saveartifact",
       "community": 78,
       "norm_label": "saveartifact()"
+    },
+    {
+      "label": "sarvamRateLimiter.js",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L1",
+      "id": "backend_utils_sarvamratelimiter_js",
+      "community": 125,
+      "norm_label": "sarvamratelimiter.js"
+    },
+    {
+      "label": "sleep()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L8",
+      "id": "utils_sarvamratelimiter_sleep",
+      "community": 125,
+      "norm_label": "sleep()"
+    },
+    {
+      "label": "clamp()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L10",
+      "id": "utils_sarvamratelimiter_clamp",
+      "community": 125,
+      "norm_label": "clamp()"
+    },
+    {
+      "label": "envInt()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L14",
+      "id": "utils_sarvamratelimiter_envint",
+      "community": 125,
+      "norm_label": "envint()"
+    },
+    {
+      "label": "getRpmLimit()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L22",
+      "id": "utils_sarvamratelimiter_getrpmlimit",
+      "community": 125,
+      "norm_label": "getrpmlimit()"
+    },
+    {
+      "label": "getBurstLimit()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L26",
+      "id": "utils_sarvamratelimiter_getburstlimit",
+      "community": 125,
+      "norm_label": "getburstlimit()"
+    },
+    {
+      "label": "getConcurrencyLimit()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L35",
+      "id": "utils_sarvamratelimiter_getconcurrencylimit",
+      "community": 125,
+      "norm_label": "getconcurrencylimit()"
+    },
+    {
+      "label": "getCooldownMs()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L48",
+      "id": "utils_sarvamratelimiter_getcooldownms",
+      "community": 125,
+      "norm_label": "getcooldownms()"
+    },
+    {
+      "label": "state",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L52",
+      "id": "utils_sarvamratelimiter_state",
+      "community": 125,
+      "norm_label": "state"
+    },
+    {
+      "label": "refreshConfig()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L61",
+      "id": "utils_sarvamratelimiter_refreshconfig",
+      "community": 125,
+      "norm_label": "refreshconfig()"
+    },
+    {
+      "label": "refillBucket()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L69",
+      "id": "utils_sarvamratelimiter_refillbucket",
+      "community": 125,
+      "norm_label": "refillbucket()"
+    },
+    {
+      "label": "isSarvamRateLimitError()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L85",
+      "id": "utils_sarvamratelimiter_issarvamratelimiterror",
+      "community": 125,
+      "norm_label": "issarvamratelimiterror()"
+    },
+    {
+      "label": "waitForConcurrency()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L106",
+      "id": "utils_sarvamratelimiter_waitforconcurrency",
+      "community": 125,
+      "norm_label": "waitforconcurrency()"
+    },
+    {
+      "label": "releaseConcurrency()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L113",
+      "id": "utils_sarvamratelimiter_releaseconcurrency",
+      "community": 125,
+      "norm_label": "releaseconcurrency()"
+    },
+    {
+      "label": "waitForToken()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L119",
+      "id": "utils_sarvamratelimiter_waitfortoken",
+      "community": 125,
+      "norm_label": "waitfortoken()"
+    },
+    {
+      "label": "markRateLimited()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L143",
+      "id": "utils_sarvamratelimiter_markratelimited",
+      "community": 125,
+      "norm_label": "markratelimited()"
+    },
+    {
+      "label": "callWithSarvamRateLimit()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L151",
+      "id": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "community": 125,
+      "norm_label": "callwithsarvamratelimit()"
+    },
+    {
+      "label": "getSarvamRateLimitStatus()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L176",
+      "id": "utils_sarvamratelimiter_getsarvamratelimitstatus",
+      "community": 125,
+      "norm_label": "getsarvamratelimitstatus()"
+    },
+    {
+      "label": "resetSarvamRateLimiter()",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L191",
+      "id": "utils_sarvamratelimiter_resetsarvamratelimiter",
+      "community": 125,
+      "norm_label": "resetsarvamratelimiter()"
     },
     {
       "label": "usageTracker.js",
@@ -10701,7 +10872,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L1",
       "id": "backend_utils_otputils_js",
-      "community": 135,
+      "community": 18,
       "norm_label": "otputils.js"
     },
     {
@@ -10710,7 +10881,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L1",
       "id": "utils_otputils_crypto",
-      "community": 135,
+      "community": 18,
       "norm_label": "crypto"
     },
     {
@@ -10719,7 +10890,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L2",
       "id": "utils_otputils_otp",
-      "community": 135,
+      "community": 18,
       "norm_label": "otp"
     },
     {
@@ -10728,7 +10899,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L3",
       "id": "utils_otputils_sendemail",
-      "community": 135,
+      "community": 18,
       "norm_label": "sendemail"
     },
     {
@@ -10737,7 +10908,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L10",
       "id": "utils_otputils_generateotp",
-      "community": 135,
+      "community": 18,
       "norm_label": "generateotp()"
     },
     {
@@ -10746,7 +10917,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L22",
       "id": "utils_otputils_createotp",
-      "community": 135,
+      "community": 18,
       "norm_label": "createotp()"
     },
     {
@@ -10755,7 +10926,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L62",
       "id": "utils_otputils_verifyotp",
-      "community": 135,
+      "community": 18,
       "norm_label": "verifyotp()"
     },
     {
@@ -10764,7 +10935,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L131",
       "id": "utils_otputils_sendotpemail",
-      "community": 135,
+      "community": 18,
       "norm_label": "sendotpemail()"
     },
     {
@@ -10773,7 +10944,7 @@
       "source_file": "backend/utils/otpUtils.js",
       "source_location": "L271",
       "id": "utils_otputils_cleanupexpiredotps",
-      "community": 135,
+      "community": 18,
       "norm_label": "cleanupexpiredotps()"
     },
     {
@@ -10782,7 +10953,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L1",
       "id": "backend_utils_dubbingtextutils_js",
-      "community": 17,
+      "community": 193,
       "norm_label": "dubbingtextutils.js"
     },
     {
@@ -10791,7 +10962,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L1",
       "id": "utils_dubbingtextutils_getttsbrackettagallowlist",
-      "community": 17,
+      "community": 193,
       "norm_label": "{ getttsbrackettagallowlist }"
     },
     {
@@ -10800,7 +10971,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L3",
       "id": "utils_dubbingtextutils_norm",
-      "community": 17,
+      "community": 193,
       "norm_label": "norm()"
     },
     {
@@ -10809,7 +10980,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L5",
       "id": "utils_dubbingtextutils_brackettoken",
-      "community": 17,
+      "community": 193,
       "norm_label": "brackettoken()"
     },
     {
@@ -10818,7 +10989,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L14",
       "id": "utils_dubbingtextutils_normalizespacedtext",
-      "community": 17,
+      "community": 193,
       "norm_label": "normalizespacedtext()"
     },
     {
@@ -10827,7 +10998,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L22",
       "id": "utils_dubbingtextutils_stripexperimentalinworldtags",
-      "community": 17,
+      "community": 193,
       "norm_label": "stripexperimentalinworldtags()"
     },
     {
@@ -10836,7 +11007,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L27",
       "id": "utils_dubbingtextutils_isenglishliketarget",
-      "community": 17,
+      "community": 193,
       "norm_label": "isenglishliketarget()"
     },
     {
@@ -10845,7 +11016,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L35",
       "id": "utils_dubbingtextutils_textfornoninworldtts",
-      "community": 17,
+      "community": 193,
       "norm_label": "textfornoninworldtts()"
     },
     {
@@ -10854,7 +11025,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L38",
       "id": "utils_dubbingtextutils_textforgeminitts",
-      "community": 17,
+      "community": 193,
       "norm_label": "textforgeminitts()"
     },
     {
@@ -10863,7 +11034,7 @@
       "source_file": "backend/utils/dubbingTextUtils.js",
       "source_location": "L43",
       "id": "utils_dubbingtextutils_textforinworldtts",
-      "community": 17,
+      "community": 193,
       "norm_label": "textforinworldtts()"
     },
     {
@@ -11592,7 +11763,7 @@
       "source_file": "backend/utils/projectUtils.js",
       "source_location": "L13",
       "id": "utils_projectutils_createprojectforsubtitlejob",
-      "community": 29,
+      "community": 206,
       "norm_label": "createprojectforsubtitlejob()"
     },
     {
@@ -11952,7 +12123,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L1",
       "id": "backend_utils_languagecatalog_js",
-      "community": 125,
+      "community": 33,
       "norm_label": "languagecatalog.js"
     },
     {
@@ -11961,7 +12132,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L18",
       "id": "utils_languagecatalog_language_map",
-      "community": 125,
+      "community": 33,
       "norm_label": "language_map"
     },
     {
@@ -11970,7 +12141,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L259",
       "id": "utils_languagecatalog_inworld_lang_code_map",
-      "community": 125,
+      "community": 33,
       "norm_label": "inworld_lang_code_map"
     },
     {
@@ -11979,7 +12150,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L333",
       "id": "utils_languagecatalog_sarvam_bcp47_map",
-      "community": 125,
+      "community": 120,
       "norm_label": "sarvam_bcp47_map"
     },
     {
@@ -11988,7 +12159,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L348",
       "id": "utils_languagecatalog_inworld_canonical_lang_keys",
-      "community": 125,
+      "community": 33,
       "norm_label": "inworld_canonical_lang_keys"
     },
     {
@@ -11997,7 +12168,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L366",
       "id": "utils_languagecatalog_capitalizelabel",
-      "community": 125,
+      "community": 33,
       "norm_label": "capitalizelabel()"
     },
     {
@@ -12006,7 +12177,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L372",
       "id": "utils_languagecatalog_buildsubtitlelanguagelist",
-      "community": 125,
+      "community": 33,
       "norm_label": "buildsubtitlelanguagelist()"
     },
     {
@@ -12015,7 +12186,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L413",
       "id": "utils_languagecatalog_language_list",
-      "community": 125,
+      "community": 33,
       "norm_label": "language_list"
     },
     {
@@ -12024,7 +12195,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L419",
       "id": "utils_languagecatalog_builddubbinglanguagelist",
-      "community": 125,
+      "community": 33,
       "norm_label": "builddubbinglanguagelist()"
     },
     {
@@ -12033,7 +12204,7 @@
       "source_file": "backend/utils/languageCatalog.js",
       "source_location": "L447",
       "id": "utils_languagecatalog_dubbing_language_list",
-      "community": 125,
+      "community": 33,
       "norm_label": "dubbing_language_list"
     },
     {
@@ -12159,7 +12330,7 @@
       "source_file": "backend/utils/subtitleUtils.js",
       "source_location": "L107",
       "id": "utils_subtitleutils_shiftsegments",
-      "community": 202,
+      "community": 1,
       "norm_label": "shiftsegments()"
     },
     {
@@ -12465,7 +12636,7 @@
       "source_file": "backend/utils/sileroVadUtils.js",
       "source_location": "L183",
       "id": "utils_silerovadutils_detectsilerovadtimeline",
-      "community": 10,
+      "community": 26,
       "norm_label": "detectsilerovadtimeline()"
     },
     {
@@ -13149,7 +13320,7 @@
       "source_file": "backend/utils/projectFilterFields.js",
       "source_location": "L1",
       "id": "backend_utils_projectfilterfields_js",
-      "community": 29,
+      "community": 206,
       "norm_label": "projectfilterfields.js"
     },
     {
@@ -13158,7 +13329,7 @@
       "source_file": "backend/utils/projectFilterFields.js",
       "source_location": "L1",
       "id": "utils_projectfilterfields_ready_statuses",
-      "community": 29,
+      "community": 206,
       "norm_label": "ready_statuses"
     },
     {
@@ -13167,7 +13338,7 @@
       "source_file": "backend/utils/projectFilterFields.js",
       "source_location": "L3",
       "id": "utils_projectfilterfields_normalizejobstatus",
-      "community": 29,
+      "community": 206,
       "norm_label": "normalizejobstatus()"
     },
     {
@@ -13176,7 +13347,7 @@
       "source_file": "backend/utils/projectFilterFields.js",
       "source_location": "L10",
       "id": "utils_projectfilterfields_buildprojectfilterfields",
-      "community": 29,
+      "community": 206,
       "norm_label": "buildprojectfilterfields()"
     },
     {
@@ -13185,7 +13356,7 @@
       "source_file": "backend/utils/dodoClient.js",
       "source_location": "L1",
       "id": "backend_utils_dodoclient_js",
-      "community": 72,
+      "community": 77,
       "norm_label": "dodoclient.js"
     },
     {
@@ -13194,7 +13365,7 @@
       "source_file": "backend/utils/dodoClient.js",
       "source_location": "L1",
       "id": "utils_dodoclient_dodopayments",
-      "community": 72,
+      "community": 77,
       "norm_label": "{ dodopayments }"
     },
     {
@@ -13617,7 +13788,7 @@
       "source_file": "backend/utils/audioUtils.js",
       "source_location": "L68",
       "id": "utils_audioutils_splitaudiointochunks",
-      "community": 202,
+      "community": 1,
       "norm_label": "splitaudiointochunks()"
     },
     {
@@ -13626,7 +13797,7 @@
       "source_file": "backend/utils/audioUtils.js",
       "source_location": "L95",
       "id": "utils_audioutils_extractaudiowindow",
-      "community": 78,
+      "community": 140,
       "norm_label": "extractaudiowindow()"
     },
     {
@@ -13635,7 +13806,7 @@
       "source_file": "backend/utils/audioUtils.js",
       "source_location": "L113",
       "id": "utils_audioutils_concatmp3files",
-      "community": 78,
+      "community": 140,
       "norm_label": "concatmp3files()"
     },
     {
@@ -14800,10 +14971,19 @@
       "norm_label": "{ sarvam_bcp47_map }"
     },
     {
+      "label": "{ callWithSarvamRateLimit }",
+      "file_type": "code",
+      "source_file": "backend/utils/sarvamTtsUtils.js",
+      "source_location": "L9",
+      "id": "utils_sarvamttsutils_callwithsarvamratelimit",
+      "community": 46,
+      "norm_label": "{ callwithsarvamratelimit }"
+    },
+    {
       "label": "SARVAM_VOICES",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L12",
+      "source_location": "L13",
       "id": "utils_sarvamttsutils_sarvam_voices",
       "community": 46,
       "norm_label": "sarvam_voices"
@@ -14812,7 +14992,7 @@
       "label": "SARVAM_LANGUAGE_VOICE_RECOMMENDATIONS",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L19",
+      "source_location": "L20",
       "id": "utils_sarvamttsutils_sarvam_language_voice_recommendations",
       "community": 46,
       "norm_label": "sarvam_language_voice_recommendations"
@@ -14821,7 +15001,7 @@
       "label": "SARVAM_LANGUAGE_ALIASES",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L66",
+      "source_location": "L67",
       "id": "utils_sarvamttsutils_sarvam_language_aliases",
       "community": 46,
       "norm_label": "sarvam_language_aliases"
@@ -14830,7 +15010,7 @@
       "label": "DEFAULT_SARVAM_FALLBACK_ORDER",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L93",
+      "source_location": "L94",
       "id": "utils_sarvamttsutils_default_sarvam_fallback_order",
       "community": 46,
       "norm_label": "default_sarvam_fallback_order"
@@ -14839,7 +15019,7 @@
       "label": "norm()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L104",
+      "source_location": "L105",
       "id": "utils_sarvamttsutils_norm",
       "community": 46,
       "norm_label": "norm()"
@@ -14848,7 +15028,7 @@
       "label": "resolveSarvamLanguageKey()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L106",
+      "source_location": "L107",
       "id": "utils_sarvamttsutils_resolvesarvamlanguagekey",
       "community": 46,
       "norm_label": "resolvesarvamlanguagekey()"
@@ -14857,7 +15037,7 @@
       "label": "inferGender()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L112",
+      "source_location": "L113",
       "id": "utils_sarvamttsutils_infergender",
       "community": 46,
       "norm_label": "infergender()"
@@ -14866,7 +15046,7 @@
       "label": "buildRecommendedVoicePool()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L129",
+      "source_location": "L130",
       "id": "utils_sarvamttsutils_buildrecommendedvoicepool",
       "community": 46,
       "norm_label": "buildrecommendedvoicepool()"
@@ -14875,7 +15055,7 @@
       "label": "parseNumberEnv()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L148",
+      "source_location": "L149",
       "id": "utils_sarvamttsutils_parsenumberenv",
       "community": 46,
       "norm_label": "parsenumberenv()"
@@ -14884,7 +15064,7 @@
       "label": "isSarvamConfigured()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L156",
+      "source_location": "L157",
       "id": "utils_sarvamttsutils_issarvamconfigured",
       "community": 55,
       "norm_label": "issarvamconfigured()"
@@ -14893,7 +15073,7 @@
       "label": "getOpenAI()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L161",
+      "source_location": "L162",
       "id": "utils_sarvamttsutils_getopenai",
       "community": 46,
       "norm_label": "getopenai()"
@@ -14902,7 +15082,7 @@
       "label": "selectBestSarvamVoice()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L166",
+      "source_location": "L167",
       "id": "utils_sarvamttsutils_selectbestsarvamvoice",
       "community": 46,
       "norm_label": "selectbestsarvamvoice()"
@@ -14911,7 +15091,7 @@
       "label": "synthesizeSarvamTts()",
       "file_type": "code",
       "source_file": "backend/utils/sarvamTtsUtils.js",
-      "source_location": "L213",
+      "source_location": "L214",
       "id": "utils_sarvamttsutils_synthesizesarvamtts",
       "community": 46,
       "norm_label": "synthesizesarvamtts()"
@@ -15021,7 +15201,7 @@
       "source_file": "backend/models/UserSubscription.js",
       "source_location": "L1",
       "id": "backend_models_usersubscription_js",
-      "community": 64,
+      "community": 227,
       "norm_label": "usersubscription.js"
     },
     {
@@ -15030,7 +15210,7 @@
       "source_file": "backend/models/UserSubscription.js",
       "source_location": "L1",
       "id": "models_usersubscription_mongoose",
-      "community": 64,
+      "community": 227,
       "norm_label": "mongoose"
     },
     {
@@ -15039,7 +15219,7 @@
       "source_file": "backend/models/UserSubscription.js",
       "source_location": "L7",
       "id": "models_usersubscription_usersubscriptionschema",
-      "community": 64,
+      "community": 227,
       "norm_label": "usersubscriptionschema"
     },
     {
@@ -15075,7 +15255,7 @@
       "source_file": "backend/models/Subtitle.js",
       "source_location": "L1",
       "id": "backend_models_subtitle_js",
-      "community": 232,
+      "community": 29,
       "norm_label": "subtitle.js"
     },
     {
@@ -15084,7 +15264,7 @@
       "source_file": "backend/models/Subtitle.js",
       "source_location": "L1",
       "id": "models_subtitle_mongoose",
-      "community": 232,
+      "community": 29,
       "norm_label": "mongoose"
     },
     {
@@ -15093,7 +15273,7 @@
       "source_file": "backend/models/Subtitle.js",
       "source_location": "L4",
       "id": "models_subtitle_segmentschema",
-      "community": 232,
+      "community": 29,
       "norm_label": "segmentschema"
     },
     {
@@ -15102,7 +15282,7 @@
       "source_file": "backend/models/Subtitle.js",
       "source_location": "L13",
       "id": "models_subtitle_subtitlejobschema",
-      "community": 232,
+      "community": 29,
       "norm_label": "subtitlejobschema"
     },
     {
@@ -15138,7 +15318,7 @@
       "source_file": "backend/models/UserUsage.js",
       "source_location": "L1",
       "id": "backend_models_userusage_js",
-      "community": 165,
+      "community": 72,
       "norm_label": "userusage.js"
     },
     {
@@ -15147,7 +15327,7 @@
       "source_file": "backend/models/UserUsage.js",
       "source_location": "L1",
       "id": "models_userusage_mongoose",
-      "community": 165,
+      "community": 72,
       "norm_label": "mongoose"
     },
     {
@@ -15156,7 +15336,7 @@
       "source_file": "backend/models/UserUsage.js",
       "source_location": "L17",
       "id": "models_userusage_userusageschema",
-      "community": 165,
+      "community": 72,
       "norm_label": "userusageschema"
     },
     {
@@ -17118,7 +17298,7 @@
       "source_file": "backend/controllers/subtitleController.js",
       "source_location": "L134",
       "id": "controllers_subtitlecontroller_emit",
-      "community": 202,
+      "community": 1,
       "norm_label": "emit()"
     },
     {
@@ -17244,7 +17424,7 @@
       "source_file": "backend/controllers/subtitleController.js",
       "source_location": "L228",
       "id": "controllers_subtitlecontroller_runlegacywhisper",
-      "community": 202,
+      "community": 1,
       "norm_label": "runlegacywhisper()"
     },
     {
@@ -17451,7 +17631,7 @@
       "source_file": "backend/controllers/adminSubscriptionController.js",
       "source_location": "L1",
       "id": "backend_controllers_adminsubscriptioncontroller_js",
-      "community": 64,
+      "community": 227,
       "norm_label": "adminsubscriptioncontroller.js"
     },
     {
@@ -17460,7 +17640,7 @@
       "source_file": "backend/controllers/adminSubscriptionController.js",
       "source_location": "L1",
       "id": "controllers_adminsubscriptioncontroller_mongoose",
-      "community": 64,
+      "community": 227,
       "norm_label": "mongoose"
     },
     {
@@ -17469,7 +17649,7 @@
       "source_file": "backend/controllers/adminSubscriptionController.js",
       "source_location": "L2",
       "id": "controllers_adminsubscriptioncontroller_user",
-      "community": 64,
+      "community": 227,
       "norm_label": "user"
     },
     {
@@ -17478,7 +17658,7 @@
       "source_file": "backend/controllers/adminSubscriptionController.js",
       "source_location": "L3",
       "id": "controllers_adminsubscriptioncontroller_usersubscription",
-      "community": 64,
+      "community": 227,
       "norm_label": "usersubscription"
     },
     {
@@ -17487,7 +17667,7 @@
       "source_file": "backend/controllers/adminSubscriptionController.js",
       "source_location": "L22",
       "id": "controllers_adminsubscriptioncontroller_credits",
-      "community": 64,
+      "community": 227,
       "norm_label": "credits"
     },
     {
@@ -18945,7 +19125,7 @@
       "source_file": "backend/controllers/dubbingController.js",
       "source_location": "L111",
       "id": "controllers_dubbingcontroller_envnumber",
-      "community": 78,
+      "community": 140,
       "norm_label": "envnumber()"
     },
     {
@@ -18963,7 +19143,7 @@
       "source_file": "backend/controllers/dubbingController.js",
       "source_location": "L137",
       "id": "controllers_dubbingcontroller_buildspeakerclonesample",
-      "community": 78,
+      "community": 140,
       "norm_label": "buildspeakerclonesample()"
     },
     {
@@ -19953,7 +20133,7 @@
       "source_file": "backend/controllers/planCatalogController.js",
       "source_location": "L1",
       "id": "backend_controllers_plancatalogcontroller_js",
-      "community": 228,
+      "community": 65,
       "norm_label": "plancatalogcontroller.js"
     },
     {
@@ -19962,7 +20142,7 @@
       "source_file": "backend/controllers/planCatalogController.js",
       "source_location": "L1",
       "id": "controllers_plancatalogcontroller_plancatalog",
-      "community": 228,
+      "community": 65,
       "norm_label": "plancatalog"
     },
     {
@@ -19971,7 +20151,7 @@
       "source_file": "backend/controllers/planCatalogController.js",
       "source_location": "L13",
       "id": "controllers_plancatalogcontroller_bykey",
-      "community": 228,
+      "community": 65,
       "norm_label": "bykey"
     },
     {
@@ -20484,7 +20664,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L1",
       "id": "backend_routes_blogroutes_js",
-      "community": 24,
+      "community": 202,
       "norm_label": "blogroutes.js"
     },
     {
@@ -20493,7 +20673,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L1",
       "id": "routes_blogroutes_express",
-      "community": 24,
+      "community": 202,
       "norm_label": "express"
     },
     {
@@ -20502,7 +20682,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L2",
       "id": "routes_blogroutes_body",
-      "community": 24,
+      "community": 202,
       "norm_label": "{ body }"
     },
     {
@@ -20511,7 +20691,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L3",
       "id": "routes_blogroutes_blogcontroller",
-      "community": 24,
+      "community": 202,
       "norm_label": "blogcontroller"
     },
     {
@@ -20520,7 +20700,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L4",
       "id": "routes_blogroutes_isauth",
-      "community": 24,
+      "community": 202,
       "norm_label": "isauth"
     },
     {
@@ -20529,7 +20709,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L5",
       "id": "routes_blogroutes_isadmin",
-      "community": 24,
+      "community": 202,
       "norm_label": "isadmin"
     },
     {
@@ -20538,7 +20718,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L6",
       "id": "routes_blogroutes_createuploadmiddleware",
-      "community": 24,
+      "community": 202,
       "norm_label": "{ createuploadmiddleware }"
     },
     {
@@ -20547,7 +20727,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L8",
       "id": "routes_blogroutes_router",
-      "community": 24,
+      "community": 202,
       "norm_label": "router"
     },
     {
@@ -20556,7 +20736,7 @@
       "source_file": "backend/routes/blogRoutes.js",
       "source_location": "L9",
       "id": "routes_blogroutes_blogimageupload",
-      "community": 24,
+      "community": 202,
       "norm_label": "blogimageupload"
     },
     {
@@ -20736,7 +20916,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L1",
       "id": "backend_routes_transcribetestroutes_js",
-      "community": 76,
+      "community": 228,
       "norm_label": "transcribetestroutes.js"
     },
     {
@@ -20745,7 +20925,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L1",
       "id": "routes_transcribetestroutes_express",
-      "community": 76,
+      "community": 228,
       "norm_label": "express"
     },
     {
@@ -20754,7 +20934,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L2",
       "id": "routes_transcribetestroutes_multer",
-      "community": 76,
+      "community": 228,
       "norm_label": "multer"
     },
     {
@@ -20763,7 +20943,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L3",
       "id": "routes_transcribetestroutes_router",
-      "community": 76,
+      "community": 228,
       "norm_label": "router"
     },
     {
@@ -20772,7 +20952,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L5",
       "id": "routes_transcribetestroutes_isauth",
-      "community": 76,
+      "community": 228,
       "norm_label": "isauth"
     },
     {
@@ -20781,7 +20961,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L6",
       "id": "routes_transcribetestroutes_testtranscribe_youtubedownloaddebug",
-      "community": 76,
+      "community": 228,
       "norm_label": "{\n  testtranscribe,\n  youtubedownloaddebug,\n}"
     },
     {
@@ -20790,7 +20970,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L11",
       "id": "routes_transcribetestroutes_audio_video_mimes",
-      "community": 76,
+      "community": 228,
       "norm_label": "audio_video_mimes"
     },
     {
@@ -20799,7 +20979,7 @@
       "source_file": "backend/routes/transcribeTestRoutes.js",
       "source_location": "L38",
       "id": "routes_transcribetestroutes_upload",
-      "community": 76,
+      "community": 228,
       "norm_label": "upload"
     },
     {
@@ -21141,7 +21321,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L1",
       "id": "backend_routes_userroutes_js",
-      "community": 227,
+      "community": 24,
       "norm_label": "userroutes.js"
     },
     {
@@ -21150,7 +21330,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L2",
       "id": "routes_userroutes_express",
-      "community": 227,
+      "community": 24,
       "norm_label": "express"
     },
     {
@@ -21159,7 +21339,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L3",
       "id": "routes_userroutes_router",
-      "community": 227,
+      "community": 24,
       "norm_label": "router"
     },
     {
@@ -21168,7 +21348,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L4",
       "id": "routes_userroutes_isauth",
-      "community": 227,
+      "community": 24,
       "norm_label": "isauth"
     },
     {
@@ -21177,7 +21357,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L5",
       "id": "routes_userroutes_isadmin",
-      "community": 227,
+      "community": 24,
       "norm_label": "isadmin"
     },
     {
@@ -21186,7 +21366,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L6",
       "id": "routes_userroutes_usercontroller",
-      "community": 227,
+      "community": 24,
       "norm_label": "usercontroller"
     },
     {
@@ -21195,7 +21375,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L7",
       "id": "routes_userroutes_createuploadmiddleware",
-      "community": 227,
+      "community": 24,
       "norm_label": "{ createuploadmiddleware }"
     },
     {
@@ -21204,7 +21384,7 @@
       "source_file": "backend/routes/userRoutes.js",
       "source_location": "L10",
       "id": "routes_userroutes_profileupload",
-      "community": 227,
+      "community": 24,
       "norm_label": "profileupload"
     },
     {
@@ -21294,7 +21474,7 @@
       "source_file": "backend/routes/planRoutes.js",
       "source_location": "L1",
       "id": "backend_routes_planroutes_js",
-      "community": 228,
+      "community": 65,
       "norm_label": "planroutes.js"
     },
     {
@@ -21303,7 +21483,7 @@
       "source_file": "backend/routes/planRoutes.js",
       "source_location": "L1",
       "id": "routes_planroutes_express",
-      "community": 228,
+      "community": 65,
       "norm_label": "express"
     },
     {
@@ -21312,7 +21492,7 @@
       "source_file": "backend/routes/planRoutes.js",
       "source_location": "L2",
       "id": "routes_planroutes_plancatalogcontroller",
-      "community": 228,
+      "community": 65,
       "norm_label": "plancatalogcontroller"
     },
     {
@@ -21321,7 +21501,7 @@
       "source_file": "backend/routes/planRoutes.js",
       "source_location": "L4",
       "id": "routes_planroutes_router",
-      "community": 228,
+      "community": 65,
       "norm_label": "router"
     },
     {
@@ -21330,7 +21510,7 @@
       "source_file": "backend/routes/billingRoutes.js",
       "source_location": "L1",
       "id": "backend_routes_billingroutes_js",
-      "community": 231,
+      "community": 76,
       "norm_label": "billingroutes.js"
     },
     {
@@ -21339,7 +21519,7 @@
       "source_file": "backend/routes/billingRoutes.js",
       "source_location": "L1",
       "id": "routes_billingroutes_express",
-      "community": 231,
+      "community": 76,
       "norm_label": "express"
     },
     {
@@ -21348,7 +21528,7 @@
       "source_file": "backend/routes/billingRoutes.js",
       "source_location": "L2",
       "id": "routes_billingroutes_isauth",
-      "community": 231,
+      "community": 76,
       "norm_label": "isauth"
     },
     {
@@ -21357,7 +21537,7 @@
       "source_file": "backend/routes/billingRoutes.js",
       "source_location": "L3",
       "id": "routes_billingroutes_billingcontroller",
-      "community": 231,
+      "community": 76,
       "norm_label": "billingcontroller"
     },
     {
@@ -21366,7 +21546,7 @@
       "source_file": "backend/routes/billingRoutes.js",
       "source_location": "L5",
       "id": "routes_billingroutes_router",
-      "community": 231,
+      "community": 76,
       "norm_label": "router"
     },
     {
@@ -22171,28 +22351,91 @@
       "norm_label": "{ savelocalfiletostorage }"
     },
     {
-      "label": "synthesizeDubbingTts()",
+      "label": "ACTIVE_DUBBING_STATUSES",
       "file_type": "code",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
       "source_location": "L23",
-      "id": "dubbing_dubbingsegmentaudioservice_synthesizedubbingtts",
+      "id": "dubbing_dubbingsegmentaudioservice_active_dubbing_statuses",
       "community": 17,
+      "norm_label": "active_dubbing_statuses"
+    },
+    {
+      "label": "clampInt()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L37",
+      "id": "dubbing_dubbingsegmentaudioservice_clampint",
+      "community": 17,
+      "norm_label": "clampint()"
+    },
+    {
+      "label": "envInt()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L41",
+      "id": "dubbing_dubbingsegmentaudioservice_envint",
+      "community": 17,
+      "norm_label": "envint()"
+    },
+    {
+      "label": "envFlag()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L49",
+      "id": "dubbing_dubbingsegmentaudioservice_envflag",
+      "community": 17,
+      "norm_label": "envflag()"
+    },
+    {
+      "label": "synthesizeDubbingTts()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L57",
+      "id": "dubbing_dubbingsegmentaudioservice_synthesizedubbingtts",
+      "community": 193,
       "norm_label": "synthesizedubbingtts()"
     },
     {
       "label": "getDubbingSegmentPipelineConcurrency()",
       "file_type": "code",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
-      "source_location": "L83",
+      "source_location": "L120",
       "id": "dubbing_dubbingsegmentaudioservice_getdubbingsegmentpipelineconcurrency",
       "community": 17,
       "norm_label": "getdubbingsegmentpipelineconcurrency()"
     },
     {
+      "label": "getSarvamCapacityPolicy()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L124",
+      "id": "dubbing_dubbingsegmentaudioservice_getsarvamcapacitypolicy",
+      "community": 17,
+      "norm_label": "getsarvamcapacitypolicy()"
+    },
+    {
+      "label": "countActiveDubbingUsers()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L155",
+      "id": "dubbing_dubbingsegmentaudioservice_countactivedubbingusers",
+      "community": 17,
+      "norm_label": "countactivedubbingusers()"
+    },
+    {
+      "label": "getAdaptiveDubbingSegmentPipelineConcurrency()",
+      "file_type": "code",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L162",
+      "id": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "community": 17,
+      "norm_label": "getadaptivedubbingsegmentpipelineconcurrency()"
+    },
+    {
       "label": "synthesizeSyncAndUploadSegment()",
       "file_type": "code",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
-      "source_location": "L92",
+      "source_location": "L233",
       "id": "dubbing_dubbingsegmentaudioservice_synthesizesyncanduploadsegment",
       "community": 17,
       "norm_label": "synthesizesyncanduploadsegment()"
@@ -22201,7 +22444,7 @@
       "label": "pipelineTtsSyncUploadForDubbing()",
       "file_type": "code",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
-      "source_location": "L136",
+      "source_location": "L280",
       "id": "dubbing_dubbingsegmentaudioservice_pipelinettssyncuploadfordubbing",
       "community": 17,
       "norm_label": "pipelinettssyncuploadfordubbing()"
@@ -22210,7 +22453,7 @@
       "label": "buildSegmentsForDb()",
       "file_type": "code",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
-      "source_location": "L283",
+      "source_location": "L442",
       "id": "dubbing_dubbingsegmentaudioservice_buildsegmentsfordb",
       "community": 17,
       "norm_label": "buildsegmentsfordb()"
@@ -22219,7 +22462,7 @@
       "label": "rebuildSegmentAudioFromStoredKey()",
       "file_type": "code",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
-      "source_location": "L310",
+      "source_location": "L469",
       "id": "dubbing_dubbingsegmentaudioservice_rebuildsegmentaudiofromstoredkey",
       "community": 60,
       "norm_label": "rebuildsegmentaudiofromstoredkey()"
@@ -25533,7 +25776,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L589",
       "id": "backend_documentation_authentication_sessions",
-      "community": 193,
+      "community": 75,
       "norm_label": "authentication & sessions"
     },
     {
@@ -25542,7 +25785,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L591",
       "id": "backend_documentation_how_it_works",
-      "community": 193,
+      "community": 75,
       "norm_label": "how it works"
     },
     {
@@ -25551,7 +25794,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L600",
       "id": "backend_documentation_forced_logout",
-      "community": 193,
+      "community": 75,
       "norm_label": "forced logout"
     },
     {
@@ -25560,7 +25803,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L604",
       "id": "backend_documentation_session_management",
-      "community": 193,
+      "community": 75,
       "norm_label": "session management"
     },
     {
@@ -25569,7 +25812,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L614",
       "id": "backend_documentation_credit_system",
-      "community": 75,
+      "community": 231,
       "norm_label": "credit system"
     },
     {
@@ -25578,7 +25821,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L618",
       "id": "backend_documentation_how_credits_are_stored",
-      "community": 75,
+      "community": 231,
       "norm_label": "how credits are stored"
     },
     {
@@ -25587,7 +25830,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L623",
       "id": "backend_documentation_credit_operations_in_utils_creditutils_js",
-      "community": 75,
+      "community": 231,
       "norm_label": "credit operations (in `utils/creditutils.js`)"
     },
     {
@@ -25596,7 +25839,7 @@
       "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L629",
       "id": "backend_documentation_usage_tracking_in_utils_usageservice_js_and_utils_usagetracker_js",
-      "community": 75,
+      "community": 231,
       "norm_label": "usage tracking (in `utils/usageservice.js` and `utils/usagetracker.js`)"
     },
     {
@@ -25816,10 +26059,19 @@
       "norm_label": "dubbing \u2014 tts provider"
     },
     {
+      "label": "Dubbing \u2014 Sarvam TTS",
+      "file_type": "document",
+      "source_file": "backend/DOCUMENTATION.md",
+      "source_location": "L893",
+      "id": "backend_documentation_dubbing_sarvam_tts",
+      "community": 93,
+      "norm_label": "dubbing \u2014 sarvam tts"
+    },
+    {
       "label": "Dubbing \u2014 Inworld TTS",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L889",
+      "source_location": "L910",
       "id": "backend_documentation_dubbing_inworld_tts",
       "community": 93,
       "norm_label": "dubbing \u2014 inworld tts"
@@ -25828,7 +26080,7 @@
       "label": "Dubbing \u2014 Smallest.ai",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L900",
+      "source_location": "L920",
       "id": "backend_documentation_dubbing_smallest_ai",
       "community": 93,
       "norm_label": "dubbing \u2014 smallest.ai"
@@ -25837,7 +26089,7 @@
       "label": "Subtitles \u2014 Silero VAD (optional)",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L910",
+      "source_location": "L930",
       "id": "backend_documentation_subtitles_silero_vad_optional",
       "community": 93,
       "norm_label": "subtitles \u2014 silero vad (optional)"
@@ -25846,7 +26098,7 @@
       "label": "Lip-sync \u2014 Wav2Lip (optional, default disabled)",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L922",
+      "source_location": "L942",
       "id": "backend_documentation_lip_sync_wav2lip_optional_default_disabled",
       "community": 93,
       "norm_label": "lip-sync \u2014 wav2lip (optional, default disabled)"
@@ -25855,7 +26107,7 @@
       "label": "Billing \u2014 Dodo Payments",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L934",
+      "source_location": "L954",
       "id": "backend_documentation_billing_dodo_payments",
       "community": 93,
       "norm_label": "billing \u2014 dodo payments"
@@ -25864,7 +26116,7 @@
       "label": "Maintenance Scripts",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L948",
+      "source_location": "L968",
       "id": "backend_documentation_maintenance_scripts",
       "community": 75,
       "norm_label": "maintenance scripts"
@@ -25873,7 +26125,7 @@
       "label": "Deployment",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L973",
+      "source_location": "L993",
       "id": "backend_documentation_deployment",
       "community": 194,
       "norm_label": "deployment"
@@ -25882,7 +26134,7 @@
       "label": "Minimum requirements",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L975",
+      "source_location": "L995",
       "id": "backend_documentation_minimum_requirements",
       "community": 194,
       "norm_label": "minimum requirements"
@@ -25891,7 +26143,7 @@
       "label": "Recommended production topology",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L983",
+      "source_location": "L1003",
       "id": "backend_documentation_recommended_production_topology",
       "community": 194,
       "norm_label": "recommended production topology"
@@ -25900,7 +26152,7 @@
       "label": "code:text (\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510)",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L985",
+      "source_location": "L1005",
       "id": "backend_documentation_codeblock_10",
       "community": 194,
       "norm_label": "code:text (\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510)"
@@ -25909,7 +26161,7 @@
       "label": "Troubleshooting",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1011",
+      "source_location": "L1031",
       "id": "backend_documentation_troubleshooting",
       "community": 145,
       "norm_label": "troubleshooting"
@@ -25918,7 +26170,7 @@
       "label": "Jobs stuck in \"processing\" or \"pending\"",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1013",
+      "source_location": "L1033",
       "id": "backend_documentation_jobs_stuck_in_processing_or_pending",
       "community": 145,
       "norm_label": "jobs stuck in \"processing\" or \"pending\""
@@ -25927,7 +26179,7 @@
       "label": "Mongo connection errors",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1019",
+      "source_location": "L1039",
       "id": "backend_documentation_mongo_connection_errors",
       "community": 145,
       "norm_label": "mongo connection errors"
@@ -25936,7 +26188,7 @@
       "label": "CORS errors from frontend/admin",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1025",
+      "source_location": "L1045",
       "id": "backend_documentation_cors_errors_from_frontend_admin",
       "community": 145,
       "norm_label": "cors errors from frontend/admin"
@@ -25945,7 +26197,7 @@
       "label": "Auth errors (401 / 403)",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1030",
+      "source_location": "L1050",
       "id": "backend_documentation_auth_errors_401_403",
       "community": 145,
       "norm_label": "auth errors (401 / 403)"
@@ -25954,7 +26206,7 @@
       "label": "Billing webhooks failing",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1036",
+      "source_location": "L1056",
       "id": "backend_documentation_billing_webhooks_failing",
       "community": 145,
       "norm_label": "billing webhooks failing"
@@ -25963,7 +26215,7 @@
       "label": "S3 assets not rendering in the UI",
       "file_type": "document",
       "source_file": "backend/DOCUMENTATION.md",
-      "source_location": "L1041",
+      "source_location": "L1061",
       "id": "backend_documentation_s3_assets_not_rendering_in_the_ui",
       "community": 145,
       "norm_label": "s3 assets not rendering in the ui"
@@ -28622,6 +28874,15 @@
       "id": "taste_taste_taste_continuously_learned_by_commandcode_cmd",
       "community": 219,
       "norm_label": "taste (continuously learned by [commandcode][cmd])"
+    },
+    {
+      "label": "StatCards()",
+      "file_type": "code",
+      "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
+      "source_location": "L252",
+      "community": 23,
+      "norm_label": "statcards()",
+      "id": "dubbing_dubbingexportview_statcards"
     }
   ],
   "links": [
@@ -35667,11 +35928,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
-      "source_location": "L252",
+      "source_location": "L277",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "frontend_components_dubbing_dubbingexportview_tsx",
-      "target": "dubbing_dubbingexportview_statcards"
+      "target": "dubbing_dubbingexportview_projectmetric",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -35742,6 +36003,16 @@
       "confidence_score": 1.0,
       "source": "frontend_components_dubbing_dubbingexportview_tsx",
       "target": "dubbing_dubbingexportview_dubbingexportview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/components/dubbing/DubbingExportView.tsx",
+      "source_location": "L252",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_components_dubbing_dubbingexportview_tsx",
+      "target": "dubbing_dubbingexportview_statcards"
     },
     {
       "relation": "calls",
@@ -44034,6 +44305,461 @@
       "weight": 1.0,
       "source": "controllers_dubbingcontroller_rundubbingpipelinefrominput",
       "target": "utils_dubbingoutpututils_saveartifact"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_sleep",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_clamp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_getrpmlimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_getburstlimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_getconcurrencylimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_getcooldownms",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_state",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_refreshconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_refillbucket",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_issarvamratelimiterror",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_waitforconcurrency",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_releaseconcurrency",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L119",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_waitfortoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_markratelimited",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L151",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L176",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_getsarvamratelimitstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamratelimiter_js",
+      "target": "utils_sarvamratelimiter_resetsarvamratelimiter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamTtsUtils.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamttsutils_js",
+      "target": "backend_utils_sarvamratelimiter_js",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_waitfortoken",
+      "target": "utils_sarvamratelimiter_sleep",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_envint",
+      "target": "utils_sarvamratelimiter_clamp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getconcurrencylimit",
+      "target": "utils_sarvamratelimiter_clamp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getrpmlimit",
+      "target": "utils_sarvamratelimiter_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getburstlimit",
+      "target": "utils_sarvamratelimiter_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getconcurrencylimit",
+      "target": "utils_sarvamratelimiter_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getcooldownms",
+      "target": "utils_sarvamratelimiter_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_refillbucket",
+      "target": "utils_sarvamratelimiter_getrpmlimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L180",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getsarvamratelimitstatus",
+      "target": "utils_sarvamratelimiter_getrpmlimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_refreshconfig",
+      "target": "utils_sarvamratelimiter_getburstlimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L192",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_resetsarvamratelimiter",
+      "target": "utils_sarvamratelimiter_getburstlimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "target": "utils_sarvamratelimiter_getconcurrencylimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L182",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getsarvamratelimitstatus",
+      "target": "utils_sarvamratelimiter_getconcurrencylimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L144",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_markratelimited",
+      "target": "utils_sarvamratelimiter_getcooldownms",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_refillbucket",
+      "target": "utils_sarvamratelimiter_refreshconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L131",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_waitfortoken",
+      "target": "utils_sarvamratelimiter_refillbucket",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L177",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_getsarvamratelimitstatus",
+      "target": "utils_sarvamratelimiter_refillbucket",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L165",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "target": "utils_sarvamratelimiter_issarvamratelimiterror",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L159",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "target": "utils_sarvamratelimiter_waitforconcurrency",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L169",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "target": "utils_sarvamratelimiter_releaseconcurrency",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L161",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "target": "utils_sarvamratelimiter_waitfortoken",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamRateLimiter.js",
+      "source_location": "L166",
+      "weight": 1.0,
+      "source": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "target": "utils_sarvamratelimiter_markratelimited",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamTtsUtils.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamttsutils_js",
+      "target": "utils_sarvamratelimiter_callwithsarvamratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/utils/sarvamTtsUtils.js",
+      "source_location": "L234",
+      "weight": 1.0,
+      "source": "utils_sarvamttsutils_synthesizesarvamtts",
+      "target": "utils_sarvamratelimiter_callwithsarvamratelimit"
     },
     {
       "relation": "imports_from",
@@ -55599,6 +56325,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/utils/sarvamTtsUtils.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "backend_utils_sarvamttsutils_js",
+      "target": "utils_sarvamttsutils_callwithsarvamratelimit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/utils/sarvamTtsUtils.js",
       "source_location": "L12",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -64723,6 +65459,46 @@
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
       "source_location": "L23",
       "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_active_dubbing_statuses",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_clampint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L41",
+      "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_envflag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L23",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
       "target": "dubbing_dubbingsegmentaudioservice_synthesizedubbingtts"
@@ -64736,6 +65512,36 @@
       "confidence_score": 1.0,
       "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
       "target": "dubbing_dubbingsegmentaudioservice_getdubbingsegmentpipelineconcurrency"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L124",
+      "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_getsarvamcapacitypolicy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_countactivedubbingusers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L162",
+      "weight": 1.0,
+      "source": "backend_services_dubbing_dubbingsegmentaudioservice_js",
+      "target": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -64782,6 +65588,83 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_envint",
+      "target": "dubbing_dubbingsegmentaudioservice_clampint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getsarvamcapacitypolicy",
+      "target": "dubbing_dubbingsegmentaudioservice_clampint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L178",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_clampint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getdubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getsarvamcapacitypolicy",
+      "target": "dubbing_dubbingsegmentaudioservice_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L167",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_envint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L171",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_envflag",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
       "source_location": "L111",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -64793,11 +65676,55 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L166",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_getdubbingsegmentpipelineconcurrency",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
       "source_location": "L164",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "dubbing_dubbingsegmentaudioservice_pipelinettssyncuploadfordubbing",
       "target": "dubbing_dubbingsegmentaudioservice_getdubbingsegmentpipelineconcurrency"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L198",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_getsarvamcapacitypolicy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "target": "dubbing_dubbingsegmentaudioservice_countactivedubbingusers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/services/dubbing/dubbingSegmentAudioService.js",
+      "source_location": "L308",
+      "weight": 1.0,
+      "source": "dubbing_dubbingsegmentaudioservice_pipelinettssyncuploadfordubbing",
+      "target": "dubbing_dubbingsegmentaudioservice_getadaptivedubbingsegmentpipelineconcurrency",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -68663,6 +69590,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/DOCUMENTATION.md",
+      "source_location": "L893",
+      "weight": 1.0,
+      "source": "backend_documentation_environment_variables",
+      "target": "backend_documentation_dubbing_sarvam_tts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/DOCUMENTATION.md",
       "source_location": "L889",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -71651,5 +72588,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e240ef0a851cec3261ade37871408143dcbf129b"
+  "built_at_commit": "956aa766f5fc21577c73fecb880e6acfbaff3ca5"
 }

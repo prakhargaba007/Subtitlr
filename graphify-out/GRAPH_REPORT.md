@@ -1,16 +1,16 @@
-# Graph Report - video transcribe  (2026-05-17)
+# Graph Report - video transcribe  (2026-05-18)
 
 ## Corpus Check
-- 335 files · ~385,194 words
+- 336 files · ~386,633 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3180 nodes · 4171 edges · 238 communities (206 shown, 32 thin omitted)
+- 3209 nodes · 4235 edges · 237 communities (203 shown, 34 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e240ef0a`
+- Built from commit: `956aa766`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -244,7 +244,6 @@
 - [[_COMMUNITY_Community 229|Community 229]]
 - [[_COMMUNITY_Community 230|Community 230]]
 - [[_COMMUNITY_Community 231|Community 231]]
-- [[_COMMUNITY_Community 232|Community 232]]
 - [[_COMMUNITY_Community 233|Community 233]]
 - [[_COMMUNITY_Community 234|Community 234]]
 - [[_COMMUNITY_Community 235|Community 235]]
@@ -268,14 +267,14 @@
   frontend/app/robots.ts → frontend/utils/siteUrl.ts
 - `Home()` --calls--> `getSiteUrl()`  [EXTRACTED]
   frontend/app/(main)/page.tsx → frontend/utils/siteUrl.ts
-- `mediaSrc()` --calls--> `s3Url()`  [EXTRACTED]
-  frontend/components/dubbing/DubbingVideoPlayer.tsx → frontend/utils/axios.ts
-- `DubbingVideoPlayer()` --calls--> `s3Url()`  [EXTRACTED]
-  frontend/components/dubbing/DubbingVideoPlayer.tsx → frontend/utils/axios.ts
+- `muxedDubbedVideoFetchUrl()` --calls--> `s3Url()`  [EXTRACTED]
+  frontend/components/dubbing/DubbingExportView.tsx → frontend/utils/axios.ts
+- `DownloadPanel()` --calls--> `s3Url()`  [EXTRACTED]
+  frontend/components/dubbing/DubbingExportView.tsx → frontend/utils/axios.ts
 - `TopBar()` --calls--> `useDubbingEditor()`  [EXTRACTED]
   frontend/components/dubbingEditor/TopBar.tsx → frontend/components/dubbingEditor/DubbingEditorContext.tsx
 
-## Communities (238 total, 32 thin omitted)
+## Communities (237 total, 34 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.01
@@ -285,13 +284,13 @@ Nodes (128): {
 
 ### Community 1 - "Community 1"
 Cohesion: 0.04
-Nodes (50): allSegments, AUDIO_VIDEO_MIMES, baseName, byteSize, {
+Nodes (54): allSegments, AUDIO_VIDEO_MIMES, baseName, byteSize, {
   calculateCreditsNeeded,
   assertEnoughCredits,
   deductCredits,
   getCreditHistory,
   getCreditSummary,
-}, { createProjectForSubtitleJob }, creditsNeeded, end (+42 more)
+}, { createProjectForSubtitleJob }, creditsNeeded, emit() (+46 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.04
@@ -323,7 +322,7 @@ Nodes (38): Admin, Admin portal, API calls fail from frontend/admin, Architectur
 
 ### Community 10 - "Community 10"
 Cohesion: 0.07
-Nodes (35): cleanupPath(), getDubbingVadMinSpeechOverlap(), detectSileroVadTimeline(), ARABIC_SCRIPT_LANGS, buildDubbingPrompt(), buildGeminiMediaPart(), buildPromptReferenceCore(), { callWithRetry: geminiCallWithRetry } (+27 more)
+Nodes (34): cleanupPath(), getDubbingVadMinSpeechOverlap(), ARABIC_SCRIPT_LANGS, buildDubbingPrompt(), buildGeminiMediaPart(), buildPromptReferenceCore(), { callWithRetry: geminiCallWithRetry }, CYRILLIC_LANGS (+26 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.06
@@ -342,27 +341,27 @@ Cohesion: 0.06
 Nodes (29): Blog, Comment, error, errors, filter, fs, imagePath, oldImagePath (+21 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.16
-Nodes (13): BottomTimeline(), CenterStage(), EditorMediaRefs, useDubbingEditor(), LeftPanel(), TABS, AddForm, EMPTY_FORM (+5 more)
+Cohesion: 0.14
+Nodes (14): BottomTimeline(), CenterStage(), BusyState, createMediaRegistry(), DubbingEditorContext, DubbingEditorContextValue, DubbingEditorProvider(), EditorMediaRefs (+6 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.08
 Nodes (27): Project, ProjectAction, ApiProjectRow, CREATED_FILTER_OPTIONS, DEFAULT_PROJECT_FILTERS, DUBBING_STATUSES, DubbingJob, FetchProjectPage (+19 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.1
-Nodes (28): DubbingJob, fs, {
+Cohesion: 0.11
+Nodes (25): ACTIVE_DUBBING_STATUSES, clampInt(), countActiveDubbingUsers(), DubbingJob, envFlag(), envInt(), fs, {
   generateSpeech,
   generateSpeechOpenAI,
-}, getDubbingSegmentPipelineConcurrency(), pipelineTtsSyncUploadForDubbing(), { recordProjectUsage }, { saveArtifact }, { saveLocalFileToStorage } (+20 more)
+} (+17 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.11
-Nodes (17): {
+Cohesion: 0.08
+Nodes (24): {
   addCredits,
   DEFAULT_CREDITS,
   grantWelcomeCreditsOnce,
-}, baseUserName, bcrypt, { createOTP, sendOTPEmail, verifyOTP }, crypto, email, error, errors (+9 more)
+}, baseUserName, bcrypt, { createOTP, sendOTPEmail, verifyOTP }, crypto, email, error, errors (+16 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.06
@@ -374,19 +373,19 @@ Nodes (29): API integration, Build & deployment, code:text (frontend/), code:bas
 
 ### Community 21 - "Community 21"
 Cohesion: 0.1
-Nodes (26): getInworldApplyTextNormalization(), buildInworldAuthorizationHeader(), { callWithRetry: geminiCallWithRetry }, extractWordTimestampsFromBody(), fetchInworldVoiceCatalog(), fs, getDefaultInworldVoice(), { getFileDuration } (+18 more)
+Nodes (25): buildInworldAuthorizationHeader(), { callWithRetry: geminiCallWithRetry }, extractWordTimestampsFromBody(), fetchInworldVoiceCatalog(), fs, getDefaultInworldVoice(), { getFileDuration }, getForcedInworldVoiceId() (+17 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.07
 Nodes (27): 401 / CSRF errors, API routes (high-level), Backend API + Workers, Background jobs & workers, Billing webhook failures, code:text (backend/), code:bash (cd backend), code:bash (npm run start) (+19 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.11
-Nodes (10): DownloadPanel(), DubbingLanguage, FORMAT_META, hasMuxedDubbedVideoFile(), muxedDubbedVideoFetchUrl(), SubtitleFormat, SubtitleLang, DubbingExportLoading() (+2 more)
+Cohesion: 0.1
+Nodes (8): DownloadPanel(), DubbingLanguage, FORMAT_META, hasMuxedDubbedVideoFile(), muxedDubbedVideoFetchUrl(), SubtitleFormat, SubtitleLang, DubbingExportLoading()
 
 ### Community 24 - "Community 24"
-Cohesion: 0.09
-Nodes (25): blogController, blogImageUpload, { body }, { createUploadMiddleware }, express, isAdmin, isAuth, router (+17 more)
+Cohesion: 0.1
+Nodes (24): { createUploadMiddleware }, express, isAdmin, isAuth, profileUpload, router, userController, createUploadMiddleware() (+16 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.07
@@ -399,7 +398,7 @@ Nodes (20): { buildProjectFilterFields }, {
 
 ### Community 26 - "Community 26"
 Cohesion: 0.13
-Nodes (22): DEFAULT_SCRIPT, { extractAudioWindow, cleanupPath }, ffmpegStatic, fs, getSileroPythonBin(), getSileroVadScriptPath(), getSubtitleVadTranscribeMode(), isSubtitleSileroVadEnabled() (+14 more)
+Nodes (23): DEFAULT_SCRIPT, detectSileroVadTimeline(), { extractAudioWindow, cleanupPath }, ffmpegStatic, fs, getSileroPythonBin(), getSileroVadScriptPath(), getSubtitleVadTranscribeMode() (+15 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.16
@@ -411,12 +410,12 @@ Nodes (16): {
 }, sendCompletionEmailIfNeeded() (+8 more)
 
 ### Community 28 - "Community 28"
-Cohesion: 0.12
-Nodes (18): metadata, DUBBING_STEPS, formatBytes(), PREVIEW_LINES, ProcessingView(), SSEEvent, STAGE_PROGRESS, SUBTITLE_STEPS (+10 more)
+Cohesion: 0.13
+Nodes (17): metadata, DUBBING_STEPS, formatBytes(), PREVIEW_LINES, ProcessingView(), SSEEvent, STAGE_PROGRESS, SUBTITLE_STEPS (+9 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.24
-Nodes (9): buildProjectFilterFields(), normalizeJobStatus(), READY_STATUSES, { buildProjectFilterFields }, { buildProjectSearchDocument }, createProjectForSubtitleJob(), DubbingJob, Project (+1 more)
+Cohesion: 0.2
+Nodes (8): mongoose, SegmentSchema, SubtitleJobSchema, { buildProjectFilterFields }, { buildProjectSearchDocument }, DubbingJob, Project, SubtitleJob
 
 ### Community 30 - "Community 30"
 Cohesion: 0.12
@@ -431,8 +430,8 @@ Cohesion: 0.11
 Nodes (7): robots(), PUBLIC_ROUTES, faqs, Home(), metadata, getSiteOrigin(), getSiteUrl()
 
 ### Community 33 - "Community 33"
-Cohesion: 0.13
-Nodes (22): { callWithRetry: geminiCallWithRetry }, formatASSTime(), formatSRTTime(), formatVTTTime(), fs, generateASS(), generateSRT(), generateVTT() (+14 more)
+Cohesion: 0.1
+Nodes (30): buildDubbingLanguageList(), buildSubtitleLanguageList(), capitalizeLabel(), DUBBING_LANGUAGE_LIST, INWORLD_CANONICAL_LANG_KEYS, INWORLD_LANG_CODE_MAP, LANGUAGE_LIST, LANGUAGE_MAP (+22 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.1
@@ -484,7 +483,7 @@ Nodes (18): billingCycleStartDate(), { checkCostSafetyCap }, checkDubbingLimits(
 
 ### Community 46 - "Community 46"
 Cohesion: 0.13
-Nodes (20): axios, buildRecommendedVoicePool(), DEFAULT_SARVAM_FALLBACK_ORDER, fs, { getFileDuration }, getOpenAI(), inferGender(), norm() (+12 more)
+Nodes (21): axios, buildRecommendedVoicePool(), { callWithSarvamRateLimit }, DEFAULT_SARVAM_FALLBACK_ORDER, fs, { getFileDuration }, getOpenAI(), inferGender() (+13 more)
 
 ### Community 47 - "Community 47"
 Cohesion: 0.12
@@ -572,20 +571,20 @@ Cohesion: 0.16
 Nodes (17): inworldVoiceProfileMaxSegments(), isInworldVoiceProfileEnabled(), { buildInworldAuthorizationHeader }, DEFAULT_VOCAL_ALLOW, enrichSegmentsWithInworldVoiceProfile(), { extractAudioWindow, cleanupPath }, fs, getVocalStyleAllowlist() (+9 more)
 
 ### Community 64 - "Community 64"
-Cohesion: 0.12
-Nodes (13): adminUser, bcrypt, mongoose, newAdmin, User, credits, mongoose, User (+5 more)
+Cohesion: 0.22
+Nodes (7): adminUser, bcrypt, mongoose, newAdmin, User, mongoose, UserSchema
 
 ### Community 65 - "Community 65"
-Cohesion: 0.2
-Nodes (7): backgroundMixSchema, featureFlagsSchema, mongoose, planCatalogSchema, mongoose, PLAN_LIMITS, PlanCatalog
+Cohesion: 0.12
+Nodes (12): byKey, PlanCatalog, backgroundMixSchema, featureFlagsSchema, mongoose, planCatalogSchema, express, planCatalogController (+4 more)
 
 ### Community 66 - "Community 66"
 Cohesion: 0.15
 Nodes (14): CreditTransactionSchema, mongoose, addCredits(), assertEnoughCredits(), calculateCreditsNeeded(), CreditTransaction, getCreditHistory(), getCreditSummary() (+6 more)
 
 ### Community 67 - "Community 67"
-Cohesion: 0.13
-Nodes (11): ACCEPTED_MIME, ApiLanguage, AUTO_DETECT, formatBytes(), SAME_AS_SOURCE, UploadCardInner(), SearchableDropdownOption, setPendingLanguage() (+3 more)
+Cohesion: 0.12
+Nodes (12): ACCEPTED_MIME, ApiLanguage, AUTO_DETECT, formatBytes(), SAME_AS_SOURCE, UploadCardInner(), SearchableDropdownOption, setPendingLanguage() (+4 more)
 
 ### Community 68 - "Community 68"
 Cohesion: 0.14
@@ -605,7 +604,7 @@ Nodes (14): authHeader, decoded, headerUserId, jwt, { body }, { createUploadMidd
 
 ### Community 72 - "Community 72"
 Cohesion: 0.12
-Nodes (13): CheckoutLock, client, { getDodoClient }, liveStatus, now, PlanCatalog, planKey, User (+5 more)
+Nodes (14): CheckoutLock, client, { getDodoClient }, liveStatus, now, PlanCatalog, planKey, User (+6 more)
 
 ### Community 73 - "Community 73"
 Cohesion: 0.12
@@ -617,26 +616,19 @@ Nodes (11): DeviceToken, NotificationHistory, NotificationsPage(), PaginationInf
 
 ### Community 75 - "Community 75"
 Cohesion: 0.13
-Nodes (14): Backend API — Deep Documentation, code:text (backend/), Controllers Reference, Credit operations (in `utils/creditUtils.js`), Credit System, How credits are stored, Local mode (`STORAGE_TYPE=local`), Maintenance Scripts (+6 more)
+Nodes (14): Authentication & Sessions, Backend API — Deep Documentation, code:text (backend/), Controllers Reference, Forced logout, How it works, Local mode (`STORAGE_TYPE=local`), Maintenance Scripts (+6 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.11
-Nodes (15): csrfHeader, decodedToken, jwt, User, express, {
-  getProjects,
-  patchProject,
-  pinProject,
-  unpinProject,
-  archiveProject,
-  restoreProject,
-}, isAuth, router (+7 more)
+Cohesion: 0.13
+Nodes (12): csrfHeader, decodedToken, jwt, User, billingController, express, isAuth, router (+4 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.13
-Nodes (12): client, DodoWebhookReceipt, { getDodoClient }, headers, lockTimeout, { processDodoWebhookEvent }, webhookId, dodoWebhookReceiptSchema (+4 more)
+Cohesion: 0.12
+Nodes (13): client, DodoWebhookReceipt, { getDodoClient }, headers, lockTimeout, { processDodoWebhookEvent }, webhookId, dodoWebhookReceiptSchema (+5 more)
 
 ### Community 78 - "Community 78"
-Cohesion: 0.17
-Nodes (14): buildSpeakerCloneSample(), calculateDubbingCredits(), envNumber(), runDubbingPipelineFromInput(), concatMp3Files(), extractAudio(), extractAudioWindow(), defaultBaseDir() (+6 more)
+Cohesion: 0.25
+Nodes (10): calculateDubbingCredits(), runDubbingPipelineFromInput(), extractAudio(), defaultBaseDir(), fs, getDubbingOutputBaseDir(), getJobOutputDir(), path (+2 more)
 
 ### Community 79 - "Community 79"
 Cohesion: 0.18
@@ -683,8 +675,8 @@ Cohesion: 0.21
 Nodes (10): { createPresignedPutUrl }, generatePresignedUrl(), createPresignedPutUrl(), fs, getRawS3ClientAndBucket(), { getSignedUrl }, headS3ObjectMeta(), path (+2 more)
 
 ### Community 90 - "Community 90"
-Cohesion: 0.27
-Nodes (12): detectLeadingSpeechOnsetSec(), getDubbingMaxAtempo(), getDubbingMaxAtempoForHindiTargets(), getDubbingTimelineSilenceMinSec(), getDubbingTimelineSilenceNoiseDb(), isDubbingSileroRefineAfterGeminiEnabled(), isDubbingSileroVadEnabled(), isDubbingTimelineCalibrateEnabled() (+4 more)
+Cohesion: 0.24
+Nodes (13): detectLeadingSpeechOnsetSec(), getDubbingMaxAtempo(), getDubbingMaxAtempoForHindiTargets(), getDubbingTimelineSilenceMinSec(), getDubbingTimelineSilenceNoiseDb(), getInworldApplyTextNormalization(), isDubbingSileroRefineAfterGeminiEnabled(), isDubbingSileroVadEnabled() (+5 more)
 
 ### Community 91 - "Community 91"
 Cohesion: 0.17
@@ -695,8 +687,8 @@ Cohesion: 0.17
 Nodes (10): category, categoryData, LessonCategory, limitNum, pageNum, query, sortObj, totalPages (+2 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.17
-Nodes (12): AI — Gemini, AI — OpenAI, ElevenLabs, Replicate, App (required), Billing — Dodo Payments, CORS (optional), Dubbing — Inworld TTS, Dubbing — Smallest.ai, Dubbing — TTS provider (+4 more)
+Cohesion: 0.15
+Nodes (13): AI — Gemini, AI — OpenAI, ElevenLabs, Replicate, App (required), Billing — Dodo Payments, CORS (optional), Dubbing — Inworld TTS, Dubbing — Sarvam TTS, Dubbing — Smallest.ai (+5 more)
 
 ### Community 94 - "Community 94"
 Cohesion: 0.17
@@ -819,8 +811,8 @@ Cohesion: 0.22
 Nodes (8): authController, { body }, express, isAuth, rateLimit, refreshLimiter, router, userRateLimiter
 
 ### Community 120 - "Community 120"
-Cohesion: 0.26
-Nodes (13): buildSarvamLanguageList(), buildSarvamScriptRule(), buildSarvamTargetPrompt(), getOpenAI(), inferTranslationMode(), norm(), OpenAI, resolveSarvamLanguageKey() (+5 more)
+Cohesion: 0.24
+Nodes (14): SARVAM_BCP47_MAP, buildSarvamLanguageList(), buildSarvamScriptRule(), buildSarvamTargetPrompt(), getOpenAI(), inferTranslationMode(), norm(), OpenAI (+6 more)
 
 ### Community 121 - "Community 121"
 Cohesion: 0.22
@@ -839,8 +831,8 @@ Cohesion: 0.22
 Nodes (8): code:block3 (┌─────────────┐     ┌─────────┐     ┌────────┐), Dodo Payments Subscription Integration, Resources, Subscription Lifecycle, Test in Dashboard, Test Scenarios, Testing, Webhook Events
 
 ### Community 125 - "Community 125"
-Cohesion: 0.24
-Nodes (9): buildDubbingLanguageList(), buildSubtitleLanguageList(), capitalizeLabel(), DUBBING_LANGUAGE_LIST, INWORLD_CANONICAL_LANG_KEYS, INWORLD_LANG_CODE_MAP, LANGUAGE_LIST, LANGUAGE_MAP (+1 more)
+Cohesion: 0.23
+Nodes (18): callWithSarvamRateLimit(), clamp(), envInt(), getBurstLimit(), getConcurrencyLimit(), getCooldownMs(), getRpmLimit(), getSarvamRateLimitStatus() (+10 more)
 
 ### Community 126 - "Community 126"
 Cohesion: 0.25
@@ -878,10 +870,6 @@ Nodes (7): { createUploadMiddleware }, express, fileController, isAdmin, isAuth,
 Cohesion: 0.25
 Nodes (7): authHeader, decoded, express, isAuth, jwt, router, { submitFeedback, getAllFeedback }
 
-### Community 135 - "Community 135"
-Cohesion: 0.2
-Nodes (9): mongoose, OTPSchema, createOTP(), crypto, generateOTP(), OTP, sendEmail, sendOTPEmail() (+1 more)
-
 ### Community 136 - "Community 136"
 Cohesion: 0.25
 Nodes (8): code:block14 (your-project/), code:typescript (import { NextRequest, NextResponse } from 'next/server';), code:typescript (import { NextRequest, NextResponse } from 'next/server';), code:typescript (export const plans = [), Configuration File, Generated API Routes, Next.js Integration, Project Structure (after `init`)
@@ -895,8 +883,8 @@ Cohesion: 0.32
 Nodes (8): clamp(), emit(), emitProgressFrameIfChanged(), emitRaw(), setExpectedFromDuration(), setStageTarget(), startProgressTicker(), tickProgress()
 
 ### Community 140 - "Community 140"
-Cohesion: 0.25
-Nodes (7): ensureMinAudioDuration(), ffmpeg, ffmpegStatic, ffprobeStatic, fs, path, { spawnSync }
+Cohesion: 0.18
+Nodes (11): buildSpeakerCloneSample(), envNumber(), concatMp3Files(), ensureMinAudioDuration(), extractAudioWindow(), ffmpeg, ffmpegStatic, ffprobeStatic (+3 more)
 
 ### Community 141 - "Community 141"
 Cohesion: 0.29
@@ -983,8 +971,8 @@ Cohesion: 0.29
 Nodes (6): extractRandomVideoThumbnailJpg(), ffmpeg, ffmpegStatic, ffprobeStatic, fs, path
 
 ### Community 165 - "Community 165"
-Cohesion: 0.14
-Nodes (14): confirmUsageIfReserved(), refundReservedUsageOnFailure(), mongoose, userUsageSchema, confirmDubbingUsage(), refundDubbingUsage(), safeNeg(), UserUsage (+6 more)
+Cohesion: 0.18
+Nodes (12): confirmUsageIfReserved(), refundReservedUsageOnFailure(), confirmDubbingUsage(), refundDubbingUsage(), safeNeg(), UserUsage, ACTIVE_STATUSES, DubbingJob (+4 more)
 
 ### Community 168 - "Community 168"
 Cohesion: 0.33
@@ -1071,8 +1059,8 @@ Cohesion: 0.5
 Nodes (4): Core, HTTP & Data, Technology Stack, UI
 
 ### Community 193 - "Community 193"
-Cohesion: 0.5
-Nodes (4): Authentication & Sessions, Forced logout, How it works, Session management
+Cohesion: 0.3
+Nodes (10): synthesizeDubbingTts(), getTtsBracketTagAllowlist(), { getTtsBracketTagAllowlist }, isEnglishLikeTarget(), norm(), normalizeSpacedText(), stripExperimentalInworldTags(), textForGeminiTts() (+2 more)
 
 ### Community 194 - "Community 194"
 Cohesion: 0.5
@@ -1103,8 +1091,8 @@ Cohesion: 0.67
 Nodes (3): audioBufferToWav(), ConversionProgress, convertToAudio()
 
 ### Community 202 - "Community 202"
-Cohesion: 0.5
-Nodes (4): emit(), runLegacyWhisper(), splitAudioIntoChunks(), shiftSegments()
+Cohesion: 0.22
+Nodes (8): blogController, blogImageUpload, { body }, { createUploadMiddleware }, express, isAdmin, isAuth, router
 
 ### Community 203 - "Community 203"
 Cohesion: 0.5
@@ -1115,8 +1103,8 @@ Cohesion: 0.67
 Nodes (3): How authentication is enforced, Role-based access control (RBAC), Security Model
 
 ### Community 206 - "Community 206"
-Cohesion: 0.24
-Nodes (9): { buildProjectFilterFields }, { buildProjectSearchDocument }, DubbingJob, main(), mongoose, Project, SubtitleJob, upsertDubbingProject() (+1 more)
+Cohesion: 0.19
+Nodes (13): { buildProjectFilterFields }, { buildProjectSearchDocument }, DubbingJob, main(), mongoose, Project, SubtitleJob, upsertDubbingProject() (+5 more)
 
 ### Community 210 - "Community 210"
 Cohesion: 0.67
@@ -1128,42 +1116,37 @@ Nodes (3): State management (Redux), Store, User slice
 
 ### Community 227 - "Community 227"
 Cohesion: 0.25
-Nodes (7): { createUploadMiddleware }, express, isAdmin, isAuth, profileUpload, router, userController
+Nodes (6): credits, mongoose, User, UserSubscription, mongoose, userSubscriptionSchema
 
 ### Community 228 - "Community 228"
-Cohesion: 0.29
-Nodes (5): byKey, PlanCatalog, express, planCatalogController, router
+Cohesion: 0.25
+Nodes (7): AUDIO_VIDEO_MIMES, express, isAuth, multer, router, {
+  testTranscribe,
+  youtubeDownloadDebug,
+}, upload
 
 ### Community 229 - "Community 229"
-Cohesion: 0.48
-Nodes (6): audioPreviewSrc(), DubbingVideoPlayer(), fmt(), getActiveSeg(), mediaSrc(), DubbingSegment
+Cohesion: 0.16
+Nodes (14): audioPreviewSrc(), DubbingVideoPlayer(), fmt(), getActiveSeg(), mediaSrc(), AddForm, EMPTY_FORM, RightInspector() (+6 more)
 
 ### Community 230 - "Community 230"
 Cohesion: 0.4
 Nodes (3): checkDubbingLimits, DubbingJob, mongoose
 
 ### Community 231 - "Community 231"
-Cohesion: 0.4
-Nodes (4): billingController, express, isAuth, router
-
-### Community 232 - "Community 232"
 Cohesion: 0.5
-Nodes (3): mongoose, SegmentSchema, SubtitleJobSchema
-
-### Community 233 - "Community 233"
-Cohesion: 0.15
-Nodes (8): BusyState, createMediaRegistry(), DubbingEditorContext, DubbingEditorContextValue, DubbingEditorProvider(), UndoEntry, EditorJob, metadata
+Nodes (4): Credit operations (in `utils/creditUtils.js`), Credit System, How credits are stored, Usage tracking (in `utils/usageService.js` and `utils/usageTracker.js`)
 
 ## Knowledge Gaps
-- **1816 isolated node(s):** `config`, `config`, `name`, `version`, `private` (+1811 more)
+- **1820 isolated node(s):** `config`, `config`, `name`, `version`, `private` (+1815 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What connects `config`, `config`, `name` to the rest of the system?**
-  _1816 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1820 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.01 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**

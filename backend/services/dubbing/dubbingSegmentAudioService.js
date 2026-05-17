@@ -20,11 +20,46 @@ const { synthesizeSmallestTts } = require("../../utils/smallestTtsUtils");
 const { synthesizeGeminiTts } = require("../../utils/geminiTtsUtils");
 const { saveLocalFileToStorage } = require("../../utils/storageFileUtils");
 
+const ACTIVE_DUBBING_STATUSES = [
+  "pending",
+  "extracting",
+  "separating",
+  "transcribing",
+  "translating",
+  "generating",
+  "syncing",
+  "merging",
+];
+
+const MIN_PIPELINE_CONCURRENCY = 1;
+const MAX_PIPELINE_CONCURRENCY = 8;
+
+function clampInt(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function envInt(key, fallback, min = MIN_PIPELINE_CONCURRENCY, max = MAX_PIPELINE_CONCURRENCY) {
+  const raw = String(process.env[key] || "").trim();
+  if (!raw) return fallback;
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return clampInt(n, min, max);
+}
+
+function envFlag(key, fallback = true) {
+  const raw = String(process.env[key] || "").trim().toLowerCase();
+  if (!raw) return fallback;
+  if (["0", "false", "no", "off"].includes(raw)) return false;
+  if (["1", "true", "yes", "on"].includes(raw)) return true;
+  return fallback;
+}
+
 async function synthesizeDubbingTts(
   ttsProviderResolved,
   text,
   voiceKey,
   targetLanguage,
+  options = {},
 ) {
   const plain = textForNonInworldTts(text);
   const iwText = textForInworldTts(text, targetLanguage);
@@ -37,7 +72,9 @@ async function synthesizeDubbingTts(
     };
   }
   if (ttsProviderResolved === "sarvam") {
-    const o = await synthesizeSarvamTts(plain, voiceKey, targetLanguage);
+    const o = await synthesizeSarvamTts(plain, voiceKey, targetLanguage, {
+      concurrencyLimit: options.sarvamConcurrencyLimit,
+    });
     return {
       audioPath: o.audioPath,
       wordTimestamps: [],
@@ -81,12 +118,116 @@ async function synthesizeDubbingTts(
 }
 
 function getDubbingSegmentPipelineConcurrency() {
-  const raw = String(
-    process.env.DUBBING_SEGMENT_PIPELINE_CONCURRENCY || "3",
+  return envInt("DUBBING_SEGMENT_PIPELINE_CONCURRENCY", 3);
+}
+
+function getSarvamCapacityPolicy() {
+  const maxConcurrency = envInt(
+    "DUBBING_SEGMENT_PIPELINE_MAX_CONCURRENCY",
+    MAX_PIPELINE_CONCURRENCY,
+  );
+  const clampedMax = clampInt(maxConcurrency, MIN_PIPELINE_CONCURRENCY, MAX_PIPELINE_CONCURRENCY);
+
+  return {
+    provider: "sarvam",
+    rpmLimit: envInt("SARVAM_TTS_RPM_LIMIT", 60, 1, Number.MAX_SAFE_INTEGER),
+    burstLimit: envInt("SARVAM_TTS_BURST_LIMIT", 6),
+    maxInFlight: envInt("SARVAM_TTS_CONCURRENCY_LIMIT", 6),
+    minConcurrency: MIN_PIPELINE_CONCURRENCY,
+    maxConcurrency: clampedMax,
+    tiers: [
+      {
+        name: "single_active_user",
+        activeUsersMax: 1,
+        segmentConcurrency: envInt("SARVAM_TTS_SINGLE_USER_SEGMENT_CONCURRENCY", 8),
+        sarvamInFlight: envInt("SARVAM_TTS_SINGLE_USER_CONCURRENCY", 6),
+      },
+      {
+        name: "multi_active_user",
+        activeUsersMin: 2,
+        segmentConcurrency: envInt("SARVAM_TTS_MULTI_USER_SEGMENT_CONCURRENCY", 3),
+        sarvamInFlight: envInt("SARVAM_TTS_MULTI_USER_CONCURRENCY", 2),
+      },
+    ],
+  };
+}
+
+async function countActiveDubbingUsers() {
+  const users = await DubbingJob.distinct("user", {
+    status: { $in: ACTIVE_DUBBING_STATUSES },
+  });
+  return users.length;
+}
+
+async function getAdaptiveDubbingSegmentPipelineConcurrency({
+  jobMongoId,
+  provider,
+} = {}) {
+  const baseline = getDubbingSegmentPipelineConcurrency();
+  const maxConcurrency = envInt(
+    "DUBBING_SEGMENT_PIPELINE_MAX_CONCURRENCY",
+    MAX_PIPELINE_CONCURRENCY,
+  );
+  const adaptiveEnabled = envFlag("DUBBING_SEGMENT_PIPELINE_ADAPTIVE", true);
+  const loadStrategy = String(
+    process.env.DUBBING_SEGMENT_PIPELINE_LOAD_STRATEGY || "active_users",
   ).trim();
-  const n = parseInt(raw, 10);
-  if (!Number.isFinite(n) || n < 1) return 3;
-  return Math.min(8, n);
+
+  if (!adaptiveEnabled || loadStrategy !== "active_users") {
+    return {
+      limit: clampInt(baseline, MIN_PIPELINE_CONCURRENCY, maxConcurrency),
+      activeUsersCount: null,
+      reason: adaptiveEnabled ? "unsupported_load_strategy" : "adaptive_disabled",
+      sarvamConcurrencyLimit: null,
+    };
+  }
+
+  let activeUsersCount;
+  try {
+    activeUsersCount = await countActiveDubbingUsers();
+  } catch (err) {
+    console.warn(
+      "[dubbing] Active user lookup failed; using busy concurrency tier:",
+      err.message,
+    );
+    activeUsersCount = 2;
+  }
+
+  const isSarvam = String(provider || "").toLowerCase() === "sarvam";
+  if (isSarvam) {
+    const policy = getSarvamCapacityPolicy();
+    const tier =
+      activeUsersCount <= 1 ? policy.tiers[0] : policy.tiers[1];
+    const segmentConcurrency = clampInt(
+      Math.min(tier.segmentConcurrency, policy.maxConcurrency),
+      policy.minConcurrency,
+      policy.maxConcurrency,
+    );
+    const sarvamConcurrencyLimit = clampInt(
+      Math.min(tier.sarvamInFlight, policy.maxInFlight),
+      policy.minConcurrency,
+      policy.maxConcurrency,
+    );
+
+    return {
+      limit: segmentConcurrency,
+      activeUsersCount,
+      reason: tier.name,
+      sarvamConcurrencyLimit,
+    };
+  }
+
+  const idle = envInt("DUBBING_SEGMENT_PIPELINE_IDLE_CONCURRENCY", 8);
+  const busy = envInt("DUBBING_SEGMENT_PIPELINE_BUSY_CONCURRENCY", baseline);
+  const reason = activeUsersCount <= 1 ? "single_active_user" : "multi_active_user";
+  const selected = activeUsersCount <= 1 ? idle : busy;
+
+  return {
+    limit: clampInt(selected, MIN_PIPELINE_CONCURRENCY, maxConcurrency),
+    activeUsersCount,
+    reason,
+    sarvamConcurrencyLimit: null,
+  };
 }
 
 async function synthesizeSyncAndUploadSegment({
@@ -103,12 +244,15 @@ async function synthesizeSyncAndUploadSegment({
   segmentId,
   revision = 0,
   projectId,
+  sarvamConcurrencyLimit,
 }) {
   const {
     audioPath,
     wordTimestamps,
     usage: ttsUsage,
-  } = await synthesizeDubbingTts(provider, text, voiceKey, targetLanguage);
+  } = await synthesizeDubbingTts(provider, text, voiceKey, targetLanguage, {
+    sarvamConcurrencyLimit,
+  });
   if (ttsUsage && projectId) {
     await recordProjectUsage(projectId, ttsUsage);
   }
@@ -161,7 +305,19 @@ async function pipelineTtsSyncUploadForDubbing({
     return { rawDubbedPaths, wordTsForRows, syncedBuffers };
   }
 
-  const limit = getDubbingSegmentPipelineConcurrency();
+  const concurrency = await getAdaptiveDubbingSegmentPipelineConcurrency({
+    jobMongoId,
+    provider: synthesizeProvider,
+  });
+  const limit = concurrency.limit;
+  console.log("[dubbing] Segment pipeline concurrency", {
+    provider: synthesizeProvider,
+    segmentCount: n,
+    activeUsersCount: concurrency.activeUsersCount,
+    selectedConcurrency: limit,
+    sarvamConcurrencyLimit: concurrency.sarvamConcurrencyLimit,
+    reason: concurrency.reason,
+  });
   let firstSyncEmitted = false;
   let uploadMsgEmitted = false;
   let completed = 0;
@@ -189,6 +345,9 @@ async function pipelineTtsSyncUploadForDubbing({
       row.text,
       voiceKey,
       targetLanguage,
+      {
+        sarvamConcurrencyLimit: concurrency.sarvamConcurrencyLimit,
+      },
     );
     if (ttsUsage && projectId) {
       await recordProjectUsage(projectId, ttsUsage);
@@ -328,6 +487,7 @@ async function rebuildSegmentAudioFromStoredKey({
 
 module.exports = {
   buildSegmentsForDb,
+  getAdaptiveDubbingSegmentPipelineConcurrency,
   getDubbingSegmentPipelineConcurrency,
   pipelineTtsSyncUploadForDubbing,
   rebuildSegmentAudioFromStoredKey,

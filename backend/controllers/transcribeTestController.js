@@ -32,11 +32,18 @@ function safeYoutubeDebugFilename(title, ext) {
 exports.testTranscribe = async (req, res, next) => {
   try {
     if (!req.file?.buffer) {
-      return res.status(422).json({ message: 'Missing file. Send multipart field "file".' });
+      return res
+        .status(422)
+        .json({ message: 'Missing file. Send multipart field "file".' });
     }
-    if (!String(process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim()) {
+    if (
+      !String(
+        process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "",
+      ).trim()
+    ) {
       return res.status(422).json({
-        message: "GOOGLE_API_KEY or GEMINI_API_KEY is required for transcription.",
+        message:
+          "GOOGLE_API_KEY or GEMINI_API_KEY is required for transcription.",
       });
     }
 
@@ -48,7 +55,8 @@ exports.testTranscribe = async (req, res, next) => {
 
     const targetLanguageRaw = String(req.body.targetLanguage || "").trim();
     const targetLanguage = targetLanguageRaw || null;
-    const translationModeRaw = String(req.body.translationMode || "auto").trim() || "auto";
+    const translationModeRaw =
+      String(req.body.translationMode || "auto").trim() || "auto";
 
     if (targetLanguage && !String(process.env.OPENAI_API_KEY || "").trim()) {
       return res.status(422).json({
@@ -58,8 +66,12 @@ exports.testTranscribe = async (req, res, next) => {
     }
 
     const isVideo = req.file.mimetype.startsWith("video/");
-    const ext = path.extname(req.file.originalname) || (isVideo ? ".mp4" : ".bin");
-    const tmpInput = path.join(os.tmpdir(), `transcribe_test_in_${uuidv4()}${ext}`);
+    const ext =
+      path.extname(req.file.originalname) || (isVideo ? ".mp4" : ".bin");
+    const tmpInput = path.join(
+      os.tmpdir(),
+      `transcribe_test_in_${uuidv4()}${ext}`,
+    );
     const tmpMp3 = path.join(os.tmpdir(), `transcribe_test_${uuidv4()}.mp3`);
 
     fs.writeFileSync(tmpInput, req.file.buffer);
@@ -69,6 +81,9 @@ exports.testTranscribe = async (req, res, next) => {
       const { segments, speaker_profiles } = await transcribeWithSpeakers(
         tmpMp3,
         sourceLanguage,
+        (opts = {
+          aiModal: "gpt",
+        }),
       );
 
       const payload = {
@@ -131,7 +146,9 @@ exports.youtubeDownloadDebug = async (req, res) => {
 
   const youtubeUrlRaw = (req.body?.youtubeUrl || "").trim();
   if (!youtubeUrlRaw) {
-    return res.status(422).json({ message: 'Missing youtubeUrl in JSON body.' });
+    return res
+      .status(422)
+      .json({ message: "Missing youtubeUrl in JSON body." });
   }
 
   let filePath = null;

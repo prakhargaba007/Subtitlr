@@ -877,17 +877,37 @@ Copy `backend/.env.example` to `backend/.env`. Full reference:
 
 ### Dubbing — TTS provider
 
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `DUBBING_TTS_PROVIDER` | `auto` | `auto`, `openai`, `inworld`, `smallest`, `elevenlabs`, `sarvam`, or `gemini` |
+| `OPENAI_TTS_MODEL` | `tts-1` | OpenAI TTS model |
+| `DUBBING_MAX_ATEMPO` | `1.5` | Max tempo speed-up to fit TTS into segment slot (0.5–2.0) |
+| `DUBBING_MAX_ATEMPO_HI` | - | Stricter cap for languages like Hindi |
+| `DUBBING_SEGMENT_PIPELINE_CONCURRENCY` | `3` | Baseline per-job segment worker count, clamped to 1-8 |
+| `DUBBING_SEGMENT_PIPELINE_IDLE_CONCURRENCY` | `8` | Segment workers when only one dubbing user is active |
+| `DUBBING_SEGMENT_PIPELINE_BUSY_CONCURRENCY` | `3` | Segment workers when multiple dubbing users are active |
+| `DUBBING_SEGMENT_PIPELINE_MAX_CONCURRENCY` | `8` | Hard cap for adaptive segment workers |
+| `DUBBING_SEGMENT_PIPELINE_ADAPTIVE` | `1` | Enables active-user adaptive segment concurrency |
+| `DUBBING_SEGMENT_PIPELINE_LOAD_STRATEGY` | `active_users` | Uses active dubbing users to select idle or busy concurrency |
 
-| Variable                | Default | Description                                                                     |
-| ----------------------- | ------- | ------------------------------------------------------------------------------- |
-| `DUBBING_TTS_PROVIDER`  | `auto`  | `auto` | `openai` | `inworld` | `smallest` | `elevenlabs` | `sarvam` | `gemini` |
-| `OPENAI_TTS_MODEL`      | `tts-1` | OpenAI TTS model                                                                |
-| `DUBBING_MAX_ATEMPO`    | `1.5`   | Max tempo speed-up to fit TTS into segment slot (0.5–2.0)                       |
-| `DUBBING_MAX_ATEMPO_HI` | —       | Stricter cap for languages like Hindi                                           |
+### Dubbing — Sarvam TTS
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `SARVAM_API_KEY` | - | Sarvam API subscription key |
+| `SARVAM_TTS_RPM_LIMIT` | `60` | Process-local Sarvam TTS token bucket limit |
+| `SARVAM_TTS_BURST_LIMIT` | `6` | Initial/maximum token burst, clamped to 1-8 |
+| `SARVAM_TTS_CONCURRENCY_LIMIT` | `6` | Global Sarvam in-flight request cap, clamped to 1-8 |
+| `SARVAM_TTS_RATE_COOLDOWN_SEC` | `60` | Cooldown after Sarvam `429` / quota responses |
+| `SARVAM_TTS_SINGLE_USER_SEGMENT_CONCURRENCY` | `8` | Sarvam segment workers when only one dubbing user is active |
+| `SARVAM_TTS_SINGLE_USER_CONCURRENCY` | `6` | Sarvam in-flight cap for the single-user tier |
+| `SARVAM_TTS_MULTI_USER_SEGMENT_CONCURRENCY` | `3` | Sarvam segment workers when multiple users are active |
+| `SARVAM_TTS_MULTI_USER_CONCURRENCY` | `2` | Sarvam in-flight cap for the multi-user tier |
+
+Plan-level `maxConcurrentJobs` still controls how many jobs a user may run. The adaptive settings above only tune internal per-job segment fan-out and Sarvam provider pacing.
 
 
 ### Dubbing — Inworld TTS
-
 
 | Variable                | Description                    |
 | ----------------------- | ------------------------------ |
