@@ -7,6 +7,13 @@ export type DubbingSegment = {
   originalText?: string;
   translatedText?: string;
   timingStrategy?: string | null;
+  audioStretch?: {
+    targetDurationSec?: number | null;
+    rawDurationSec?: number | null;
+    adjustedDurationSec?: number | null;
+    lengthRatio?: number | null;
+    tempoRatio?: number | null;
+  };
   dubbedAudioKey?: string | null;
 };
 

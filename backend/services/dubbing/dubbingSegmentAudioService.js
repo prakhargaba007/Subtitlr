@@ -270,6 +270,7 @@ async function synthesizeSyncAndUploadSegment({
     audioPath,
     adjustedPath: synced.adjustedPath,
     adjustedDuration: synced.adjustedDuration,
+    audioStretch: synced.audioStretch,
     timingStrategy: synced.strategy,
     wordTimestamps,
     ttsUsage,
@@ -459,6 +460,7 @@ function buildSegmentsForDb({
       translatedText: ts.translatedText,
       subSegments: subs.length ? subs : [],
       timingStrategy: subs.length ? null : (solo?.timingStrategy ?? null),
+      audioStretch: subs.length ? undefined : solo?.audioStretch,
       ttsWordTimestamps: subs.length ? undefined : solo?.ttsWordTimestamps,
       voiceProfile: ts.voiceProfile,
       dubbedAudioKey: subs.length ? null : (segmentAudioKeys.get(i) ?? null),
@@ -482,6 +484,7 @@ async function rebuildSegmentAudioFromStoredKey({
     start,
     adjustedPath: synced.adjustedPath,
     adjustedDuration: synced.adjustedDuration,
+    audioStretch: synced.audioStretch,
   };
 }
 

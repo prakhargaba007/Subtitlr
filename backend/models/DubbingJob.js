@@ -8,6 +8,22 @@ const classLabelSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const audioStretchSchema = new mongoose.Schema(
+  {
+    /** Segment/sub-segment duration we tried to fit into. */
+    targetDurationSec: { type: Number, default: null },
+    /** TTS audio duration before timing sync. */
+    rawDurationSec: { type: Number, default: null },
+    /** Audio duration after padding/stretching/speed adjustment. */
+    adjustedDurationSec: { type: Number, default: null },
+    /** adjustedDurationSec / rawDurationSec. >1 means lengthened, <1 means shortened. */
+    lengthRatio: { type: Number, default: null },
+    /** rawDurationSec / adjustedDurationSec, matching the effective tempo multiplier. */
+    tempoRatio: { type: Number, default: null },
+  },
+  { _id: false }
+);
+
 const subSegmentSchema = new mongoose.Schema(
   {
     relStart: { type: Number, default: 0 },
@@ -18,6 +34,7 @@ const subSegmentSchema = new mongoose.Schema(
       enum: ["padded", "stretched", "stretched_slow", "stretched_capped"],
       default: null,
     },
+    audioStretch: { type: audioStretchSchema, default: undefined },
     ttsWordTimestamps: {
       type: [
         {
@@ -49,6 +66,7 @@ const segmentSchema = new mongoose.Schema(
       enum: ["padded", "stretched", "stretched_slow", "stretched_capped"],
       default: null,
     },
+    audioStretch: { type: audioStretchSchema, default: undefined },
     /** Optional split of one source timing window into multiple TTS lines (e.g. Hindi → English). */
     subSegments: { type: [subSegmentSchema], default: [] },
     /** Inworld STT voice profile (or similar) for this segment time range. */

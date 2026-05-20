@@ -15,6 +15,11 @@ type AddForm = {
 
 const EMPTY_FORM: AddForm = { translatedText: "", start: "", end: "", speaker_id: "" };
 
+function fmtStretchPercent(ratio?: number | null) {
+  if (typeof ratio !== "number" || !Number.isFinite(ratio)) return null;
+  return `${((ratio - 1) * 100).toFixed(1)}%`;
+}
+
 export default function RightInspector() {
   const {
     job,
@@ -33,6 +38,7 @@ export default function RightInspector() {
 
   const selected = job.segments.find((s) => s.segmentId === selectedId) ?? null;
   const duration = selected ? Math.max(0.01, selected.end - selected.start) : 0;
+  const stretchPercent = fmtStretchPercent(selected?.audioStretch?.lengthRatio);
 
   // ── Local timing draft (for the number inputs) ───────────────────────────
   const [draftStart, setDraftStart] = useState("");
@@ -177,8 +183,8 @@ export default function RightInspector() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <aside className="w-[300px] shrink-0 flex flex-col border-l border-white/[0.08] bg-[#1e2228] text-[#e8eaed]">
-      <div className="px-4 py-3 border-b border-white/[0.08]">
+    <aside className="w-[300px] shrink-0 flex flex-col border-l border-white/8 bg-[#1e2228] text-[#e8eaed]">
+      <div className="px-4 py-3 border-b border-white/8">
         <p className="text-[11px] font-bold uppercase tracking-wider text-[#9aa3ad]">Properties</p>
       </div>
       <div className="flex-1 overflow-y-auto p-4 min-h-0">
@@ -302,7 +308,10 @@ export default function RightInspector() {
                 {selected.revision ?? 0}
               </p>
               {selected.timingStrategy && (
-                <p className="text-[10px] text-[#9aa3ad] mt-1">Fit: {selected.timingStrategy}</p>
+                <p className="text-[10px] text-[#9aa3ad] mt-1">
+                  Fit: {selected.timingStrategy}
+                  {stretchPercent ? ` · length ${stretchPercent}` : ""}
+                </p>
               )}
             </div>
 
@@ -390,7 +399,7 @@ export default function RightInspector() {
             </div>
 
             {/* ── Segment preview audio ──────────────────────────────────── */}
-            <div className="pt-4 border-t border-white/[0.08]">
+            <div className="pt-4 border-t border-white/8">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#9aa3ad] mb-2">
                 Segment preview
               </p>

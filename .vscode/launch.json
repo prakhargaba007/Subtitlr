@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/prakhar/Documents/code/personal_project/video transcribe",
+      "program": "/Users/prakhar/Documents/code/personal_project/video transcribe/build/Debug/outDebug"
+    }
+  ]
+}

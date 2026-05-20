@@ -332,7 +332,11 @@ export default function PricingPlansGrid({ variant = "section" }: PricingPlansGr
                       </td>
                       <td className="py-5 px-6 font-bold text-on-surface">
                         {formatCreditAllowance(plan)}
+                        {getMonthlyCredits(plan) === 500 && (
+                          <span className="ml-2 text-xs text-on-surface-variant">(one time)</span>
+                        )}
                       </td>
+                 
                       <td className="py-5 px-6 text-on-surface-variant">
                         Up to {formatSubtitleMinutes(plan)} subtitles
                       </td>

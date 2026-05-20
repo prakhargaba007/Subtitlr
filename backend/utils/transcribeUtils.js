@@ -345,6 +345,18 @@ function normalizeSpeakerId(raw) {
   return "Speaker_1";
 }
 
+const pad2 = (n) => String(n).padStart(2, "0");
+const pad3 = (n) => String(n).padStart(3, "0");
+
+function formatTranscriptClockTime(seconds) {
+  const totalMs = Math.max(0, Math.round((Number(seconds) || 0) * 1000));
+  const minutes = Math.floor(totalMs / 60_000);
+  const remainingMs = totalMs % 60_000;
+  const sec = Math.floor(remainingMs / 1000);
+  const ms = remainingMs % 1000;
+  return `${pad2(minutes)}min:${pad2(sec)}sec,${pad3(ms)}`;
+}
+
 /**
  * Gemini sometimes returns start_us/end_us in seconds or milliseconds instead
  * of microseconds.  Detect the unit by looking at the largest end_us value and
@@ -388,9 +400,101 @@ function normalizeRawTimestamps(transcript) {
   return transcript;
 }
 
+function compactClockNumberToSeconds(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+
+  const sign = n < 0 ? -1 : 1;
+  const abs = Math.abs(n);
+  const whole = Math.floor(abs);
+  const fraction = abs - whole;
+  const minutes = Math.floor(whole / 100);
+  const seconds = whole % 100;
+
+  return sign * (minutes * 60 + seconds + fraction);
+}
+
+function isCompactClockSecondsCandidate(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return false;
+
+  const whole = Math.floor(Math.abs(n));
+  if (whole < 100) return false;
+
+  return whole % 100 < 60;
+}
+
+function shouldUseCompactClockTimestamps(transcript) {
+  const clockLikeValues = [];
+  const longValues = [];
+
+  for (const row of transcript) {
+    for (const key of ["start_us", "end_us"]) {
+      const micros = Number(row[key]);
+      if (!Number.isFinite(micros)) continue;
+      const seconds = micros / 1e6;
+      if (Math.abs(seconds) >= 100) {
+        longValues.push(seconds);
+        if (isCompactClockSecondsCandidate(seconds)) {
+          clockLikeValues.push(seconds);
+        }
+      }
+    }
+  }
+
+  if (!clockLikeValues.length) return false;
+
+  if (clockLikeValues.length >= 2) {
+    return clockLikeValues.length / longValues.length >= 0.75;
+  }
+
+  // Boundary rows like 59.5s -> 1:00.5 can have only one value >= 100.
+  return transcript.some((row) => {
+    const startSeconds = Number(row.start_us) / 1e6;
+    const endSeconds = Number(row.end_us) / 1e6;
+    if (!Number.isFinite(startSeconds) || !Number.isFinite(endSeconds)) {
+      return false;
+    }
+    if (
+      !isCompactClockSecondsCandidate(startSeconds) &&
+      !isCompactClockSecondsCandidate(endSeconds)
+    ) {
+      return false;
+    }
+
+    const rawDuration = endSeconds - startSeconds;
+    const compactDuration =
+      compactClockNumberToSeconds(endSeconds) -
+      compactClockNumberToSeconds(startSeconds);
+
+    return rawDuration > 15 && compactDuration > 0 && compactDuration <= 15;
+  });
+}
+
+function normalizeCompactClockTimestamps(transcript) {
+  if (!shouldUseCompactClockTimestamps(transcript)) return transcript;
+
+  console.warn(
+    "[transcribe] ⚠️  Gemini timestamps look like compact MMSS.sss values. " +
+      "Converting to real elapsed seconds before dubbing.",
+  );
+
+  return transcript.map((row) => ({
+    ...row,
+    start_us: Math.round(
+      compactClockNumberToSeconds(Number(row.start_us) / 1e6) * 1e6,
+    ),
+    end_us: Math.round(
+      compactClockNumberToSeconds(Number(row.end_us) / 1e6) * 1e6,
+    ),
+  }));
+}
+
 function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
   if (!Array.isArray(transcript)) return [];
-  const normalized = normalizeRawTimestamps(transcript);
+  const normalized = normalizeCompactClockTimestamps(
+    normalizeRawTimestamps(transcript),
+  );
   const off = Number(timeOffsetSec) || 0;
   return normalized.map((row) => {
     const start_us = Number(row.start_us);
@@ -417,6 +521,8 @@ function mapGeminiTranscriptToSegments(transcript, timeOffsetSec) {
     return {
       start,
       end,
+      start_time: formatTranscriptClockTime(start),
+      end_time: formatTranscriptClockTime(end),
       speaker_id: normalizeSpeakerId(row.speaker ?? row.speaker_id),
       text,
       tts_performance_hint,

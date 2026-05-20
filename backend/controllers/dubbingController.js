@@ -1502,11 +1502,13 @@ exports.startDubbingJob = async (req, res) => {
           relEnd: row.relEnd,
           translatedText: row.text,
           timingStrategy: sync.strategy,
+          audioStretch: sync.audioStretch,
           ttsWordTimestamps: wts && wts.length ? wts : undefined,
         });
       } else {
         parentSolo.set(row.parentIndex, {
           timingStrategy: sync.strategy,
+          audioStretch: sync.audioStretch,
           ttsWordTimestamps: wts && wts.length ? wts : undefined,
         });
       }
@@ -2011,11 +2013,13 @@ exports.startDubbingRetargetJob = async (req, res) => {
           relEnd: row.relEnd,
           translatedText: row.text,
           timingStrategy: sync.strategy,
+          audioStretch: sync.audioStretch,
           ttsWordTimestamps: wts && wts.length ? wts : undefined,
         });
       } else {
         parentSolo.set(row.parentIndex, {
           timingStrategy: sync.strategy,
+          audioStretch: sync.audioStretch,
           ttsWordTimestamps: wts && wts.length ? wts : undefined,
         });
       }
@@ -2451,6 +2455,7 @@ exports.regenerateDubbingSegment = async (req, res, next) => {
 
     seg.dubbedAudioKey = key;
     seg.timingStrategy = audioResult.timingStrategy;
+    seg.audioStretch = audioResult.audioStretch;
     seg.revision = nextRev;
     await job.save();
 
@@ -2461,6 +2466,7 @@ exports.regenerateDubbingSegment = async (req, res, next) => {
         url,
         strategy: audioResult.timingStrategy,
         adjustedDuration: audioResult.adjustedDuration,
+        audioStretch: audioResult.audioStretch,
       },
     });
   } catch (err) {
@@ -2545,6 +2551,7 @@ exports.addDubbingSegment = async (req, res, next) => {
       translatedText: rawText,
       dubbedAudioKey: key,
       timingStrategy: audioResult.timingStrategy,
+      audioStretch: audioResult.audioStretch,
       subSegments: [],
       voiceProfile: { source: null },
     };
@@ -2561,6 +2568,7 @@ exports.addDubbingSegment = async (req, res, next) => {
         url,
         strategy: audioResult.timingStrategy,
         adjustedDuration: audioResult.adjustedDuration,
+        audioStretch: audioResult.audioStretch,
       },
     });
   } catch (err) {

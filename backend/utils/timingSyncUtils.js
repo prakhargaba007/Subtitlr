@@ -117,6 +117,13 @@ const syncSegmentTiming = async (audioPath, originalDuration, opts = {}) => {
   }
 
   const adjustedDuration = await getFileDuration(outputPath);
+  const audioStretch = {
+    targetDurationSec: originalDuration,
+    rawDurationSec: actualDuration,
+    adjustedDurationSec: adjustedDuration,
+    lengthRatio: actualDuration > 0 ? adjustedDuration / actualDuration : null,
+    tempoRatio: adjustedDuration > 0 ? actualDuration / adjustedDuration : null,
+  };
 
   return {
     adjustedPath: outputPath,
@@ -124,6 +131,7 @@ const syncSegmentTiming = async (audioPath, originalDuration, opts = {}) => {
     actualDuration,
     adjustedDuration,
     strategy,
+    audioStretch,
   };
 };
 
